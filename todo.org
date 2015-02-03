@@ -1,0 +1,37 @@
+* Before Commit
+** DONE [#A] rename everything to start with "pu:"
+- pu-layout.el - DONE
+- pu-switch.el - DONE
+- pu-configuration.el - DONE
+- pu-core.el - DONE
+- purpose.el - DONE
+** DONE [#A] re-order code logically (also the requires)
+- pu-core.el - DONE
+- pu-switch.el - DONE
+- pu-layout.el - DONE
+- pu-configuration.el - DONE
+- purpose.el - DONE
+** DONE [#A] add commentary and documentation
+* Unsorted
+** TODO [#A] write README					     :UI:API:
+** DONE [#B] add to package repository (MELPA?)
+** [#C] maybe: add function delete-non-dedicated-windows
+* Integration and fixes for working with other features (e.g. Dired) :endless:
+* Version 1.0 Requirements
+Version 1.0 will not be considered ready until these tasks are completed
+** TODO [#A] find-file-with-purpose				     :UI:API:
+** TODO [#A] implement pu:buffer-purpose-name-regexp 		   :internal:
+** TODO [#B] prefix-overload (overload commands on same key, with different prefix arguments) :UI:API:internal:
+** TODO [#B] make pu:load-layout and pu:save-layout prompt for filename when called interactively :UI:
+* Not Version-Related
+Tasks that should be done, but not necessarily for a specific version
+** TODO [#A] frame support: design and write frame-related behavior and code :UI:API:internal:
+** [#A] consider smarter function-call decision in pu:action-function
+Which function to use, and how to call it (pu:switch-buffer, pu:pop-buffer).
+Pending more usage-experience, suggestions and bug-reports.
+** TODO [#B] pu:switch-buffer-with-same-purpose 			 :UI:
+** [#C] improve/change default configuration			     :UI:API:
+** [#C] refactor code (make it nicer and better)		    :endless:
+** TODO [#B] make prompts better (more like IDO, more feature-rich)	 :UI:
+** TODO [#B] automatic tests
+** TODO [#B] adapt variables for customize				 :UI:
