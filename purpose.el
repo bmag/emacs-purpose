@@ -30,26 +30,30 @@
 ;; Purpose-Aware commands that replace common commands:
 ;; `pu:switch-buffer': instead of `switch-to-buffer'
 ;; `pu:pop-buffer': instead of `pop-to-buffer'
+;; `pu:find-file': instead of `find-file'
+;; `pu:find-file-other-window': instead of `find-file-other-window'
 
 ;; Important Features:
 ;; -  Configurable: Configure how Purpose decides what's your buffer's
-;;    purpose. Note that the window's purpose is determined by its buffer.
+;;    purpose. Note that the window's purpose is determined by its
+;;    buffer.
 ;; -  Persistent Window Layout: You can save and load your window layout
 ;;    between sessions by using `pu:save-layout' and `pu:load-layout'.
 ;; -  Purpose-Aware Buffer Switching: Commands for switching buffers
-;;    without ruining your layout. The main ones are `pu:switch-buffer'
-;;    and `pu:pop-buffer'. Also, purpose-aware switching is supported
-;;    for any function that uses `display-buffer' internally
-;;    (`switch-to-buffer'  doesn't). See pu-switch.el for more.
+;;    without ruining your layout. The main ones are `pu:switch-buffer',
+;;    `pu:pop-buffer' and `pu:find-file'. Also, purpose-aware switching
+;;    is supported for any function that uses `display-buffer'
+;;    internally (`switch-to-buffer' doesn't). See pu-switch.el for
+;;    more.
 ;; -  Developer-Friendly: Purpose has hooks and an API that should make
 ;;    it easy for developers to use it as a part of more sophisticated
 ;;    plugins. If it isn't, your input is welcome.
 
 ;; Developer Usage (informal API):
-;; -  `pu:set-layout', `pu:load-layout': use this to set a window layout that
-;;    suits your plugin.
-;; -  `pu:get-layout' or `pu:save-layout': use this to save a layout so you
-;;    can add it to your plugin later.
+;; -  `pu:set-layout', `pu:load-layout': use this to set a window layout
+;;    that suits your plugin.
+;; -  `pu:get-layout' or `pu:save-layout': use this to save a layout so
+;;    you can add it to your plugin later.
 ;; -  `pu:get-extra-window-params-function': use this if you want to
 ;;    save additional window parameters that make sense for your plugin,
 ;;    when `pu:get-layout' is called.
@@ -90,8 +94,18 @@
     map)
   "Keymap for Purpose mode.")
 
+(defun pu:modeline-string ()
+  "Return the presentation of a window's purpose for display in the
+modeline. The string returned has two forms. For example, if window's
+purpose is 'edit:
+If (pu:window-purpose-dedicated-p), return \"[edit!]\", otherwise return
+\"[edit]\"."
+  (format "[%s%s]"
+	  (pu:window-purpose)
+	  (if (pu:window-purpose-dedicated-p) "!" "")))
+
 (define-minor-mode purpose-mode
-  nil :global t
+  nil :global t :lighter (:eval (pu:modeline-string))
   (if purpose-mode
       (progn
 	(setq display-buffer-overriding-action '(pu:action-function . nil))

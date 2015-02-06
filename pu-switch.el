@@ -14,6 +14,10 @@
 ;; -  `pu:pop-buffer': Shows a buffer in a matching window, but not in
 ;;    the current window. If necessary, create a new window. For the
 ;;    exact rules, see the function's documentation.
+;; -  `pu:find-file': Opens a file in a window. The window is chosen by
+;;    `pu:switch-buffer'.
+;; -  `pu:find-file-other-window': Opens a file in a window. The window
+;;    is chosen by `pu:pop-buffer'.
 ;; -  `pu:action-function': Overrides the default behavior of
 ;;    `display-buffer'. Uses `pu:switch-buffer' and `pu:pop-buffer' to
 ;;    display the buffer in the correct window.
@@ -38,8 +42,8 @@
 not be overridden. This is a list of names.")
 
 (defvar pu:display-buffer-hook nil
-  "Hook to run after displaying a buffer with a purpose-aware function. That
-means after `pu:switch-buffer', `pu:pop-buffer' and
+  "Hook to run after displaying a buffer with a purpose-aware function.
+That means after `pu:switch-buffer', `pu:pop-buffer' and
 `pu:action-function'.")
 
 
@@ -54,7 +58,7 @@ is made according to the rules in `pu:switch-buffer'."
      (get-buffer-window buffer-or-name)
      ;; current window matches purpose and is not buffer-dedicated
      (and (not (window-dedicated-p))
-	  (eql (window-purpose) buffer-purpose)
+	  (eql (pu:window-purpose) buffer-purpose)
 	  (selected-window))
      ;; other window matches purpose and is not buffer-dedicated
      (car (remove-if #'(lambda (window) (window-dedicated-p window))
@@ -114,12 +118,14 @@ necessary."
 
 ;; Purpose action function (integration with `display-buffer')
 (defun pu:action-function (buffer alist)
-  "Action function to use for overriding default display-buffer behavior.
-This function should be used by setting `display-buffer-overriding-action'
-to (pu:action-function . nil)."
+  "Action function to use for overriding default display-buffer
+behavior. This function should be used by setting
+`display-buffer-overriding-action' to (pu:action-function . nil)."
   (when (pu:use-action-function-p buffer alist)
     (message "Alist: %S" alist)
-    ;;TODO: smarter decision between switch and pop, and if to use :reuse-current-window
+    ;;TODO: smarter decision between switch and pop, and if to use
+    ;;      :reuse-current-window
+    
     ;;(pu:switch-buffer buffer)
     (pu:pop-buffer buffer :reuse-current-window t)
     (get-buffer-window buffer)))
@@ -128,15 +134,15 @@ to (pu:action-function . nil)."
 
 ;;; UI/API functions
 (defun pu:switch-buffer (buffer-or-name)
-  "Switch to buffer BUFFER-OR-NAME in a window chosen according to its purpose.
-The window is chosen as follows:
+  "Switch to buffer BUFFER-OR-NAME in a window chosen according to its
+purpose. The window is chosen as follows:
 1. If the buffer is already shown in a window, use that window.
-2. If the current window matches the buffer's purpose, and the window is not 
-   dedicated to its current buffer, use the current window.
-3. If there is another window matching the buffer's purpose, and the window is
-   not dedicated to its current buffer, use that window.
-4. If the current window is not dedicated to its buffer or its purpose, use the
-   current window.
+2. If the current window matches the buffer's purpose, and the window is
+   not dedicated to its current buffer, use the current window.
+3. If there is another window matching the buffer's purpose, and the
+   window is not dedicated to its current buffer, use that window.
+4. If the current window is not dedicated to its buffer or its purpose,
+   use the current window.
 5. Choose a window according to `pu:pop-buffer'.
 
 Return the buffer switched to.
@@ -153,21 +159,24 @@ Runs the hook `pu:display-buffer-hook' after switching to the buffer."
       (pu:pop-buffer buffer-or-name))))
 
 (defun* pu:pop-buffer (buffer-or-name &key reuse-current-window)
-  "Pop to buffer BUFFER-OR-NAME in a window chosen according to its purpose.
-The window is chosen as follows: (note that the current window is never chosen)
-1. If the buffer is already shown in a window, use that window. If argument
-   REUSE-SAME-WINDOW is non-nil, the current window is considered.
-2. If there is another window matching the buffer's purpose, and the window is
-   not dedicated to its current buffer, use that window.
-3. If there is another window which is not dedicated to its current buffer or
-   its purpose, use that window.
+  "Pop to buffer BUFFER-OR-NAME in a window chosen according to its
+purpose. The window is chosen as follows: (note that the current window
+is never chosen)
+1. If the buffer is already shown in a window, use that window. If
+   argument REUSE-SAME-WINDOW is non-nil, the current window is
+   considered.
+2. If there is another window matching the buffer's purpose, and the
+   window is not dedicated to its current buffer, use that window.
+3. If there is another window which is not dedicated to its current
+   buffer or its purpose, use that window.
 4. Split current window.
 
 Return the buffer switched to.
 Runs the hook `pu:display-buffer-hook' after popping to the buffer."
   (interactive
    (list (read-buffer-to-switch "[PU] Pop to buffer: ")))
-  (let ((new-window (pu:choose-window-for-pop buffer-or-name reuse-current-window)))
+  (let ((new-window (pu:choose-window-for-pop buffer-or-name
+					      reuse-current-window)))
     (if new-window
 	(prog2
 	    (select-window new-window)
@@ -178,13 +187,38 @@ Runs the hook `pu:display-buffer-hook' after popping to the buffer."
 	  (prog1
 	      (current-buffer)
 	    (run-hooks 'pu:display-buffer-hook))
-	(error "Couldn't create new window"))
-      )))
+	(error "Couldn't create new window")))))
+
+(defun pu:find-file (filename &optional wildcards)
+  "Open file FILENAME in a window chosen by the same rules as
+`pu:switch-buffer'. If argument WILDCARDS is non-nil, allow processing
+of wildcards. This means several files could be opened at once."
+  (interactive (find-file-read-args "[PU] Find file: "
+				    (confirm-nonexistent-file-or-buffer)))
+  (let ((value (find-file-noselect filename nil nil wildcards)))
+    (if (listp value)
+	(mapcar #'pu:switch-buffer (nreverse value))
+      (pu:switch-buffer value))))
+
+(defun pu:find-file-other-window (filename &optional wildcards)
+  "Open file FILENAME in a window chosen by the same rules as
+`pu:pop-buffer'. If argument WILDCARDS is non-nil, allow processing of
+wildcards. This means several files could be opened at once."
+  (interactive (find-file-read-args "[PU] Find file in other window: "
+				    (confirm-nonexistent-file-or-buffer)))
+  (let ((value (find-file-noselect filename nil nil wildcards)))
+    (if (listp value)
+	(progn
+	  (setq value (nreverse value))
+	  (pu:pop-buffer (car value))
+	  (mapc #'pu:switch-buffer (cdr value))
+	  value)
+      (pu:pop-buffer value))))
 
 (defmacro pu:with-action-function-inactive (&rest body)
   "Make `pu:action-function' inactive while evaluating BODY. This is
 done by setting `pu:action-function-active-p' to nil temporarily."
   `(let ((pu:action-function-active-p nil))
-    ,@body))
+     ,@body))
 
 (provide 'pu-switch)

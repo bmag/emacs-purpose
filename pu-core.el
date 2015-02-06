@@ -59,7 +59,8 @@ purpose 'edit."
 mode."
   (when (get-buffer buffer-or-name) ; check if buffer exists
     (let* ((major-mode (pu:buffer-major-mode buffer-or-name))
-	   (derived-modes (pu:iter-hash #'(lambda (mode purpose) mode) pu:mode-purposes))
+	   (derived-modes (pu:iter-hash #'(lambda (mode purpose) mode)
+					pu:mode-purposes))
 	   (derived-mode (apply #'derived-mode-p derived-modes)))
       (when derived-mode
 	(pu:get-mode-purpose derived-mode)))))
@@ -73,7 +74,7 @@ exact name."
 
 ;;TODO: implement
 (defun pu:buffer-purpose-name-regexp (buffer-or-name)
-  "Returnn the purpose of buffer BUFFER-OR-NAME, as determined by the
+  "Return the purpose of buffer BUFFER-OR-NAME, as determined by the
 regexps matched by its name."
   nil)
 
@@ -141,12 +142,17 @@ defaults to the selected window."
   "Toggle window WINDOW's dedication to its purpose on or off. WINDOW
 defaults to the selected window."
   (interactive)
-  (let* ((flag (not (pu:window-purpose-dedicated-p window)))
-	 (msg (if flag
-		  "Window purpose is now dedicated"
-		"Window purpose is not dedicated anymore")))
+  (let ((flag (not (pu:window-purpose-dedicated-p window))))
+    ;; window's purpose is displayed in modeline, so no need to print message
+    ;; for the user
+    ;;      (msg (if flag
+    ;;      	  "Window purpose is now dedicated"
+    ;; 	         "Window purpose is not dedicated anymore")))
     (pu:set-window-purpose-dedicated-p window flag)
-    (message msg)
+    (force-mode-line-update)
+    ;; window's purpose is displayed in modeline, so no need to print message
+    ;; for the user
+    ;;(message msg)
     flag))
 
 ;; not really purpose-related, but helpful for the user

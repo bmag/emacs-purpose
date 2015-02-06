@@ -38,15 +38,15 @@ variable is intended for internal use, do not set it directly.")
   directly.")
 
 (defvar pu:default-mode-purposes '((comint-mode . terminal)
-				(prog-mode . edit)
-				(image-mode . image)
-				(vc-dir-mode . vc)
-				(vc-log-entry-mode . vc))
+				   (prog-mode . edit)
+				   (image-mode . image)
+				   (vc-dir-mode . vc)
+				   (vc-log-entry-mode . vc))
   "Default value for `pu:mode-purposes'.")
 
 (defvar pu:default-name-purposes '(("*shell*" . terminal)
-				 (".gitignore" . edit)
-				 (".hgignore" . edit))
+				   (".gitignore" . edit)
+				   (".hgignore" . edit))
   "Default value for `pu:name-purposes'.")
 
 (defvar pu:default-name-regexp-purposes nil
@@ -67,21 +67,24 @@ This affects also buffers whose major mode is derived from MODE."
   (puthash mode purpose pu:mode-purposes))
 
 (defun pu:set-name-regexp-purpose (regexp purpose)
-  "Set the purpose of buffers with names that match regexp REGEXP to be purpose."
+  "Set the purpose of buffers with names that match regexp REGEXP to be
+purpose."
   (puthash regexp purpose pu:name-regexp-purposes))
 
 ;; getters
 (defun pu:get-name-purpose (name)
-  "Get the purpose of buffer-name NAME. Return nil if no purpose is found."
+  "Get the purpose of buffer-name NAME. Return nil if no purpose is
+found."
   (gethash name pu:name-purposes))
 
 (defun pu:get-mode-purpose (mode)
-  "Get the purpose of major-mode MODE. Return nil if no purpose is found."
+  "Get the purpose of major-mode MODE. Return nil if no purpose is
+found."
   (gethash mode pu:mode-purposes))
 
 (defun pu:get-name-regexp-purpose (regexp)
-  "Get the purpose of buffer-name matching regexp REGEXP. Return nil if no
-purpose is found."
+  "Get the purpose of buffer-name matching regexp REGEXP. Return nil if
+no purpose is found."
   (gethash regexp pu:name-regexp-purposes))
 
 ;; deleters
@@ -107,15 +110,18 @@ purpose is found."
   (clrhash pu:mode-purposes)
   (clrhash pu:name-regexp-purposes))
 
-(defun pu:add-configuration (new-name-purposes new-mode-purposes
-					    new-name-regexp-purposes)
-  "Add the mappings defined in alists NEW-NAME-PURPOSES, NEW-MODE-PURPOSES and
-NEW-NAME-REGEXP-PURPOSES to the purpose configuration."
+(defun pu:add-configuration (new-name-purposes
+			     new-mode-purposes
+			     new-name-regexp-purposes)
+  "Add the mappings defined in alists NEW-NAME-PURPOSES,
+NEW-MODE-PURPOSES and NEW-NAME-REGEXP-PURPOSES to the purpose
+configuration."
   (mapc #'(lambda (element) (pu:set-name-purpose (car element) (cdr element)))
 	new-name-purposes)
   (mapc #'(lambda (element) (pu:set-mode-purpose (car element) (cdr element)))
 	new-mode-purposes)
-  (mapc #'(lambda (element) (pu:set-name-regexp-purpose (car element) (cdr element)))
+  (mapc #'(lambda (element)
+	    (pu:set-name-regexp-purpose (car element) (cdr element)))
 	new-name-regexp-purposes))
 
 (defun pu:reset-configuration ()
@@ -123,21 +129,25 @@ NEW-NAME-REGEXP-PURPOSES to the purpose configuration."
   (interactive)
   (pu:clear-configuration)
   (pu:add-configuration pu:default-name-purposes
-		     pu:default-mode-purposes
-		     pu:default-name-regexp-purposes))
+			pu:default-mode-purposes
+			pu:default-name-regexp-purposes))
 
-(defun pu:set-configuration (new-name-purposes new-mode-purposes
-			  new-name-regexp-purposes &optional dont-use-default)
-  "Set the entire purpose configuration according to alists NEW-NAME-PURPOSES,
-NEW-MODE-PURPOSES and NEW-NAME-REGEXP-PURPOSES. The configuration is built on top of
-the default configuration.
-If DONT-USE-DEFAULT is non-nil, the default configuration is not used as the
-basis for the configuration."
+(defun pu:set-configuration (new-name-purposes
+			     new-mode-purposes
+			     new-name-regexp-purposes
+			     &optional dont-use-default)
+  "Set the entire purpose configuration according to alists
+NEW-NAME-PURPOSES, NEW-MODE-PURPOSES and NEW-NAME-REGEXP-PURPOSES. The
+configuration is built on top of the default configuration.
+If DONT-USE-DEFAULT is non-nil, the default configuration is not used as
+the basis for the configuration."
   (if dont-use-default
       (pu:clear-configuration)
     (pu:reset-configuration))
   (pu:add-configuration new-name-purposes
-		     new-mode-purposes
-		     new-name-regexp-purposes))
+			new-mode-purposes
+			new-name-regexp-purposes))
 
+
+(pu:reset-configuration)
 (provide 'pu-configuration)
