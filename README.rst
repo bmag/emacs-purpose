@@ -114,13 +114,13 @@ completed.
 - [#A] regexp support for purpose detection (implement
   pu:buffer-purpose-name-regexp)
   
-- [#B] prefix-overload (overload commands on same key, with different
+- [DONE] [#B] prefix-overload (overload commands on same key, with different
   prefix arguments)
   
 - [#B] make pu:load-layout and pu:save-layout prompt for filename when
   called interactively
   
-- [#B] set good key-bindings for Purpose's commands
+- [DONE] [#B] set good key-bindings for Purpose's commands
    
 Not Version-Specific
 --------------------

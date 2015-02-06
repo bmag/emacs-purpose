@@ -2,7 +2,7 @@
 
 ;; Author: Bar Magal (2015)
 ;; Package: purpose
-;; Version: 0.1.0
+;; Version: 0.1.1
 
 ;;; Commentary:
 
@@ -83,14 +83,38 @@
 (require 'pu-configuration)
 (require 'pu-layout)
 (require 'pu-switch)
+(require 'pu-prefix-overload)
+
+(pu:def-prefix-overload pu:find-file-overload '(pu:find-file ido-find-file))
+(pu:def-prefix-overload pu:find-file-other-window-overload '(pu:find-file-other-window ido-find-file-other-window))
+(pu:def-prefix-overload pu:switch-buffer-overload '(pu:switch-buffer ido-switch-buffer))
+(pu:def-prefix-overload pu:pop-buffer-overload '(pu:pop-buffer ido-switch-buffer-other-window))
+
 
 (defvar purpose-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "C-c o") #'pu:switch-buffer)
-    (define-key map (kbd "C-c p") #'pu:pop-buffer)
+    ;; No "C-x 5" bindings because we don't support multiple frames yet
+    (define-key map (kbd "C-x C-f") #'pu:find-file-overload)
+    (define-key map (kbd "C-x 4 f") #'pu:find-file-other-window-overload)
+    (define-key map (kbd "C-x 4 C-f") #'pu:find-file-other-window-overload)
+    (define-key map (kbd "C-x b") #'pu:switch-buffer-overload)
+    (define-key map (kbd "C-x 4 b") #'pu:pop-buffer-overload)
+
+    ;; Helpful for quitting temporary windows. Close in meaning to
+    ;; `kill-buffer', so we map it to a close key ("C-x j" is close to
+    ;; "C-x k")
     (define-key map (kbd "C-x j") #'quit-window)
-    (define-key map (kbd "C-c d") #'pu:toggle-window-purpose-dedicated)
-    (define-key map (kbd "C-c D") #'pu:toggle-window-buffer-dedicated)
+
+    ;; We use "C-c ," for compatibility with key-binding conventions and
+    ;; because its the same as Emacs plugin E2WM, which probably won't
+    ;; be used together with Purpose
+    (define-key map (kbd "C-c ,") #'purpose-mode-prefix-map)
+    (define-prefix-command 'purpose-mode-prefix-map)
+    (define-key purpose-mode-prefix-map (kbd "o") #'pu:switch-buffer)
+    (define-key purpose-mode-prefix-map (kbd "p") #'pu:pop-buffer)
+    (define-key purpose-mode-prefix-map (kbd "d") #'pu:toggle-window-purpose-dedicated)
+    (define-key purpose-mode-prefix-map (kbd "D") #'pu:toggle-window-buffer-dedicated)
+
     map)
   "Keymap for Purpose mode.")
 

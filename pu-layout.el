@@ -2,7 +2,7 @@
 
 ;; Author: Bar Magal (2015)
 ;; Package: purpose
-;; Version: 0.1.0
+;; Version: 0.1.1
 
 ;;; Commentary:
 ;; This file contains function for saving and loading the entire window
