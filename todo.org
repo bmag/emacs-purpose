@@ -1,7 +1,7 @@
 * Version 1.0 Requirements
 Version 1.0 will not be considered ready until these tasks are completed
 ** DONE [#A] implement function pu:find-file 			     :UI:API:
-** TODO [#A] regexp support for purpose detection (implement pu:buffer-purpose-name-regexp) :internal:
+** DONE [#A] regexp support for purpose detection (implement pu:buffer-purpose-name-regexp) :internal:
 ** DONE [#B] prefix-overload (overload commands on same key, with different prefix arguments) :UI:API:internal:
 ** TODO [#B] make pu:load-layout and pu:save-layout prompt for filename when called interactively :UI:
 ** DONE [#B] set good key-bindings for Purpose's commands

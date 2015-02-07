@@ -2,7 +2,7 @@
 
 ;; Author: Bar Magal (2015)
 ;; Package: purpose
-;; Version: 0.1.1
+;; Version: 0.1.2
 
 ;;; Commentary:
 ;; This file contains core functions to be used by other parts of
@@ -72,11 +72,24 @@ exact name."
 			buffer-or-name
 		      (buffer-name buffer-or-name))))
 
-;;TODO: implement
+(defun pu:buffer-purpose-name-regexp-1 (buffer-or-name regexp purpose)
+  "Return purpose PURPOSE if buffer BUFFER-OR-NAME's name matches regexp
+REGEXP."
+  (when (string-match-p regexp (or (and (bufferp buffer-or-name)
+					(buffer-name buffer-or-name))
+				   buffer-or-name))
+    purpose))
+
 (defun pu:buffer-purpose-name-regexp (buffer-or-name)
   "Return the purpose of buffer BUFFER-OR-NAME, as determined by the
 regexps matched by its name."
-  nil)
+  (car (remove nil
+	       (pu:iter-hash #'(lambda (regexp purpose)
+				 (pu:buffer-purpose-name-regexp-1
+				  buffer-or-name
+				  regexp
+				  purpose))
+			     pu:name-regexp-purposes))))
 
 (defun pu:buffer-purpose (buffer-or-name)
   "Get buffer's purpose. The purpose is determined by consulting these

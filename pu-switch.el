@@ -2,7 +2,7 @@
 
 ;; Author: Bar Magal (2015)
 ;; Package: purpose
-;; Version: 0.1.1
+;; Version: 0.1.2
 
 ;;; Commentary:
 ;; This file contains functions for switching buffers in a way that
@@ -125,9 +125,9 @@ behavior. This function should be used by setting
     (message "Alist: %S" alist)
     ;;TODO: smarter decision between switch and pop, and if to use
     ;;      :reuse-current-window
-    
-    ;;(pu:switch-buffer buffer)
-    (pu:pop-buffer buffer :reuse-current-window t)
+    (let ((reuse-current-window (not (cdr (assoc 'inhibit-same-window
+						 alist)))))
+      (pu:pop-buffer buffer :reuse-current-window reuse-current-window))
     (get-buffer-window buffer)))
 
 

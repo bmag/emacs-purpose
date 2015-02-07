@@ -2,7 +2,7 @@
 
 ;; Author: Bar Magal (2015)
 ;; Package: purpose
-;; Version: 0.1.1
+;; Version: 0.1.2
 
 ;;; Commentary:
 ;; This file contains functions and macros for using the same

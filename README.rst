@@ -84,8 +84,6 @@ Caveats
 - Frame support is not yet available. Purpose may not work as expected
   when using Emacs with several frames.
 
-- Regexp support is not yet available.
-
 - Emacs features and plugins which don't use display-buffer are not yet
   integrated with Purpose.
 
@@ -111,7 +109,7 @@ completed.
 
 - [DONE] [#A] implement function pu:find-file
   
-- [#A] regexp support for purpose detection (implement
+- [DONE] [#A] regexp support for purpose detection (implement
   pu:buffer-purpose-name-regexp)
   
 - [DONE] [#B] prefix-overload (overload commands on same key, with different
