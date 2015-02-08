@@ -16,66 +16,66 @@ need.
 Features
 ========
 
-1) Automatic purpose detection
-------------------------------
-   
-   The purpose of a window is the same as the purpose of its current
-   buffer. The purpose of buffer is determined by its name and its
-   mode. Purpose comes with a default confiuration, but you can set your
-   configuration by using the function pu:set-configuration. The
-   documentation inside the code (pu-configuration.el) provides more
-   information.
-   
-   The purpose of a window is shown in its modeline, between square
-   brackets. If the window's purpose is dedicated, an exalamation mark
-   ("!") is added after the purpose's name and before the closing
-   bracket.
-   
-2) Purpose-aware display
-------------------------
-   
-   Purpose provides you with commands for displaying buffers in the
-   correct windows. The main commands are pu:find-file, pu:switch-buffer
-   and pu:pop-buffer. Also, Purpose uses variable
-   display-buffer-overriding-action to provide purpose-awareness to
-   function display-buffer and anything else that uses display-buffer
-   behind the scenes.
-   
-   Programmers can use the hook pu:display-buffer-hook to execute code
-   after everytime that Purpose displays a buffer.
-   
-   For now, features and plugins that don't use display-buffer will not
-   be handled properly by Purpose. This includes switch-to-buffer,
-   Dired, recentf, and probably some more. Whenever you encounter a
-   feature that isn't handled properly by Purpose, you are welcome to
-   report it. If possible, I encourage you to solve it and send me the
-   fix via a pull-request. Often the solution is to make the feature use
-   pu:switch-buffer instead of switch-to-buffer. With time, and as
-   Purpose gains popularity (hopefully) and becomes mature, Purpose will
-   handle more and more of those features and plugins.
-   
-3) Purpose dedication
----------------------
-   
-   Commands pu:toggle-window-purpose-dedicated and
-   pu:toggle-window-buffer-dedicated let you mark a window as dedicated
-   to its current purpose or to its current buffer. Marking a window's
-   purpose as dedicated means that Purpose won't use this window for
-   buffers with other purposes. Marking a window's buffer as dedicated
-   means that it won't be used for other buffers, even if they have the
-   same purpose. Buffer dedication is a built-in Emacs feature, which
-   Purpose knows to respect.
-   
-4) Persistent window layout
+Automatic purpose detection
 ---------------------------
-   
-   Purpose lets you save your current window layout with the command
-   pu:save-layout. It also lets you load a saved window layout with the
-   command pu:load-layout.
-   
-   Programmers can use the hooks pu:set-window-properties-functions and
-   pu:get-extra-window-params-function to save/load other window
-   properties that may interest them.
+
+The purpose of a window is the same as the purpose of its current
+buffer. The purpose of buffer is determined by its name and its
+mode. Purpose comes with a default confiuration, but you can set your
+configuration by using the function pu:set-configuration. The
+documentation inside the code (pu-configuration.el) provides more
+information.
+
+The purpose of a window is shown in its modeline, between square
+brackets. If the window's purpose is dedicated, an exalamation mark
+("!") is added after the purpose's name and before the closing
+bracket.
+
+Purpose-aware display
+---------------------
+
+Purpose provides you with commands for displaying buffers in the
+correct windows. The main commands are pu:find-file, pu:switch-buffer
+and pu:pop-buffer. Also, Purpose uses variable
+display-buffer-overriding-action to provide purpose-awareness to
+function display-buffer and anything else that uses display-buffer
+behind the scenes.
+
+Programmers can use the hook pu:display-buffer-hook to execute code
+after everytime that Purpose displays a buffer.
+
+For now, features and plugins that don't use display-buffer will not
+be handled properly by Purpose. This includes switch-to-buffer,
+Dired, recentf, and probably some more. Whenever you encounter a
+feature that isn't handled properly by Purpose, you are welcome to
+report it. If possible, I encourage you to solve it and send me the
+fix via a pull-request. Often the solution is to make the feature use
+pu:switch-buffer instead of switch-to-buffer. With time, and as
+Purpose gains popularity (hopefully) and becomes mature, Purpose will
+handle more and more of those features and plugins.
+
+Purpose dedication
+------------------
+
+Commands pu:toggle-window-purpose-dedicated and
+pu:toggle-window-buffer-dedicated let you mark a window as dedicated
+to its current purpose or to its current buffer. Marking a window's
+purpose as dedicated means that Purpose won't use this window for
+buffers with other purposes. Marking a window's buffer as dedicated
+means that it won't be used for other buffers, even if they have the
+same purpose. Buffer dedication is a built-in Emacs feature, which
+Purpose knows to respect.
+
+Persistent window layout
+------------------------
+
+Purpose lets you save your current window layout with the command
+pu:save-layout. It also lets you load a saved window layout with the
+command pu:load-layout.
+
+Programmers can use the hooks pu:set-window-properties-functions and
+pu:get-extra-window-params-function to save/load other window
+properties that may interest them.
 
    
 Caveats
