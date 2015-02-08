@@ -2,7 +2,7 @@
 
 ;; Author: Bar Magal (2015)
 ;; Package: purpose
-;; Version: 0.1.2
+;; Version: 1.0
 
 ;;; Commentary:
 ;; This file contains core functions to be used by other parts of
@@ -15,6 +15,8 @@
 (defvar default-purpose 'general
   "The default purpose for buffers which didn't get another purpose.")
 
+(defconst pu:version "1.0"
+  "Purpose's version.")
 
 
 ;;; utilities

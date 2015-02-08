@@ -2,7 +2,7 @@
 
 ;; Author: Bar Magal (2015)
 ;; Package: purpose
-;; Version: 0.1.2
+;; Version: 1.0
 
 ;;; Commentary:
 
@@ -105,9 +105,7 @@
     ;; "C-x k")
     (define-key map (kbd "C-x j") #'quit-window)
 
-    ;; We use "C-c ," for compatibility with key-binding conventions and
-    ;; because its the same as Emacs plugin E2WM, which probably won't
-    ;; be used together with Purpose
+    ;; We use "C-c ," for compatibility with key-binding conventions
     (define-key map (kbd "C-c ,") #'purpose-mode-prefix-map)
     (define-prefix-command 'purpose-mode-prefix-map)
     (define-key purpose-mode-prefix-map (kbd "o") #'pu:switch-buffer)

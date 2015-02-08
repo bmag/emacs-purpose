@@ -2,7 +2,7 @@
 
 ;; Author: Bar Magal (2015)
 ;; Package: purpose
-;; Version: 0.1.2
+;; Version: 1.0
 
 ;;; Commentary:
 ;; This file contains functions for changing Purpose's configuration.

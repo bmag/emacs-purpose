@@ -2,7 +2,7 @@
 
 ;; Author: Bar Magal (2015)
 ;; Package: purpose
-;; Version: 0.1.2
+;; Version: 1.0
 
 ;;; Commentary:
 ;; This file contains function for saving and loading the entire window
@@ -195,23 +195,27 @@ The height is never given in pixels, but in text size
       (pu:set-window-properties layout)
     (pu:set-layout-1 layout (selected-window))))
 
-;;TODO: when called interactively, prompt for filename with default
 (defun pu:save-layout (&optional filename)
   "Save current layout to file FILENAME. If FILENAME is nil, use
 `pu:default-layout-file' instead."
-  (interactive)
-  ;;(interactive "[PU] Save layout to file: " nil pu:default-layout-file)
+  (interactive
+   (list (read-file-name "[PU] Save layout to file: "
+			 (file-name-directory pu:default-layout-file)
+			 nil nil
+			 (file-name-nondirectory pu:default-layout-file))))
   (with-temp-file (or filename pu:default-layout-file)
     ;; "%S" - print as S-expression - this allows us to read the value with
     ;; `read' later in `pu:load-layout'
     (insert (format "%S" (pu:get-layout)))))
 
-;;TODO: when called interactively, prompt for filename with default
 (defun pu:load-layout (&optional filename)
   "Load layout from file FILENAME. If FILENAME is nil, use
 `pu:default-layout-file' instead."
-  (interactive)
-  ;;(interactive "[PU] Load layout from file: " nil pu:default-layout-file)
+  (interactive
+   (list (read-file-name "[PU] Load layout from file: "
+			 (file-name-directory pu:default-layout-file)
+			 nil nil
+			 (file-name-nondirectory pu:default-layout-file))))
   (pu:set-layout
    (with-temp-buffer
      (insert-file-contents (or filename pu:default-layout-file))
