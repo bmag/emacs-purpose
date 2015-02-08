@@ -1,8 +1,8 @@
-;;; pu-layout.el
+;;; pu-layout.el --- Save and load window layout
 
 ;; Author: Bar Magal (2015)
 ;; Package: purpose
-;; Version: 1.0
+;; Version: 1.0.50
 
 ;;; Commentary:
 ;; This file contains function for saving and loading the entire window
@@ -10,6 +10,7 @@
 
 ;;; Code:
 
+(require 'cl-lib)
 (require 'pu-core)
 
 (defvar pu:default-layout-file (concat user-emacs-directory
@@ -33,7 +34,7 @@ nil, your function should act on the selected window instead.")
 
 ;;; window-params low-level functions
 (defun pu:window-edges-to-percentage (&optional window)
-  (multiple-value-bind (left top right bottom) (window-edges window)
+  (cl-multiple-value-bind (left top right bottom) (window-edges window)
     (let ((frame-width (frame-width (window-frame window)))
 	  (frame-height (frame-height (window-frame window))))
       (list (/ left frame-width 1.0)
@@ -114,7 +115,7 @@ WINDOW should be a live window, and defaults to the selected one.
 This function is mainly intended to be used by `pu:restore-windows-1'."
   (append (list window)
 	  ;; starting from 2nd sub-tree, since N sub-trees require N-1 splits
-	  (loop for sub-tree in (cdddr tree)
+	  (cl-loop for sub-tree in (cl-cdddr tree)
 		with direction = (not (car tree))
 		collect (split-window window -5 direction))))
 
@@ -151,8 +152,8 @@ The height is never given in pixels, but in text size
   "Helper function for `pu:get-layout'."
   (if (windowp window-tree)
       (pu:window-params window-tree)
-    (append (list (first window-tree)
-		  (second window-tree))
+    (append (list (cl-first window-tree)
+		  (cl-second window-tree))
 	    (mapcar #'pu:get-layout-1 (cddr window-tree)))))
 
 (defun pu:set-layout-1 (tree window)
@@ -171,7 +172,7 @@ The height is never given in pixels, but in text size
     ;; 			   window))
     
     (let ((windows (pu:split-window tree window)))
-      (loop for sub-tree in (cddr tree)
+      (cl-loop for sub-tree in (cddr tree)
 	    for window in windows
 	    do (pu:set-layout-1 sub-tree window)))))
 
@@ -222,3 +223,4 @@ The height is never given in pixels, but in text size
      (read (point-marker)))))
 
 (provide 'pu-layout)
+;;; pu-layout.el ends here

@@ -1,8 +1,8 @@
-;;; pu-configuration.el
+;;; pu-configuration.el --- Configuration handling for Purpose
 
 ;; Author: Bar Magal (2015)
 ;; Package: purpose
-;; Version: 1.0
+;; Version: 1.0.50
 
 ;;; Commentary:
 ;; This file contains functions for changing Purpose's configuration.
@@ -151,3 +151,4 @@ the basis for the configuration."
 
 (pu:reset-configuration)
 (provide 'pu-configuration)
+;;; pu-configuration.el ends here

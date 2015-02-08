@@ -1,8 +1,8 @@
-;;; pu-prefix-overload.el
+;;; pu-prefix-overload.el --- Bind several commands to the same key
 
 ;; Author: Bar Magal (2015)
 ;; Package: purpose
-;; Version: 1.0
+;; Version: 1.0.50
 
 ;;; Commentary:
 ;; This file contains functions and macros for using the same
@@ -16,6 +16,8 @@
 ;; `find-file', the user presses C-u C-x C-f.
 
 ;;; Code:
+
+(require 'cl-lib)
 
 (defun pu:prefix-arg-to-index (prefix-arg)
   "Turn prefix argument to a logical index. Examples:
@@ -40,11 +42,11 @@ C-u 1 2 <command>: index 12
 (defun pu:generate-documentation-def-prefix-overload (name commands)
   (let ((doc-first (format "\\[%s]: `%s'" name (symbol-name (car commands))))
 	(doc-rest
-	 (loop for c in (cdr commands)
+	 (cl-loop for c in (cdr commands)
 	       for i from 1
 	       collect (format "%s \\[%s], C-u %s \\[%s]: `%s'"
 			       (mapconcat #'identity
-					  (loop for j from 1 to i
+					  (cl-loop for j from 1 to i
 						collect "C-u")
 					  " ")
 			       name
@@ -66,7 +68,7 @@ no prefix argument: first command;
 C-u or C-u 1: second command;
 C-u C-u or C-u 2: third command;
 and so on.
-Use it like this: 
+Use it like this:
     (pu:def-prefix-overload hello '(command1 command2 command3))"
   (unless (eval commands)
     (error "Argument COMMANDS cannot be empty"))
@@ -80,3 +82,4 @@ Use it like this:
 	 (error "Index %s too big" index)))))
 
 (provide 'pu-prefix-overload)
+;;; pu-prefix-overload.el ends here

@@ -1,8 +1,8 @@
-;;; purpose.el
+;;; purpose.el --- Handle buffers and windows by their purposes
 
 ;; Author: Bar Magal (2015)
 ;; Package: purpose
-;; Version: 1.0
+;; Version: 1.0.50
 
 ;;; Commentary:
 
@@ -106,7 +106,7 @@
     (define-key map (kbd "C-x j") #'quit-window)
 
     ;; We use "C-c ," for compatibility with key-binding conventions
-    (define-key map (kbd "C-c ,") #'purpose-mode-prefix-map)
+    (define-key map (kbd "C-c ,") 'purpose-mode-prefix-map)
     (define-prefix-command 'purpose-mode-prefix-map)
     (define-key purpose-mode-prefix-map (kbd "o") #'pu:switch-buffer)
     (define-key purpose-mode-prefix-map (kbd "p") #'pu:pop-buffer)
@@ -135,3 +135,4 @@ If (pu:window-purpose-dedicated-p), return \"[edit!]\", otherwise return
     (setq pu:action-function-active-p nil)))
 
 (provide 'purpose)
+;;; purpose.el ends here

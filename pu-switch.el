@@ -1,8 +1,8 @@
-;;; pu-switch.el
+;;; pu-switch.el --- Purpose-aware display handling
 
 ;; Author: Bar Magal (2015)
 ;; Package: purpose
-;; Version: 1.0
+;; Version: 1.0.50
 
 ;;; Commentary:
 ;; This file contains functions for switching buffers in a way that
@@ -31,6 +31,7 @@
 
 ;;; Code:
 
+(require 'cl-lib)
 (require 'pu-core)
 
 (defvar pu:action-function-active-p nil
@@ -61,7 +62,7 @@ is made according to the rules in `pu:switch-buffer'."
 	  (eql (pu:window-purpose) buffer-purpose)
 	  (selected-window))
      ;; other window matches purpose and is not buffer-dedicated
-     (car (remove-if #'(lambda (window) (window-dedicated-p window))
+     (car (cl-remove-if #'(lambda (window) (window-dedicated-p window))
 		     (pu:windows-with-purpose buffer-purpose)))
      ;; current window not buffer-dedicated or purpose-dedicated
      (and (not (window-dedicated-p))
@@ -79,12 +80,12 @@ is made according to the rules in `pu:pop-buffer'."
 		    (eql new-window (selected-window)))
 	 new-window))
      ;; other window matches purpose and is not buffer-dedicated
-     (car (remove-if #'(lambda (window)
+     (car (cl-remove-if #'(lambda (window)
 			 (or (eql window (selected-window))
 			     (window-dedicated-p window)))
 		     (pu:windows-with-purpose buffer-purpose)))
      ;; other window not buffer-dedicated or purpose-dedicated
-     (car (remove-if #'(lambda (window)
+     (car (cl-remove-if #'(lambda (window)
 			 (or (eql window (selected-window))
 			     (window-dedicated-p window)
 			     (pu:window-purpose-dedicated-p window)))
@@ -148,7 +149,7 @@ purpose. The window is chosen as follows:
 Return the buffer switched to.
 Runs the hook `pu:display-buffer-hook' after switching to the buffer."
 
-  (interactive 
+  (interactive
    (list (read-buffer-to-switch "[PU] Switch to buffer: ")))
   (let ((new-window (pu:choose-window-for-switch buffer-or-name)))
     (if new-window
@@ -158,7 +159,7 @@ Runs the hook `pu:display-buffer-hook' after switching to the buffer."
 	  (run-hooks 'pu:display-buffer-hook))
       (pu:pop-buffer buffer-or-name))))
 
-(defun* pu:pop-buffer (buffer-or-name &key reuse-current-window)
+(cl-defun pu:pop-buffer (buffer-or-name &key reuse-current-window)
   "Pop to buffer BUFFER-OR-NAME in a window chosen according to its
 purpose. The window is chosen as follows: (note that the current window
 is never chosen)
@@ -222,3 +223,4 @@ done by setting `pu:action-function-active-p' to nil temporarily."
      ,@body))
 
 (provide 'pu-switch)
+;;; pu-switch.el ends here

@@ -1,8 +1,8 @@
-;;; pu-core.el
+;;; pu-core.el --- Core functions for Purpose
 
 ;; Author: Bar Magal (2015)
 ;; Package: purpose
-;; Version: 1.0
+;; Version: 1.0.50
 
 ;;; Commentary:
 ;; This file contains core functions to be used by other parts of
@@ -15,7 +15,7 @@
 (defvar default-purpose 'general
   "The default purpose for buffers which didn't get another purpose.")
 
-(defconst pu:version "1.0"
+(defconst pu:version "1.0.50"
   "Purpose's version.")
 
 
@@ -109,7 +109,7 @@ If no purpose was determined, return `default-purpose'."
 
 (defun pu:buffers-with-purpose (purpose)
   "Return a list of all existing buffers with purpose PURPOSE."
-  (remove-if-not #'(lambda (buffer) (eql purpose (pu:buffer-purpose buffer)))
+  (cl-remove-if-not #'(lambda (buffer) (eql purpose (pu:buffer-purpose buffer)))
 		 (buffer-list)))
 
 (defun pu:window-purpose (&optional window)
@@ -120,7 +120,7 @@ WINDOW defaults to the selected window."
 
 (defun pu:windows-with-purpose (purpose)
   "Return a list of all live windows with purpose PURPOSE."
-  (remove-if-not #'(lambda (window) (eql purpose (pu:window-purpose window)))
+  (cl-remove-if-not #'(lambda (window) (eql purpose (pu:window-purpose window)))
 		 (window-list)))
 
 
@@ -184,3 +184,4 @@ WINDOW defaults to the selected window."
     flag))
 
 (provide 'pu-core)
+;;; pu-core.el ends here
