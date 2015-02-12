@@ -132,12 +132,16 @@
     map)
   "Keymap for Purpose mode.")
 
+;; https://www.gnu.org/software/emacs/manual/html_node/elisp/Menu-Keymaps.html#Menu-Keymaps
+;; (defvar purpose-menu-bar-map (make-sparse-keymap "Purpose"))
+
+
 (defun purpose--modeline-string ()
   "Return the presentation of a window's purpose for display in the
 modeline.  The string returned has two forms.  For example, if window's
 purpose is 'edit: If (purpose-window-purpose-dedicated-p), return
 \"[edit!]\", otherwise return \"[edit]\"."
-  (format "[%s%s]"
+  (format " [%s%s]"
 	  (purpose-window-purpose)
 	  (if (purpose-window-purpose-dedicated-p) "!" "")))
 
@@ -147,9 +151,11 @@ purpose is 'edit: If (purpose-window-purpose-dedicated-p), return
    (purpose--modeline-string))
   (if purpose-mode
       (progn
+	(advice-add 'switch-to-buffer :around #'purpose-switch-to-buffer-advice)
 	(setq display-buffer-overriding-action
 	      '(purpose--action-function . nil))
 	(setq purpose--action-function-active-p t))
+    (advice-remove 'switch-to-buffer #'purpose-switch-to-buffer-advice)
     (setq purpose--action-function-active-p nil)))
 
 (provide 'purpose)
