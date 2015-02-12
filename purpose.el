@@ -152,10 +152,12 @@ purpose is 'edit: If (purpose-window-purpose-dedicated-p), return
   (if purpose-mode
       (progn
 	(advice-add 'switch-to-buffer :around #'purpose-switch-to-buffer-advice)
+	(advice-add 'display-buffer :around #'purpose-display-buffer-advice)
 	(setq display-buffer-overriding-action
 	      '(purpose--action-function . nil))
 	(setq purpose--action-function-active-p t))
     (advice-remove 'switch-to-buffer #'purpose-switch-to-buffer-advice)
+    (advice-remove 'display-buffer #'purpose-display-buffer-advice)
     (setq purpose--action-function-active-p nil)))
 
 (provide 'purpose)

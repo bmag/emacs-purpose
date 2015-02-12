@@ -39,7 +39,11 @@ This variable is intended for internal use, do not set it directly.")
     (prog-mode . edit)
     (image-mode . image)
     (vc-dir-mode . vc)
-    (vc-log-entry-mode . vc))
+    (vc-log-entry-mode . vc)
+    (dired-mode . dired)
+    (occur-mode . occur)
+    (grep-mode . grep)
+    (compilation-mode . compilation))
   "Default value for `purpose-mode-purposes'.")
 
 (defvar purpose-default-name-purposes
