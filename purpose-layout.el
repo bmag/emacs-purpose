@@ -5,7 +5,7 @@
 
 ;;; Commentary:
 ;; This file contains function for saving and loading the entire window
-;; layout.
+;; layout and frame layout.
 
 ;;; Code:
 
@@ -24,7 +24,7 @@ This variable is used by `purpose-window-params'.  See
 (defvar purpose-set-window-properties-functions nil
   "Hook to run after calling `purpose-set-window-properties'.
 Use this to set additional properties for windows as they are created,
-when `purpose-set-layout' or `purpose-load-layout' is called.  Each
+when `purpose-set-window-layout' or `purpose-load-window-layout' is called.  Each
 function in `purpose-set-window-properties-functions' is called with two
 arguments: PROPERTIES and WINDOW.  PROPERTIES is the window's property
 list as saved in the used layout, and WINDOW is the new window.  If
@@ -148,16 +148,16 @@ WINDOW must be a live window and defaults to the selected one."
 
 
 ;;; Recursive helpers for setting/getting the layout
-(defun purpose--get-layout-1 (window-tree)
-  "Helper function for `purpose-get-layout'."
+(defun purpose--get-window-layout-1 (window-tree)
+  "Helper function for `purpose-get-window-layout'."
   (if (windowp window-tree)
       (purpose-window-params window-tree)
     (append (list (cl-first window-tree)
 		  (cl-second window-tree))
-	    (mapcar #'purpose--get-layout-1 (cddr window-tree)))))
+	    (mapcar #'purpose--get-window-layout-1 (cddr window-tree)))))
 
-(defun purpose--set-layout-1 (tree window)
-  "Helper function for `purpose-set-layout'."
+(defun purpose--set-window-layout-1 (tree window)
+  "Helper function for `purpose-set-window-layout'."
   (if (purpose-window-params-p tree)
       (progn
 	(purpose--set-size-percentage (plist-get tree :width)
@@ -174,50 +174,103 @@ WINDOW must be a live window and defaults to the selected one."
     (let ((windows (purpose--split-window tree window)))
       (cl-loop for sub-tree in (cddr tree)
 	       for window in windows
-	       do (purpose--set-layout-1 sub-tree window)))))
+	       do (purpose--set-window-layout-1 sub-tree window)))))
 
 
 
 ;;; High level functions for setting/getting the layout (UI/API)
-(defun purpose-get-layout ()
-  "Get current layout."
-  (purpose--get-layout-1 (car (window-tree))))
 
-(defun purpose-set-layout (layout)
-  "Set current layout.
-LAYOUT must be a layout as returned by `purpose-get-layout'."
-  (delete-other-windows)
-  ;; 1. split
-  ;; 2. let each window splits itself/set its size
+;;; get/set/load/save window layout
 
-  ;; 1. if windowp, set size+buffer
-  ;; 2. split window, recurse for each window
-  (if (purpose-window-params-p layout)
-      (purpose-set-window-properties layout)
-    (purpose--set-layout-1 layout (selected-window))))
+(defun purpose-get-window-layout (&optional frame)
+  "Get window layout of FRAME.
+FRAME defaults to the selected frame."
+  (purpose--get-window-layout-1 (car (window-tree frame))))
 
-(defun purpose-save-layout (&optional filename)
-  "Save current layout to file FILENAME.
+(defun purpose-set-window-layout (layout &optional frame)
+  "Set LAYOUT as FRAME's window layout.
+FRAME defaults to the selected frame.
+LAYOUT must be a layout as returned by `purpose-get-window-layout'.
+This function doesn't change the selected frame (uses
+`with-selected-frame' internally)."
+  (with-selected-frame (or frame (selected-frame))
+    (delete-other-windows)
+    ;; 1. split
+    ;; 2. let each window splits itself/set its size
+
+    ;; 1. if windowp, set size+buffer
+    ;; 2. split window, recurse for each window
+    (if (purpose-window-params-p layout)
+	(purpose-set-window-properties layout)
+      (purpose--set-window-layout-1 layout (selected-window)))))
+
+(defun purpose-save-window-layout (&optional filename)
+  "Save window layout of current frame to file FILENAME.
 If FILENAME is nil, use `purpose-default-layout-file' instead."
   (interactive
-   (list (read-file-name "[PU] Save layout to file: "
+   (list (read-file-name "[PU] Save window layout to file: "
 			 (file-name-directory purpose-default-layout-file)
 			 nil nil
 			 (file-name-nondirectory purpose-default-layout-file))))
   (with-temp-file (or filename purpose-default-layout-file)
     ;; "%S" - print as S-expression - this allows us to read the value with
-    ;; `read' later in `purpose-load-layout'
-    (insert (format "%S" (purpose-get-layout)))))
+    ;; `read' later in `purpose-load-window-layout'
+    (insert (format "%S" (purpose-get-window-layout)))))
 
-(defun purpose-load-layout (&optional filename)
-  "Load layout from file FILENAME.
+(defun purpose-load-window-layout (&optional filename)
+  "Load window layout from file FILENAME.
 If FILENAME is nil, use `purpose-default-layout-file' instead."
   (interactive
-   (list (read-file-name "[PU] Load layout from file: "
+   (list (read-file-name "[PU] Load window layout from file: "
 			 (file-name-directory purpose-default-layout-file)
 			 nil nil
 			 (file-name-nondirectory purpose-default-layout-file))))
-  (purpose-set-layout
+  (purpose-set-window-layout
+   (with-temp-buffer
+     (insert-file-contents (or filename purpose-default-layout-file))
+     (read (point-marker)))))
+
+;;; get/set/load/save frame layout
+
+(defun purpose-get-frame-layout ()
+  "Return Emacs' frame layout.
+The frame layout is a list of all live frames' window layouts. Each
+window-layout is a window-layout as returned by
+`purpose-get-window-layout'."
+  (mapcar #'purpose-get-window-layout (frame-list)))
+
+(defun purpose-set-frame-layout (layout)
+  "Set LAYOUT as Emacs' frame layout.
+LAYOUT must be a layout as returned by `purpose-get-frame-layout'.
+This function deletes all existing frames and creates frames as
+specified by LAYOUT."
+  (delete-other-frames)
+  (purpose-set-window-layout (car layout))
+  (dolist (window-layout (cdr layout))
+    (purpose-set-window-layout window-layout (make-frame))))
+
+(defun purpose-save-frame-layout (&optional filename)
+  "Save frame layout of Emacs to file FILENAME.
+If FILENAME is nil, use `purpose-default-layout-file' instead."
+  (interactive
+   (list (read-file-name "[PU] Save frame layout to file: "
+			 (file-name-directory purpose-default-layout-file)
+			 nil nil
+			 (file-name-nondirectory purpose-default-layout-file))))
+  (with-temp-file (or filename purpose-default-layout-file)
+    ;; "%S" - print as S-expression - this allows us to read the value with
+    ;; `read' later in `purpose-load-window-layout'
+    (insert (format "%S" (purpose-get-frame-layout)))))
+
+(defun purpose-load-frame-layout (&optional filename)
+  "Load frame layout from file FILENAME.
+If FILENAME is nil, use `purpose-default-layout-file' instead."
+  (interactive
+   (list (read-file-name "[PU] Load frame layout from file: "
+			 (file-name-directory purpose-default-layout-file)
+			 nil nil
+			 (file-name-nondirectory purpose-default-layout-file))))
+  (purpose-set-frame-layout
    (with-temp-buffer
      (insert-file-contents (or filename purpose-default-layout-file))
      (read (point-marker)))))

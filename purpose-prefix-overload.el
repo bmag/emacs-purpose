@@ -43,7 +43,7 @@ C-u 1 2 <command>: index 12
     prefix-arg)))
 
 (defun purpose--generate-documentation-def-prefix-overload (name commands)
-  (let ((doc-first (format "\\[%s]: `%s'" name (symbol-name (car commands))))
+  (let ((doc-first (format "\\[%s]: `%s'" name (car commands)))
 	(doc-rest
 	 (cl-loop for c in (cdr commands)
 		  for i from 1
@@ -55,7 +55,7 @@ C-u 1 2 <command>: index 12
 				  name
 				  i
 				  name
-				  (symbol-name c)))))
+				  c))))
     (mapconcat
      #'identity
      (append
