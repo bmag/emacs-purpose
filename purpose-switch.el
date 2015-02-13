@@ -30,13 +30,13 @@ used.  This is an internal variable, don't set it yourself.")
 it yourself.")
 
 (defvar purpose-action-sequences
-  '((nil . (purpose-display-reuse-window-buffer
-	    purpose-display-reuse-window-purpose
-	    purpose-display-maybe-same-window
-	    purpose-display-maybe-other-window
-	    purpose-display-maybe-other-frame
-	    purpose-display-maybe-pop-up-window
-	    purpose-display-maybe-pop-up-frame))
+  '((switch-to-buffer . (purpose-display-reuse-window-buffer
+			 purpose-display-reuse-window-purpose
+			 purpose-display-maybe-same-window
+			 purpose-display-maybe-other-window
+			 purpose-display-maybe-other-frame
+			 purpose-display-maybe-pop-up-window
+			 purpose-display-maybe-pop-up-frame))
     (prefer-same-window . (purpose-display-maybe-same-window
 			   purpose-display-reuse-window-buffer
 			   purpose-display-reuse-window-purpose
@@ -61,6 +61,8 @@ it yourself.")
 			   purpose-display-reuse-window-buffer
 			   purpose-display-reuse-window-purpose
 			   purpose-display-maybe-same-window))))
+
+(defvar purpose-default-action-sequence 'prefer-other-window)
 
 
 ;;; general utilities
@@ -112,10 +114,46 @@ This doesn't change the original alist, but returns a modified copy."
 
 (defalias 'purpose-display-reuse-window-buffer #'display-buffer-reuse-window)
 
+(defun purpose--reusable-frames (alist)
+  "Return a list of reusable frames.
+If ALIST contains a `reusable-frames' entry, its value determines which
+frames to search for a reusable window:
+  nil -- the selected frame
+  A frame -- just that frame
+  `visible' -- all visible frames
+  0 -- all frames on the current terminal
+  t -- all frames.
+
+If ALIST contains no `reusable-frames' entry, search just the selected
+frame if `pop-up-frames' is nil; search all frames on the current
+terminal if it's non-nil."
+  (let-alist alist
+    (let ((reusable-frames (cond ((assoc 'reusable-frames alist)
+				  .reusable-frames)
+				 (pop-up-frames 0)
+				 (t nil))))
+      (cond ((null reusable-frames)
+	     (list (selected-frame)))
+	    ((framep reusable-frames)
+	     (list reusable-frames))
+	    ((eql reusable-frames 'visible)
+	     (visible-frame-list))
+	    ((eql reusable-frames 0)
+	     (cl-remove-if-not
+	      #'(lambda (frame)
+		  (eql (frame-terminal frame) (frame-terminal)))
+	      (frame-list)))
+	    ((eql reusable-frames t)
+	     (frame-list))
+	    (t
+	     (message "Bad value for reusable-frames in ALIST: %S"
+		      reusable-frames)
+	     nil)))))
+
 (defun purpose-display-reuse-window-purpose (buffer alist)
   "Display BUFFER in a window that is already used for the same purpose.
-Return that window. Return nil if no usable window is found.
-Windows that are dediacted to their buffers are eligible for reuse.
+Return that window.  Return nil if no usable window is found.
+Windows that are dediacted to their buffers are not eligible for reuse.
 
 If ALIST has a non-nil `inhibit-same-window' entry, the selected window
 is not eligible for reuse.
@@ -135,35 +173,15 @@ terminal if it's non-nil.
 If ALIST has a non-nil `inhibit-switch-frame' entry, then in the event
 that a window on another frame is chosen, avoid raising that frame."
   (let-alist alist
-    (let* ((reusable-frames (cond ((assoc 'reusable-frames alist)
-				   .reusable-frames)
-				  (pop-up-frames 0)
-				  (t nil)))
-	   (frames
-	    (cond ((null reusable-frames)
-		   (list (selected-frame)))
-		  ((framep reusable-frames)
-		   (list reusable-frames))
-		  ((eql reusable-frames 'visible)
-		   (visible-frame-list))
-		  ((eql reusable-frames 0)
-		   (cl-remove-if-not
-		    #'(lambda (frame)
-			(eql (frame-terminal frame) (frame-terminal)))
-		    (frame-list)))
-		  ((eql reusable-frames t)
-		   (frame-list))
-		  (t
-		   (message "Bad value for reusable-frames in ALIST: %S"
-			    reusable-frames)
-		   nil)))
-	   (purpose (purpose-buffer-purpose buffer))
+    (let* ((frames (purpose--reusable-frames alist))
 	   (windows (purpose-flatten (mapcar #'window-list frames)))
+	   (purpose (purpose-buffer-purpose buffer))
 	   window)
-      (setq windows (cl-delete-if-not
+      (setq windows (cl-delete-if
 		     #'(lambda (window)
-			 (and (not (window-dedicated-p window))
-			      (eql purpose (purpose-window-purpose window))))
+			 (or (window-dedicated-p window)
+			     (not (eql purpose
+				       (purpose-window-purpose window)))))
 		     windows))
       (when .inhibit-same-window
 	(setq windows (delq (selected-window) windows)))
@@ -173,10 +191,76 @@ that a window on another frame is chosen, avoid raising that frame."
       window)))
 
 (defun purpose-display-reuse-window-buffer-other-frame (buffer alist)
-  nil)
+  "Return a window that is already displaying BUFFER.
+Return nil if no usable window is found.
+Windows in the selected frame are not eligible for reuse, even if
+`reusable-frames' says to search the selected frame.
+
+If ALIST contains a `reusable-frames' entry, its value determines
+which frames to search for a reusable window:
+  nil -- the selected frame (actually the last non-minibuffer frame)
+  A frame   -- just that frame
+  `visible' -- all visible frames
+  0   -- all frames on the current terminal
+  t   -- all frames.
+
+If ALIST contains no `reusable-frames' entry, search just the
+selected frame if `display-buffer-reuse-frames' and
+`pop-up-frames' are both nil; search all frames on the current
+terminal if either of those variables is non-nil.
+
+If ALIST has a non-nil `inhibit-switch-frame' entry, then in the
+event that a window on another frame is chosen, avoid raising
+that frame."
+  (let* ((frames (cl-delete (selected-frame)
+			    (purpose--reusable-frames alist)))
+	 (windows (purpose-flatten (mapcar #'window-list frames)))
+	 window)
+    (setq windows (cl-delete-if #'window-dedicated-p windows))
+    (setq window (car windows))
+    (when window
+      (purpose--change-buffer buffer window 'reuse alist))
+    window))
 
 (defun purpose-display-reuse-window-purpose-other-frame (buffer alist)
-  nil)
+  "Display BUFFER in a window that is already used for the same purpose.
+Return that window.  Return nil if no usable window is found.
+Windows that are dediacted to their buffers are not eligible for reuse.
+Windows in the selected frame are not eligible for reuse, even if
+`reusable-frames' says to search the selected frame.
+
+If ALIST has a non-nil `inhibit-same-window' entry, the selected window
+is not eligible for reuse.
+
+If ALIST contains a `reusable-frames' entry, its value determines which
+frames to search for a reusable window:
+  nil -- the selected frame
+  A frame -- just that frame
+  `visible' -- all visible frames
+  0 -- all frames on the current terminal
+  t -- all frames.
+
+If ALIST contains no `reusable-frames' entry, search just the selected
+frame if `pop-up-frames' is nil; search all frames on the current
+terminal if it's non-nil.
+
+If ALIST has a non-nil `inhibit-switch-frame' entry, then in the event
+that a window on another frame is chosen, avoid raising that frame."
+  (let* ((frames (cl-delete (selected-frame)
+			    (purpose--reusable-frames alist)))
+	 (windows (purpose-flatten (mapcar #'window-list frames)))
+	 (purpose (purpose-buffer-purpose buffer))
+	 window)
+    (setq windows (cl-delete-if
+		   #'(lambda (window)
+		       (or (window-dedicated-p window)
+			   (not (eql purpose
+				     (purpose-window-purpose window)))))
+		   windows))
+    (setq window (car windows))
+    (when window
+      (purpose--change-buffer buffer window 'reuse alist))
+    window))
 
 (defun purpose-display-same-window (buffer alist)
   "Display BUFFER in selected window, no matter what.
@@ -293,13 +377,15 @@ This function should be used by setting
 `display-buffer-overriding-action' to (purpose--action-function . nil).
 If ALIST is nil, it is ignored and `purpose--alist' is used instead."
   (setq alist (purpose-alist-combine alist purpose--alist))
-  (message "Alist: %S" alist)
+  (message "Purpose display: Buffer: %S; Alist: %S" buffer alist)
   (when (purpose--use-action-function-p buffer alist)
     ;;(message "Selected Window: %S; Buffer: %S; Alist: %S" (selected-window) buffer alist)
     ;;(purpose--create-buffer-window buffer)?
     (let-alist alist
       (let* ((old-frame (selected-frame))
-	     (action-sequence (alist-get .action-order purpose-action-sequences))
+	     (action-sequence (alist-get (or .action-order
+					     purpose-default-action-sequence)
+					 purpose-action-sequences))
 	     (new-window
 	      ;; call all display actions in action-sequence until one of them
 	      ;; succeeds, and return the window used for display (action's
@@ -353,7 +439,9 @@ currently selected window is not available."
   ;; `purpose--action-function' should try to switch buffer in current window,
   ;; and if that's impossible - display buffer in another window.
   (purpose-select-buffer buffer-or-name
-			 (when force-same-window 'force-same-window)
+			 (if force-same-window
+			     'force-same-window
+			   'switch-to-buffer)
 			 norecord))
 
 (defun purpose-switch-buffer-other-window (buffer-or-name &optional norecord)
@@ -382,7 +470,7 @@ Never selects the currently selected window."
   (interactive (list (read-buffer-to-switch "[PU] Switch to buffer: ")))
   (purpose-select-buffer buffer-or-name 'prefer-other-window norecord))
 
-(defun purpose-pop-to-buffer-same-window (buffer-or-name &optional norecord)
+(defun purpose-pop-buffer-same-window (buffer-or-name &optional norecord)
   "Select buffer BUFFER-OR-NAME, preferably in the selected window."
   (interactive (list (read-buffer-to-switch "[PU] Switch to buffer: ")))
   (purpose-select-buffer buffer-or-name 'prefer-same-window norecord))
@@ -400,36 +488,77 @@ If Purpose is active (`purpose--active-p' is non-nil), call
       (purpose-switch-buffer buffer-or-name norecord force-same-window)
     (funcall oldfun buffer-or-name norecord force-same-window)))
 
-;; ;; TODO: maybe remove this
-;; (defun purpose-display--action-to-order (action)
-;;   "Return appropriate `action-order' value for ACTION."
-;;   (if (not (listp action))
-;;       'prefer-other-window
-;;     (cl-case action
-;;       (display-buffer--same-window-action 'prefer-same-window)
-;;       (display-buffer--other-frame-action 'prefer-other-frame))))
+(defun purpose-switch-to-buffer-other-window-advice (oldfun buffer-or-name &optional norecord)
+  "Advice for overriding `switch-to-buffer-other-window' conditionally.
+If Purpose is active (`purpose--active-p' is non-nil), call
+`purpose-switch-buffer-other-window', otherwise call
+`switch-to-buffer-other-window'."
+  (message "switch-to-buffer-other-window advice")
+  (if purpose--active-p
+      (purpose-switch-buffer-other-window buffer-or-name norecord)
+    (funcall oldfun buffer-or-name norecord)))
 
-;; ;; TODO: maybe remove this
-;; (defun purpose-display-buffer-advice (oldfun buffer-or-name &optional action frame)
-;;   "Update `purpose--alist' when calling `display-buffer'."
-;;   (let* ((action-order (purpose-display--action-to-order action))
-;; 	 (purpose--alist (if action-order
-;; 			     (purpose-alist-set 'action-order
-;; 						action-order
-;; 						purpose--alist)
-;; 			   purpose--alist)))
-;;     (funcall oldfun buffer-or-name action frame)))
+(defun purpose-switch-to-buffer-other-frame-advice (oldfun buffer-or-name &optional norecord)
+  "Advice for overriding `switch-to-buffer-other-frame' conditionally.
+If Purpose is active (`purpose--active-p' is non-nil), call
+`purpose-switch-buffer-other-frame', otherwise call
+`switch-to-buffer-other-frame'."
+  (message "switch-to-buffer-other-frame advice")
+  (if purpose--active-p
+      (purpose-switch-buffer-other-frame buffer-or-name norecord)
+    (funcall oldfun buffer-or-name norecord)))
 
+(defun purpose-pop-to-buffer-advice (oldfun buffer-or-name &optional action norecord)
+  "Advice for overriding `pop-to-buffer' conditionally.
+If Purpose is active (`purpose--active-p' is non-nil) and ACTION is nil,
+call `purpose-pop-buffer', otherwise call `pop-to-buffer'."
+  (message "pop-to-buffer advice")
+  (if (and purpose--active-p
+	   (not action))
+      (purpose-pop-buffer buffer-or-name norecord)
+    (funcall oldfun buffer-or-name action norecord)))
 
+(defun purpose-pop-to-buffer-same-window-advice (oldfun buffer-or-name &optional norecord)
+  "Advice for overriding `pop-to-buffer-same-window' conditionally.
+If Purpose is active (`purpose--active-p' is non-nil), call
+`purpose-pop-buffer-same-window', otherwise call
+`pop-to-buffer-same-window'."
+  (message "pop-to-buffer-same-window advice")
+  (if purpose--active-p
+      (purpose-pop-buffer-same-window buffer-or-name norecord)
+    (funcall oldfun buffer-or-name norecord)))
 
+;; TODO: maybe recognize some more actions
+(defun purpose-display--action-to-order (action)
+  "Return appropriate `action-order' value for ACTION."
+  (when (not (listp action))		; non-nil, non-list
+    'prefer-other-window))
 
-;;; UI/API functions
+(defun purpose-display-buffer-advice (oldfun buffer-or-name &optional action frame)
+  "Update `purpose--alist' when calling `display-buffer'."
+  (let* ((action-order (purpose-display--action-to-order action))
+	 (purpose--alist (if action-order
+			     (purpose-alist-set 'action-order
+						action-order
+						purpose--alist)
+			   purpose--alist)))
+    (funcall oldfun buffer-or-name action frame)))
 
+;; anti-override:
 (defmacro without-purpose (&rest body)
   "Make Purpose inactive while executing BODY.
 This works internally by temporarily setting `purpose--active-p'."
   `(let ((purpose--active-p nil))
      ,@body))
+
+(defmacro without-purpose-command (command)
+  "Create a command that runs COMMAND with purpose inactive.
+This works internally by using `without-purpose' and
+`call-interactively'."
+  `(lambda ()
+     (interactive)
+     (without-purpose
+      (call-interactively ,command))))
 
 (provide 'purpose-switch)
 ;;; purpose-switch.el ends here

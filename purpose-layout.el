@@ -44,7 +44,7 @@ instead.")
 	    (/ bottom frame-height 1.0)))))
 
 (defun purpose--window-width-to-percentage (&optional window)
-n  (/ (window-width window) (frame-width (window-frame window)) 1.0))
+  (/ (window-width window) (frame-width (window-frame window)) 1.0))
 
 (defun purpose--window-height-to-percentage (&optional window)
   (/ (window-height window) (frame-height (window-frame window)) 1.0))
@@ -124,24 +124,18 @@ This function is mainly intended to be used by
 		   with direction = (not (car tree))
 		   collect (split-window window -5 direction))))
 
-(defun purpose--set-size (width height &optional window pixelwise)
+(defun purpose--set-size (width height &optional window)
   "Set the size of window WINDOW to width WIDTH and height HEIGHT.
-WINDOW must be a live window and defaults to the selected one.
-
-Optional argument PIXELWISE non-nil means the width is given in pixels.
-The height is never given in pixels, but in text size (number of
-lines)."
+WINDOW must be a live window and defaults to the selected one."
   (unless (one-window-p)
-    (let ((width-delta (- width (window-width window pixelwise)))
+    (let ((width-delta (- width (window-width window)))
 	  (height-delta (- height (window-height window))))
       (window-resize window
-		     (window-resizable window width-delta
-				       t nil pixelwise)
-		     t nil pixelwise)
+		     (window-resizable window width-delta t nil)
+		     t nil)
       (window-resize window
-		     (window-resizable window height-delta
-				       nil nil pixelwise)
-		     nil nil pixelwise))))
+		     (window-resizable window height-delta nil nil)
+		     nil nil))))
 
 (defun purpose--set-size-percentage (width-percentage
 				     height-percentage
