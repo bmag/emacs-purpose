@@ -2,6 +2,9 @@
 Purpose
 =======
 
+IMPORTANT: this README is not accurate for version 1.1. The README will
+be updated shortly (together with the project's wiki).
+
 Purpose is a plugin for Emacs which introduces the concept of a
 "purpose" for windows and buffers. By setting purposes for your windows
 and for your buffers, Purpose helps you maintain a consistent window

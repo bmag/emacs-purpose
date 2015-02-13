@@ -15,10 +15,15 @@
   "Names of buffers for which the default `display-buffer' behavior
 should not be overridden.  This is a list of names.")
 
-(defvar purpose-display-buffer-hook nil
-  "Hook to run after displaying a buffer with a purpose-aware function.
-That means after `purpose-switch-buffer', `purpose-pop-buffer' and
-`purpose--action-function'.")
+(defvar purpose-display-fallback 'pop-up-frame
+  "Fallback action to use when `purpose--action-function' couldn't
+display a buffer.
+This should be either `pop-up-window' for displaying the buffer in a new
+window, `pop-up-frame' for displaying the buffer in a new frame, or nil
+for signalling an error.")
+
+(defvar purpose-select-buffer-hook nil
+  "Hook to run after selecting a buffer with `purpose-select-buffer'.")
 
 (defvar purpose--active-p nil
   "When nil, Purpose's advices and `purpose--action-function' are not
@@ -338,12 +343,17 @@ This function doesn't raise the new frame."
 	(purpose--change-buffer buffer window 'reuse alist)
 	window))))
 
+(defalias 'purpose-display-pop-up-window #'display-buffer-pop-up-window)
+
 (defun purpose-display-maybe-pop-up-window (buffer alist)
   "Display BUFFER in a new window, if possible.
 The display is possible if `pop-up-windows' is non-nil.
 The display is done with `display-buffer-pop-up-window'."
   (when pop-up-windows
-    (display-buffer-pop-up-window buffer alist)))
+    ;; (display-buffer-pop-up-window buffer alist)
+    (purpose-display-pop-up-window buffer alist)))
+
+(defalias 'purpose-display-pop-up-frame #'display-buffer-pop-up-frame)
 
 (defun purpose-display-maybe-pop-up-frame (buffer alist)
   "Display BUFFER in a new frame, if possible.
@@ -355,7 +365,8 @@ The display is done with `display-buffer-pop-up-frame'."
   (when (if (eq pop-up-frames 'graphic-only)
 	    (display-graphic-p)
 	  pop-up-frames)
-    (display-buffer-pop-up-frame buffer alist)))
+    ;; (display-buffer-pop-up-frame buffer alist)
+    (purpose-display-pop-up-frame)))
 
 
 
@@ -404,12 +415,20 @@ If ALIST is nil, it is ignored and `purpose--alist' is used instead."
 	  ;; 	;; `raise-frame'? `window--maybe-raise-frame'?
 	  ;; 	(select-frame-set-input-focus (window-frame new-window)))
 	  ;;   (select-window new-window))
-	  (error "No window available"))))))
+	  (cond ((eql purpose-display-fallback 'pop-up-frame)
+		 (message "trying fallback: purpose-display-pop-up-frame")
+		 (purpose-display-pop-up-frame buffer alist))
+		((eql purpose-display-fallback 'pop-up-window)
+		 (message "trying fallback: purpose-display-pop-up-window")
+		 (purpose-display-pop-up-window buffer alist))
+		(t
+		 (error "No window available"))))))))
 
 (defun purpose-select-buffer (buffer-or-name &optional action-order norecord)
   "Display buffer BUFFER-OR-NAME in window and then select that window.
 ACTION-ORDER is used as the `action-order' entry in
-`purpose--action-function''s alist."
+`purpose--action-function''s alist.
+This function runs hook `purpose-select-buffer-hook' when its done."
   (let* ((buffer (window-normalize-buffer-to-switch-to buffer-or-name))
 	 (purpose--alist (purpose-alist-set 'action-order
 					    action-order
@@ -424,7 +443,7 @@ ACTION-ORDER is used as the `action-order' entry in
       (unless (eq new-frame old-frame)
 	(select-frame-set-input-focus new-frame norecord))
       (select-window new-window norecord))
-    (run-hooks purpose-display-buffer-hook)
+    (run-hooks purpose-select-buffer-hook)
     buffer))
 
 

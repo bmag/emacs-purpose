@@ -8,14 +8,14 @@
 ;; key-binding for several commands (overloading). The correct command
 ;; is chosen by considering the prefix argument.
 ;;
-;; For example, this binds `purpose-find-file' and `find-file' to C-x
-;; C-f:
+;; For example, this binds `ido-find-file' and
+;; `find-file-without-purpose' to C-x C-f:
 ;;    (def-prefix-overload purpose-find-file-overload
-;;      '(purpose-find-file find-file))
+;;      '(ido-find-file find-file-without-purpose))
 ;;    (define-key purpose-mode-map (kbd "C-x C-f")
 ;;      #'purpose-find-file-overload)
-;; To call `purpose-find-file', the user presses C-x C-f. To call
-;; `find-file', the user presses C-u C-x C-f.
+;; To call `ido-find-file', the user presses C-x C-f. To call
+;; `find-file-without-purpose', the user presses C-u C-x C-f.
 
 ;;; Code:
 
