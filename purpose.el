@@ -108,11 +108,11 @@
 (defvar purpose-mode-map
   (let ((map (make-sparse-keymap)))
     ;; No "C-x 5" bindings because we don't support multiple frames yet
-    (define-key map (kbd "C-x C-f") #'purpose-find-file-overload)
-    (define-key map (kbd "C-x 4 f") #'purpose-find-file-other-window-overload)
-    (define-key map (kbd "C-x 4 C-f") #'purpose-find-file-other-window-overload)
-    (define-key map (kbd "C-x b") #'purpose-switch-buffer-overload)
-    (define-key map (kbd "C-x 4 b") #'purpose-pop-buffer-overload)
+    ;; (define-key map (kbd "C-x C-f") #'purpose-find-file-overload)
+    ;; (define-key map (kbd "C-x 4 f") #'purpose-find-file-other-window-overload)
+    ;; (define-key map (kbd "C-x 4 C-f") #'purpose-find-file-other-window-overload)
+    ;; (define-key map (kbd "C-x b") #'purpose-switch-buffer-overload)
+    ;; (define-key map (kbd "C-x 4 b") #'purpose-pop-buffer-overload)
 
     ;; Helpful for quitting temporary windows. Close in meaning to
     ;; `kill-buffer', so we map it to a close key ("C-x j" is close to
@@ -152,13 +152,13 @@ purpose is 'edit: If (purpose-window-purpose-dedicated-p), return
   (if purpose-mode
       (progn
 	(advice-add 'switch-to-buffer :around #'purpose-switch-to-buffer-advice)
-	(advice-add 'display-buffer :around #'purpose-display-buffer-advice)
+	;; (advice-add 'display-buffer :around #'purpose-display-buffer-advice)
 	(setq display-buffer-overriding-action
 	      '(purpose--action-function . nil))
-	(setq purpose--action-function-active-p t))
+	(setq purpose--active-p t))
     (advice-remove 'switch-to-buffer #'purpose-switch-to-buffer-advice)
-    (advice-remove 'display-buffer #'purpose-display-buffer-advice)
-    (setq purpose--action-function-active-p nil)))
+    ;; (advice-remove 'display-buffer #'purpose-display-buffer-advice)
+    (setq purpose--active-p nil)))
 
 (provide 'purpose)
 ;;; purpose.el ends here
