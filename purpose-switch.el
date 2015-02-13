@@ -79,14 +79,16 @@ it yourself.")
 (defun purpose-alist-set (key value alist)
   "Set VALUE to be the value associated to KEY in ALIST.
 This doesn't change the original alist, but returns a modified copy."
-  (setf (alist-get key alist) value))
+  (setf (alist-get key alist) value)
+  alist)
 
 (defun purpose-alist-del (key alist)
   "Delete KEY from ALIST.
 This doesn't change the original alist, but returns a modified copy."
   ;; we could use any value instead of 0, as long as we used it instead
   ;; of 0 in both places
-  (setf (alist-get key alist 0 t) 0))
+  (setf (alist-get key alist 0 t) 0)
+  alist)
 
 (defun purpose-alist-combine (&rest alists)
   ;; (purpose-flatten alists)
@@ -443,7 +445,7 @@ This function runs hook `purpose-select-buffer-hook' when its done."
       (unless (eq new-frame old-frame)
 	(select-frame-set-input-focus new-frame norecord))
       (select-window new-window norecord))
-    (run-hooks purpose-select-buffer-hook)
+    (run-hooks 'purpose-select-buffer-hook)
     buffer))
 
 
@@ -457,6 +459,7 @@ currently selected window is not available."
   ;; `display-buffer' should call `purpose--action-function', and
   ;; `purpose--action-function' should try to switch buffer in current window,
   ;; and if that's impossible - display buffer in another window.
+  (message "xxxx")
   (purpose-select-buffer buffer-or-name
 			 (if force-same-window
 			     'force-same-window
