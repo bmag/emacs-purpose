@@ -5,7 +5,7 @@
 ;; Version: 1.1.50
 ;; Keywords: frames
 ;; Homepage: https://github.com/bmag/emacs-purpose
-;; Package-Requires: ((emacs "24.4") (let-alist "1.0.3"))
+;; Package-Requires: ((cl-lib "0.5") (let-alist "1.0.3"))
 
 ;;; Commentary:
 
