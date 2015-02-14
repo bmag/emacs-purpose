@@ -31,10 +31,21 @@ list as saved in the used layout, and WINDOW is the new window.  If
 WINDOW is nil, your function should act on the selected window
 instead.")
 
+(defvar purpose-mru-window-layout nil
+  "Most recently used window layout.
+This is the last layout used by `purpose-set-window-layout'.")
+
+(defvar purpose-mru-frame-layout nil
+  "Most recently used frame layout.
+This is the last layout used by `purpose-set-frame-layout'.")
+
 
 
 ;;; window-params low-level functions
 (defun purpose--window-edges-to-percentage (&optional window)
+  "Convert a `window-edges' list from integers to percentages.
+The percentages represent the WINDOW's edges relative to its frame's
+size."
   (cl-multiple-value-bind (left top right bottom) (window-edges window)
     (let ((frame-width (frame-width (window-frame window)))
 	  (frame-height (frame-height (window-frame window))))
@@ -44,15 +55,23 @@ instead.")
 	    (/ bottom frame-height 1.0)))))
 
 (defun purpose--window-width-to-percentage (&optional window)
+  "Return a percentage of WINDOW's width to its frame's width.
+WINDOW defaults to the selected window."
   (/ (window-width window) (frame-width (window-frame window)) 1.0))
 
 (defun purpose--window-height-to-percentage (&optional window)
+  "Return a percentage of WINDOW's height to its frame's height.
+WINDOW defaults to the selected window."
   (/ (window-height window) (frame-height (window-frame window)) 1.0))
 
 (defun purpose--window-percentage-to-width (percentage &optional window)
+  "Return a window width as an integer.
+The width is the PERCENTAGE of WINDOW's frame's width."
   (round (* percentage (frame-width (window-frame window)))))
 
 (defun purpose--window-percentage-to-height (percentage &optional window)
+  "Return a window height as an integer.
+The height is the PERCENTAGE of WINDOW's frame's height."
   (round (* percentage (frame-height (window-frame window)))))
 
 
@@ -187,10 +206,12 @@ WINDOW must be a live window and defaults to the selected one."
 FRAME defaults to the selected frame."
   (purpose--get-window-layout-1 (car (window-tree frame))))
 
-(defun purpose-set-window-layout (layout &optional frame)
+(defun purpose-set-window-layout (layout &optional frame norecord)
   "Set LAYOUT as FRAME's window layout.
 FRAME defaults to the selected frame.
 LAYOUT must be a layout as returned by `purpose-get-window-layout'.
+Unless NORECORD is non-nil, this function sets LAYOUT as the value of
+`purpose-mru-window-layout'.
 This function doesn't change the selected frame (uses
 `with-selected-frame' internally)."
   (with-selected-frame (or frame (selected-frame))
@@ -202,7 +223,9 @@ This function doesn't change the selected frame (uses
     ;; 2. split window, recurse for each window
     (if (purpose-window-params-p layout)
 	(purpose-set-window-properties layout)
-      (purpose--set-window-layout-1 layout (selected-window)))))
+      (purpose--set-window-layout-1 layout (selected-window)))
+    (unless norecord
+      (setq purpose-mru-window-layout layout))))
 
 (defun purpose-save-window-layout (&optional filename)
   "Save window layout of current frame to file FILENAME.
@@ -230,6 +253,13 @@ If FILENAME is nil, use `purpose-default-layout-file' instead."
      (insert-file-contents (or filename purpose-default-layout-file))
      (read (point-marker)))))
 
+(defun purpose-reset-window-layout ()
+  "Load window layout from `purpose-mru-window-layout'.
+If `purpose-mru-window-layout' is nil, do nothing."
+  (interactive)
+  (when purpose-mru-window-layout
+    (purpose-set-window-layout purpose-mru-window-layout)))
+
 ;;; get/set/load/save frame layout
 
 (defun purpose-get-frame-layout ()
@@ -239,15 +269,19 @@ window-layout is a window-layout as returned by
 `purpose-get-window-layout'."
   (mapcar #'purpose-get-window-layout (frame-list)))
 
-(defun purpose-set-frame-layout (layout)
+(defun purpose-set-frame-layout (layout &optional norecord)
   "Set LAYOUT as Emacs' frame layout.
 LAYOUT must be a layout as returned by `purpose-get-frame-layout'.
+Unless NORECORD is non-nil, this function sets LAYOUT as the value of
+`purpose-mru-frame-layout'.
 This function deletes all existing frames and creates frames as
 specified by LAYOUT."
   (delete-other-frames)
-  (purpose-set-window-layout (car layout))
+  (purpose-set-window-layout (car layout) nil t)
   (dolist (window-layout (cdr layout))
-    (purpose-set-window-layout window-layout (make-frame))))
+    (purpose-set-window-layout window-layout (make-frame) t))
+  (unless norecord
+    (setq purpose-mru-frame-layout layout)))
 
 (defun purpose-save-frame-layout (&optional filename)
   "Save frame layout of Emacs to file FILENAME.
@@ -274,6 +308,14 @@ If FILENAME is nil, use `purpose-default-layout-file' instead."
    (with-temp-buffer
      (insert-file-contents (or filename purpose-default-layout-file))
      (read (point-marker)))))
+
+(defun purpose-reset-frame-layout ()
+  "Load frame layout from `purpose-mru-frame-layout'.
+If `purpose-mru-frame-layout' is nil, do nothing."
+  (interactive)
+  (when purpose-mru-frame-layout
+    (purpose-set-frame-layout purpose-mru-frame-layout)))
+
 
 (provide 'purpose-layout)
 ;;; purpose-layout.el ends here
