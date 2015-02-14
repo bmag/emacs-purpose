@@ -1,3 +1,5 @@
+(require 'dired)
+(require 'ibuffer)
 (require 'purpose)
 
 (defvar pu-ext--window-layout

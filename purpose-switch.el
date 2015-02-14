@@ -8,6 +8,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'let-alist)
 (require 'purpose-core)
 
 (defvar purpose-action-function-ignore-buffer-names
@@ -72,23 +73,54 @@ it yourself.")
 
 ;;; general utilities
 
+(if (version<= "24.4" emacs-version)
+    (progn
+      (defalias 'purpose-alist-get #'alist-get)
+      
+      (defun purpose-alist-set (key value alist)
+	"Set VALUE to be the value associated to KEY in ALIST.
+This doesn't change the original alist, but returns a modified copy."
+	(eval
+	(setf (alist-get key alist) value)
+	alist)
+
+      (defun purpose-alist-del (key alist)
+	"Delete KEY from ALIST.
+This doesn't change the original alist, but returns a modified copy."
+	;; we could use any value instead of 0, as long as we used it instead
+	;; of 0 in both places
+	(setf (alist-get key alist 0 t) 0)
+	alist)))
+
+  ;; define our (limited) version of alist-get for Emacs 24.3 and older
+  (defun purpose-alist-get (key alist &optional default remove)
+    "Get KEY's value in ALIST.
+If no such key, return DEFAULT.
+When setting KEY's value, if the new value is equal to DEFAULT and
+REMOVE is non-nil, then delete the KEY instead."
+    (let ((entry (assq key alist)))
+      (if entry
+	  (cdr entry)
+	default)))
+  
+  (defun purpose-alist-set (key value alist)
+    "Set VALUE to be the value associated to KEY in ALIST.
+This doesn't change the original alist, but returns a modified copy."
+    (cons (cons key value)
+	  (purpose-alist-del key alist)))
+
+  (defun purpose-alist-del (key alist)
+    "Delete KEY from ALIST.
+This doesn't change the original alist, but returns a modified copy."
+    ;; we could use any value instead of 0, as long as we used it instead
+    ;; of 0 in both places
+    (cl-remove-if #'(lambda (entry)
+		      (eq key (car entry)))
+		  alist)))
+
 (defun purpose-flatten (seq)
   "Turn a list of lists (SEQ) to one concatenated list."
   (apply #'append seq))
-
-(defun purpose-alist-set (key value alist)
-  "Set VALUE to be the value associated to KEY in ALIST.
-This doesn't change the original alist, but returns a modified copy."
-  (setf (alist-get key alist) value)
-  alist)
-
-(defun purpose-alist-del (key alist)
-  "Delete KEY from ALIST.
-This doesn't change the original alist, but returns a modified copy."
-  ;; we could use any value instead of 0, as long as we used it instead
-  ;; of 0 in both places
-  (setf (alist-get key alist 0 t) 0)
-  alist)
 
 (defun purpose-alist-combine (&rest alists)
   ;; (purpose-flatten alists)
@@ -396,9 +428,9 @@ If ALIST is nil, it is ignored and `purpose--alist' is used instead."
     ;;(purpose--create-buffer-window buffer)?
     (let-alist alist
       (let* ((old-frame (selected-frame))
-	     (action-sequence (alist-get (or .action-order
-					     purpose-default-action-sequence)
-					 purpose-action-sequences))
+	     (action-sequence (purpose-alist-get
+			       (or .action-order purpose-default-action-sequence)
+			       purpose-action-sequences))
 	     (new-window
 	      ;; call all display actions in action-sequence until one of them
 	      ;; succeeds, and return the window used for display (action's
@@ -459,7 +491,6 @@ currently selected window is not available."
   ;; `display-buffer' should call `purpose--action-function', and
   ;; `purpose--action-function' should try to switch buffer in current window,
   ;; and if that's impossible - display buffer in another window.
-  (message "xxxx")
   (purpose-select-buffer buffer-or-name
 			 (if force-same-window
 			     'force-same-window
@@ -501,70 +532,133 @@ Never selects the currently selected window."
 
 ;;; Overrides (advices)
 
-(defun purpose-switch-to-buffer-advice (oldfun buffer-or-name &optional norecord force-same-window)
-  "Advice for overriding `switch-to-buffer' conditionally.
-If Purpose is active (`purpose--active-p' is non-nil), call
-`purpose-switch-buffer', otherwise call `switch-to-buffer'."
-  (message "switch-to-buffer advice")
-  (if purpose--active-p
-      (purpose-switch-buffer buffer-or-name norecord force-same-window)
-    (funcall oldfun buffer-or-name norecord force-same-window)))
-
-(defun purpose-switch-to-buffer-other-window-advice (oldfun buffer-or-name &optional norecord)
-  "Advice for overriding `switch-to-buffer-other-window' conditionally.
-If Purpose is active (`purpose--active-p' is non-nil), call
-`purpose-switch-buffer-other-window', otherwise call
-`switch-to-buffer-other-window'."
-  (message "switch-to-buffer-other-window advice")
-  (if purpose--active-p
-      (purpose-switch-buffer-other-window buffer-or-name norecord)
-    (funcall oldfun buffer-or-name norecord)))
-
-(defun purpose-switch-to-buffer-other-frame-advice (oldfun buffer-or-name &optional norecord)
-  "Advice for overriding `switch-to-buffer-other-frame' conditionally.
-If Purpose is active (`purpose--active-p' is non-nil), call
-`purpose-switch-buffer-other-frame', otherwise call
-`switch-to-buffer-other-frame'."
-  (message "switch-to-buffer-other-frame advice")
-  (if purpose--active-p
-      (purpose-switch-buffer-other-frame buffer-or-name norecord)
-    (funcall oldfun buffer-or-name norecord)))
-
-(defun purpose-pop-to-buffer-advice (oldfun buffer-or-name &optional action norecord)
-  "Advice for overriding `pop-to-buffer' conditionally.
-If Purpose is active (`purpose--active-p' is non-nil) and ACTION is nil,
-call `purpose-pop-buffer', otherwise call `pop-to-buffer'."
-  (message "pop-to-buffer advice")
-  (if (and purpose--active-p
-	   (not action))
-      (purpose-pop-buffer buffer-or-name norecord)
-    (funcall oldfun buffer-or-name action norecord)))
-
-(defun purpose-pop-to-buffer-same-window-advice (oldfun buffer-or-name &optional norecord)
-  "Advice for overriding `pop-to-buffer-same-window' conditionally.
-If Purpose is active (`purpose--active-p' is non-nil), call
-`purpose-pop-buffer-same-window', otherwise call
-`pop-to-buffer-same-window'."
-  (message "pop-to-buffer-same-window advice")
-  (if purpose--active-p
-      (purpose-pop-buffer-same-window buffer-or-name norecord)
-    (funcall oldfun buffer-or-name norecord)))
-
 ;; TODO: maybe recognize some more actions
 (defun purpose-display--action-to-order (action)
   "Return appropriate `action-order' value for ACTION."
   (when (not (listp action))		; non-nil, non-list
     'prefer-other-window))
 
-(defun purpose-display-buffer-advice (oldfun buffer-or-name &optional action frame)
-  "Update `purpose--alist' when calling `display-buffer'."
-  (let* ((action-order (purpose-display--action-to-order action))
-	 (purpose--alist (if action-order
-			     (purpose-alist-set 'action-order
-						action-order
-						purpose--alist)
-			   purpose--alist)))
-    (funcall oldfun buffer-or-name action frame)))
+(if (version<= "24.4" emacs-version)
+    (progn
+      (defun purpose-display-buffer-advice (oldfun buffer-or-name &optional action frame)
+	"Update `purpose--alist' when calling `display-buffer'."
+	(let* ((action-order (purpose-display--action-to-order action))
+	       (purpose--alist (if action-order
+				   (purpose-alist-set 'action-order
+						      action-order
+						      purpose--alist)
+				 purpose--alist)))
+	  (funcall oldfun buffer-or-name action frame)))
+
+      (defun purpose-switch-to-buffer-advice (oldfun buffer-or-name &optional norecord force-same-window)
+	"Advice for overriding `switch-to-buffer' conditionally.
+If Purpose is active (`purpose--active-p' is non-nil), call
+`purpose-switch-buffer', otherwise call `switch-to-buffer'."
+	(message "switch-to-buffer advice")
+	(if purpose--active-p
+	    (purpose-switch-buffer buffer-or-name norecord force-same-window)
+	  (funcall oldfun buffer-or-name norecord force-same-window)))
+
+      (defun purpose-switch-to-buffer-other-window-advice (oldfun buffer-or-name &optional norecord)
+	"Advice for overriding `switch-to-buffer-other-window' conditionally.
+If Purpose is active (`purpose--active-p' is non-nil), call
+`purpose-switch-buffer-other-window', otherwise call
+`switch-to-buffer-other-window'."
+	(message "switch-to-buffer-other-window advice")
+	(if purpose--active-p
+	    (purpose-switch-buffer-other-window buffer-or-name norecord)
+	  (funcall oldfun buffer-or-name norecord)))
+
+      (defun purpose-switch-to-buffer-other-frame-advice (oldfun buffer-or-name &optional norecord)
+	"Advice for overriding `switch-to-buffer-other-frame' conditionally.
+If Purpose is active (`purpose--active-p' is non-nil), call
+`purpose-switch-buffer-other-frame', otherwise call
+`switch-to-buffer-other-frame'."
+	(message "switch-to-buffer-other-frame advice")
+	(if purpose--active-p
+	    (purpose-switch-buffer-other-frame buffer-or-name norecord)
+	  (funcall oldfun buffer-or-name norecord)))
+      
+      (defun purpose-pop-to-buffer-advice (oldfun buffer-or-name &optional action norecord)
+	"Advice for overriding `pop-to-buffer' conditionally.
+If Purpose is active (`purpose--active-p' is non-nil) and ACTION is nil,
+call `purpose-pop-buffer', otherwise call `pop-to-buffer'."
+	(message "pop-to-buffer advice")
+	(if (and purpose--active-p
+		 (not action))
+	    (purpose-pop-buffer buffer-or-name norecord)
+	  (funcall oldfun buffer-or-name action norecord)))
+
+      (defun purpose-pop-to-buffer-same-window-advice (oldfun buffer-or-name &optional norecord)
+	"Advice for overriding `pop-to-buffer-same-window' conditionally.
+If Purpose is active (`purpose--active-p' is non-nil), call
+`purpose-pop-buffer-same-window', otherwise call
+`pop-to-buffer-same-window'."
+	(message "pop-to-buffer-same-window advice")
+	(if purpose--active-p
+	    (purpose-pop-buffer-same-window buffer-or-name norecord)
+	  (funcall oldfun buffer-or-name norecord)))
+      )
+
+  (defadvice display-buffer (around purpose-override (buffer-or-name &optional action frame))
+    "Update `purpose--alist' when calling `display-buffer'."
+    (let* ((action-order (purpose-display--action-to-order action))
+	   (purpose--alist (if action-order
+			       (purpose-alist-set 'action-order
+						  action-order
+						  purpose--alist)
+			     purpose--alist)))
+      ad-do-it))
+
+  (defadvice switch-to-buffer (around purpose-override (buffer-or-name &optional norecord force-same-window))
+    "Advice for overriding `switch-to-buffer' conditionally.
+If Purpose is active (`purpose--active-p' is non-nil), call
+`purpose-switch-buffer', otherwise call `switch-to-buffer'."
+    (message "switch-to-buffer advice")
+    (if purpose--active-p
+	(purpose-switch-buffer buffer-or-name norecord force-same-window)
+      ad-do-it))
+
+  (defadvice switch-to-buffer-other-window (around purpose-override (buffer-or-name &optional norecord))
+    "Advice for overriding `switch-to-buffer-other-window' conditionally.
+If Purpose is active (`purpose--active-p' is non-nil), call
+`purpose-switch-buffer-other-window', otherwise call
+`switch-to-buffer-other-window'."
+    (message "switch-to-buffer-other-window advice")
+    (if purpose--active-p
+	(purpose-switch-buffer-other-window buffer-or-name norecord)
+      (funcall oldfun buffer-or-name norecord)))
+
+  (defadvice switch-to-buffer-other-frame (around purpose-override (buffer-or-name &optional norecord))
+    "Advice for overriding `switch-to-buffer-other-frame' conditionally.
+If Purpose is active (`purpose--active-p' is non-nil), call
+`purpose-switch-buffer-other-frame', otherwise call
+`switch-to-buffer-other-frame'."
+    (message "switch-to-buffer-other-frame advice")
+    (if purpose--active-p
+	(purpose-switch-buffer-other-frame buffer-or-name norecord)
+      ad-do-it))
+  
+  (defadvice pop-to-buffer (around purpose-override (buffer-or-name &optional action norecord))
+    "Advice for overriding `pop-to-buffer' conditionally.
+If Purpose is active (`purpose--active-p' is non-nil) and ACTION is nil,
+call `purpose-pop-buffer', otherwise call `pop-to-buffer'."
+    (message "pop-to-buffer advice")
+    (if (and purpose--active-p
+	     (not action))
+	(purpose-pop-buffer buffer-or-name norecord)
+      ad-do-it))
+
+  (defadvice pop-to-buffer-same-window (around purpose-override (buffer-or-name &optional norecord))
+    "Advice for overriding `pop-to-buffer-same-window' conditionally.
+If Purpose is active (`purpose--active-p' is non-nil), call
+`purpose-pop-buffer-same-window', otherwise call
+`pop-to-buffer-same-window'."
+    (message "pop-to-buffer-same-window advice")
+    (if purpose--active-p
+	(purpose-pop-buffer-same-window buffer-or-name norecord)
+      ad-do-it))
+  )
 
 ;; anti-override:
 (defmacro without-purpose (&rest body)
