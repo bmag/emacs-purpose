@@ -20,4 +20,65 @@ return the formatted string. FORMAT-STRING and ARGS are passed to
       (apply #'message format-string args)
     (apply #'format format-string args)))
 
+(if (fboundp 'alist-get)
+    ;; alist-get is defined in Emacs 24.4 and newer
+    (progn
+      (defalias 'purpose-alist-get #'alist-get)
+      
+      (defun purpose-alist-set (key value alist)
+	"Set VALUE to be the value associated to KEY in ALIST.
+This doesn't change the original alist, but returns a modified copy."
+	(setf (alist-get key alist) value)
+	alist)
+
+      (defun purpose-alist-del (key alist)
+	"Delete KEY from ALIST.
+This doesn't change the original alist, but returns a modified copy."
+	;; we could use any value instead of 0, as long as we used it instead
+	;; of 0 in both places
+	(setf (alist-get key alist 0 t) 0)
+	alist))
+
+  ;; define our (limited) version of alist-get for Emacs 24.3 and older
+  (defun purpose-alist-get (key alist &optional default remove)
+    "Get KEY's value in ALIST.
+If no such key, return DEFAULT.
+When setting KEY's value, if the new value is equal to DEFAULT and
+REMOVE is non-nil, then delete the KEY instead."
+    (let ((entry (assq key alist)))
+      (if entry
+	  (cdr entry)
+	default)))
+  
+  (defun purpose-alist-set (key value alist)
+    "Set VALUE to be the value associated to KEY in ALIST.
+This doesn't change the original alist, but returns a modified copy."
+    (cons (cons key value)
+	  (purpose-alist-del key alist)))
+
+  (defun purpose-alist-del (key alist)
+    "Delete KEY from ALIST.
+This doesn't change the original alist, but returns a modified copy."
+    ;; we could use any value instead of 0, as long as we used it instead
+    ;; of 0 in both places
+    (cl-remove-if #'(lambda (entry)
+		      (eq key (car entry)))
+		  alist)))
+
+(defun purpose-flatten (seq)
+  "Turn a list of lists (SEQ) to one concatenated list."
+  (apply #'append seq))
+
+(defun purpose-alist-combine (&rest alists)
+  ;; (purpose-flatten alists)
+  (let ((result nil))
+    (dolist (alist alists)
+      (dolist (element alist)
+	(unless (assoc (car element) result)
+	  (setq result (purpose-alist-set (car element)
+					  (cdr element)
+					  result)))))
+    result))
+
 (provide 'purpose-utils)
+;;; purpose-utils.el ends here

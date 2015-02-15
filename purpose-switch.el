@@ -72,68 +72,6 @@ it yourself.")
 (defvar purpose-default-action-sequence 'prefer-other-window)
 
 
-;;; general utilities
-
-(if (version<= "24.4" emacs-version)
-    (progn
-      (defalias 'purpose-alist-get #'alist-get)
-      
-      (defun purpose-alist-set (key value alist)
-	"Set VALUE to be the value associated to KEY in ALIST.
-This doesn't change the original alist, but returns a modified copy."
-	(setf (alist-get key alist) value)
-	alist)
-
-      (defun purpose-alist-del (key alist)
-	"Delete KEY from ALIST.
-This doesn't change the original alist, but returns a modified copy."
-	;; we could use any value instead of 0, as long as we used it instead
-	;; of 0 in both places
-	(setf (alist-get key alist 0 t) 0)
-	alist))
-
-  ;; define our (limited) version of alist-get for Emacs 24.3 and older
-  (defun purpose-alist-get (key alist &optional default remove)
-    "Get KEY's value in ALIST.
-If no such key, return DEFAULT.
-When setting KEY's value, if the new value is equal to DEFAULT and
-REMOVE is non-nil, then delete the KEY instead."
-    (let ((entry (assq key alist)))
-      (if entry
-	  (cdr entry)
-	default)))
-  
-  (defun purpose-alist-set (key value alist)
-    "Set VALUE to be the value associated to KEY in ALIST.
-This doesn't change the original alist, but returns a modified copy."
-    (cons (cons key value)
-	  (purpose-alist-del key alist)))
-
-  (defun purpose-alist-del (key alist)
-    "Delete KEY from ALIST.
-This doesn't change the original alist, but returns a modified copy."
-    ;; we could use any value instead of 0, as long as we used it instead
-    ;; of 0 in both places
-    (cl-remove-if #'(lambda (entry)
-		      (eq key (car entry)))
-		  alist)))
-
-(defun purpose-flatten (seq)
-  "Turn a list of lists (SEQ) to one concatenated list."
-  (apply #'append seq))
-
-(defun purpose-alist-combine (&rest alists)
-  ;; (purpose-flatten alists)
-  (let ((result nil))
-    (dolist (alist alists)
-      (dolist (element alist)
-	(unless (assoc (car element) result)
-	  (setq result (purpose-alist-set (car element)
-					  (cdr element)
-					  result)))))
-    result))
-
-
 
 ;;; Level1 actions
 ;; reuse-window-buffer: display buffer in a window already displaying that buffer. frames to consider are chosen by `inhibit-same-window', `reusable-frames', `display-buffer-reuse-frames' and `pop-up-frames'.
@@ -400,7 +338,7 @@ The display is done with `display-buffer-pop-up-frame'."
 	    (display-graphic-p)
 	  pop-up-frames)
     ;; (display-buffer-pop-up-frame buffer alist)
-    (purpose-display-pop-up-frame)))
+    (purpose-display-pop-up-frame buffer alist)))
 
 
 
@@ -530,7 +468,8 @@ Never selects the currently selected window."
   (when (not (listp action))		; non-nil, non-list
     'prefer-other-window))
 
-(if (version<= "24.4" emacs-version)
+(if (fboundp 'advice-add)
+    ;; define advices for Emacs 24.4 and newer
     (progn
       (defun purpose-display-buffer-advice (oldfun buffer-or-name &optional action frame)
 	"Update `purpose--alist' when calling `display-buffer'."
@@ -592,6 +531,7 @@ If Purpose is active (`purpose--active-p' is non-nil), call
 	  (funcall oldfun buffer-or-name norecord)))
       )
 
+  ;; define advices for Emacs 24.3 and older
   (defadvice display-buffer (around purpose-override (buffer-or-name &optional action frame))
     "Update `purpose--alist' when calling `display-buffer'."
     (let* ((action-order (purpose-display--action-to-order action))
