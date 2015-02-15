@@ -122,13 +122,19 @@
   '(ido-find-file-other-frame find-file-other-frame-without-purpose))
 
 (define-purpose-prefix-overload purpose-switch-buffer-overload
-  '(ido-switch-buffer switch-buffer-without-purpose))
+  '(ido-switch-buffer
+    switch-buffer-without-purpose
+    purpose-switch-buffer-with-purpose))
 
 (define-purpose-prefix-overload purpose-switch-buffer-other-window-overload
-  '(ido-switch-buffer-other-window switch-buffer-other-window-without-purpose))
+  '(ido-switch-buffer-other-window
+    switch-buffer-other-window-without-purpose
+    purpose-switch-buffer-with-purpose-other-window))
 
 (define-purpose-prefix-overload purpose-switch-buffer-other-frame-overload
-  '(ido-switch-buffer-other-frame switch-buffer-other-frame-without-purpose))
+  '(ido-switch-buffer-other-frame
+    switch-buffer-other-frame-without-purpose
+    purpose-switch-buffer-with-purpose-other-frame))
 
 
 

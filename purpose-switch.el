@@ -608,5 +608,45 @@ This works internally by using `without-purpose' and
      (without-purpose
       (call-interactively ,command))))
 
+
+
+;;; Advanced switching functions
+
+(defun purpose-read-buffers-with-purpose (purpose)
+  "Prompt the user for a buffer with purpose PURPOSE."
+  (ido-completing-read "[PU] Buffer: "
+		       (mapcar #'buffer-name
+			       (delq (current-buffer)
+				     (purpose-buffers-with-purpose purpose)))))
+
+(defun purpose-switch-buffer-with-purpose (&optional purpose)
+  "Prompt the user and switch to a buffer with purpose PURPOSE.
+If called interactively, or with PURPOSE nil, PURPOSE defaults to the
+current buffer's purpose."
+  (interactive)
+  (purpose-switch-buffer
+   (purpose-read-buffers-with-purpose
+    (or purpose (purpose-buffer-purpose (current-buffer))))))
+
+(defun purpose-switch-buffer-with-purpose-other-window (&optional purpose)
+  "Prompt the user and switch to a buffer with purpose PURPOSE.
+The buffer is display in another window.
+If called interactively, or with PURPOSE nil, PURPOSE defaults to the
+current buffer's purpose."
+  (interactive)
+  (purpose-switch-buffer-other-window
+   (purpose-read-buffers-with-purpose
+    (or purpose (purpose-buffer-purpose (current-buffer))))))
+
+(defun purpose-switch-buffer-with-purpose-other-frame (&optional purpose)
+  "Prompt the user and switch to a buffer with purpose PURPOSE.
+The buffer is display in another frame.
+If called interactively, or with PURPOSE nil, PURPOSE defaults to the
+current buffer's purpose."
+  (interactive)
+  (purpose-switch-buffer-other-frame
+   (purpose-read-buffers-with-purpose
+    (or purpose (purpose-buffer-purpose (current-buffer))))))
+
 (provide 'purpose-switch)
 ;;; purpose-switch.el ends here
