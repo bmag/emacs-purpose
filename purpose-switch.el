@@ -10,6 +10,7 @@
 (require 'cl-lib)
 (require 'let-alist)
 (require 'purpose-core)
+(require 'purpose-utils)
 
 (defvar purpose-action-function-ignore-buffer-names
   '("*Completions*" "*Ido Completions*")
@@ -80,7 +81,6 @@ it yourself.")
       (defun purpose-alist-set (key value alist)
 	"Set VALUE to be the value associated to KEY in ALIST.
 This doesn't change the original alist, but returns a modified copy."
-	(eval
 	(setf (alist-get key alist) value)
 	alist)
 
@@ -90,7 +90,7 @@ This doesn't change the original alist, but returns a modified copy."
 	;; we could use any value instead of 0, as long as we used it instead
 	;; of 0 in both places
 	(setf (alist-get key alist 0 t) 0)
-	alist)))
+	alist))
 
   ;; define our (limited) version of alist-get for Emacs 24.3 and older
   (defun purpose-alist-get (key alist &optional default remove)
@@ -422,10 +422,8 @@ This function should be used by setting
 `display-buffer-overriding-action' to (purpose--action-function . nil).
 If ALIST is nil, it is ignored and `purpose--alist' is used instead."
   (setq alist (purpose-alist-combine alist purpose--alist))
-  (message "Purpose display: Buffer: %S; Alist: %S" buffer alist)
+  (purpose-message "Purpose display: Buffer: %S; Alist: %S" buffer alist)
   (when (purpose--use-action-function-p buffer alist)
-    ;;(message "Selected Window: %S; Buffer: %S; Alist: %S" (selected-window) buffer alist)
-    ;;(purpose--create-buffer-window buffer)?
     (let-alist alist
       (let* ((old-frame (selected-frame))
 	     (action-sequence (purpose-alist-get
@@ -438,22 +436,16 @@ If ALIST is nil, it is ignored and `purpose--alist' is used instead."
 	      (cl-do ((action-sequence action-sequence (cdr action-sequence))
 		      (window nil ;; (funcall (car action-sequence) buffer alist)
 			      (progn
-				(message "trying: %S" (car action-sequence))
+				(purpose-message "trying: %S" (car action-sequence))
 				(funcall (car action-sequence) buffer alist))))
 		  ((or (null action-sequence) window) window))))
 	(if new-window
 	    new-window
-	  ;; (progn
-	  ;;   (unless (or (eql (window-frame new-window) old-frame)
-	  ;; 		  .inhibit-switch-frame)
-	  ;; 	;; `raise-frame'? `window--maybe-raise-frame'?
-	  ;; 	(select-frame-set-input-focus (window-frame new-window)))
-	  ;;   (select-window new-window))
 	  (cond ((eql purpose-display-fallback 'pop-up-frame)
-		 (message "trying fallback: purpose-display-pop-up-frame")
+		 (purpose-message "trying fallback: purpose-display-pop-up-frame")
 		 (purpose-display-pop-up-frame buffer alist))
 		((eql purpose-display-fallback 'pop-up-window)
-		 (message "trying fallback: purpose-display-pop-up-window")
+		 (purpose-message "trying fallback: purpose-display-pop-up-window")
 		 (purpose-display-pop-up-window buffer alist))
 		(t
 		 (error "No window available"))))))))
@@ -554,7 +546,7 @@ Never selects the currently selected window."
 	"Advice for overriding `switch-to-buffer' conditionally.
 If Purpose is active (`purpose--active-p' is non-nil), call
 `purpose-switch-buffer', otherwise call `switch-to-buffer'."
-	(message "switch-to-buffer advice")
+	(purpose-message "switch-to-buffer advice")
 	(if purpose--active-p
 	    (purpose-switch-buffer buffer-or-name norecord force-same-window)
 	  (funcall oldfun buffer-or-name norecord force-same-window)))
@@ -564,7 +556,7 @@ If Purpose is active (`purpose--active-p' is non-nil), call
 If Purpose is active (`purpose--active-p' is non-nil), call
 `purpose-switch-buffer-other-window', otherwise call
 `switch-to-buffer-other-window'."
-	(message "switch-to-buffer-other-window advice")
+	(purpose-message "switch-to-buffer-other-window advice")
 	(if purpose--active-p
 	    (purpose-switch-buffer-other-window buffer-or-name norecord)
 	  (funcall oldfun buffer-or-name norecord)))
@@ -574,7 +566,7 @@ If Purpose is active (`purpose--active-p' is non-nil), call
 If Purpose is active (`purpose--active-p' is non-nil), call
 `purpose-switch-buffer-other-frame', otherwise call
 `switch-to-buffer-other-frame'."
-	(message "switch-to-buffer-other-frame advice")
+	(purpose-message "switch-to-buffer-other-frame advice")
 	(if purpose--active-p
 	    (purpose-switch-buffer-other-frame buffer-or-name norecord)
 	  (funcall oldfun buffer-or-name norecord)))
@@ -583,7 +575,7 @@ If Purpose is active (`purpose--active-p' is non-nil), call
 	"Advice for overriding `pop-to-buffer' conditionally.
 If Purpose is active (`purpose--active-p' is non-nil) and ACTION is nil,
 call `purpose-pop-buffer', otherwise call `pop-to-buffer'."
-	(message "pop-to-buffer advice")
+	(purpose-message "pop-to-buffer advice")
 	(if (and purpose--active-p
 		 (not action))
 	    (purpose-pop-buffer buffer-or-name norecord)
@@ -594,7 +586,7 @@ call `purpose-pop-buffer', otherwise call `pop-to-buffer'."
 If Purpose is active (`purpose--active-p' is non-nil), call
 `purpose-pop-buffer-same-window', otherwise call
 `pop-to-buffer-same-window'."
-	(message "pop-to-buffer-same-window advice")
+	(purpose-message "pop-to-buffer-same-window advice")
 	(if purpose--active-p
 	    (purpose-pop-buffer-same-window buffer-or-name norecord)
 	  (funcall oldfun buffer-or-name norecord)))
@@ -614,7 +606,7 @@ If Purpose is active (`purpose--active-p' is non-nil), call
     "Advice for overriding `switch-to-buffer' conditionally.
 If Purpose is active (`purpose--active-p' is non-nil), call
 `purpose-switch-buffer', otherwise call `switch-to-buffer'."
-    (message "switch-to-buffer advice")
+    (purpose-message "switch-to-buffer advice")
     (if purpose--active-p
 	(purpose-switch-buffer buffer-or-name norecord force-same-window)
       ad-do-it))
@@ -624,7 +616,7 @@ If Purpose is active (`purpose--active-p' is non-nil), call
 If Purpose is active (`purpose--active-p' is non-nil), call
 `purpose-switch-buffer-other-window', otherwise call
 `switch-to-buffer-other-window'."
-    (message "switch-to-buffer-other-window advice")
+    (purpose-message "switch-to-buffer-other-window advice")
     (if purpose--active-p
 	(purpose-switch-buffer-other-window buffer-or-name norecord)
       (funcall oldfun buffer-or-name norecord)))
@@ -634,7 +626,7 @@ If Purpose is active (`purpose--active-p' is non-nil), call
 If Purpose is active (`purpose--active-p' is non-nil), call
 `purpose-switch-buffer-other-frame', otherwise call
 `switch-to-buffer-other-frame'."
-    (message "switch-to-buffer-other-frame advice")
+    (purpose-message "switch-to-buffer-other-frame advice")
     (if purpose--active-p
 	(purpose-switch-buffer-other-frame buffer-or-name norecord)
       ad-do-it))
@@ -643,7 +635,7 @@ If Purpose is active (`purpose--active-p' is non-nil), call
     "Advice for overriding `pop-to-buffer' conditionally.
 If Purpose is active (`purpose--active-p' is non-nil) and ACTION is nil,
 call `purpose-pop-buffer', otherwise call `pop-to-buffer'."
-    (message "pop-to-buffer advice")
+    (purpose-message "pop-to-buffer advice")
     (if (and purpose--active-p
 	     (not action))
 	(purpose-pop-buffer buffer-or-name norecord)
@@ -654,7 +646,7 @@ call `purpose-pop-buffer', otherwise call `pop-to-buffer'."
 If Purpose is active (`purpose--active-p' is non-nil), call
 `purpose-pop-buffer-same-window', otherwise call
 `pop-to-buffer-same-window'."
-    (message "pop-to-buffer-same-window advice")
+    (purpose-message "pop-to-buffer-same-window advice")
     (if purpose--active-p
 	(purpose-pop-buffer-same-window buffer-or-name norecord)
       ad-do-it))

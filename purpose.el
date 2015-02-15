@@ -216,11 +216,10 @@ This function is called when `purpose-mode' is deactivated."
 		       #'purpose-pop-to-buffer-same-window-advice)
 	(advice-remove 'display-buffer #'purpose-display-buffer-advice))
     (dolist (function '(switch-to-buffer
-			;; switch-to-buffer-other-window
-			;; switch-to-buffer-other-frame
-			;; pop-to-buffer
-			;; pop-to-buffer-same-window
-			))
+			switch-to-buffer-other-window
+			switch-to-buffer-other-frame
+			pop-to-buffer
+			pop-to-buffer-same-window))
       (ad-disable-advice function 'around 'purpose-override)
       (ad-update function))))
 
