@@ -14,6 +14,19 @@
 ;; layout easily. Purpose is intended to help both regular users and
 ;; developers who want Emacs to have a more IDE-like behavior.
 
+;; More information can be found on GitHub: https://github.com/bmag/emacs-purpose/wiki
+
+;; Installation:
+;; Download Purpose's source files and put them in your `load-path'.
+;; Purpoes is available from MELPA, so the best way to do this is
+;; with Emacs' package manager.
+;; Next, add this line to your init file:
+;;    (purpose-mode)
+;; If you prefer to download manually, you need to add these lines as
+;; well (before calling `purpose-mode'):
+;;    (add-to-list 'load-path "/path/to/purpose")
+;;    (require 'purpose)
+
 ;; Typical Usage (Regular User)
 ;; 1. Turn Purpose on (`purpose-mode').
 ;; 2. Configure which purposes you want your windows to have (see
@@ -58,23 +71,14 @@
 ;; - `purpose-set-window-properties-functions': use this hook if you
 ;;    want to set extra properties for new windows, when
 ;;    `purpose-set-window-layout' is called.
-;; - `set-configuration', `add-configuration': use these to change the
-;;    purpose configuration to suit your plugin's needs.
+;; - `purpose-set-configuration', `purpose-add-configuration': use these
+;;    to change the purpose configuration to suit your plugin's needs.
 ;; - `purpose-select-buffer-hook': use this if you want to run some
 ;;    code every time a buffer is selected.
 ;; - `without-purpose': use this macro if you need to ignore purposes
 ;;    while executing some piece of code.
 ;; - `without-purpose-command': use this macro to create a command that
 ;;    ignores purposes.
-
-;;; Installation:
-;; Download Purpose's source files and put them in your `load-path'.
-;; Purpoes is available from MELPA, so the best way to do this is
-;; with Emacs' package manager.
-;; Next, add these lines to your init file:
-;;    (require 'purpose)
-;;    (purpose-mode)
-;; And that's all.
 
 ;;; Code:
 
