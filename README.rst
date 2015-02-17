@@ -79,19 +79,3 @@ command purpose-load-layout.
 Programmers can use the hooks purpose-set-window-properties-functions and
 purpose-get-extra-window-params-function to save/load other window
 properties that may interest them.
-
-   
-Caveats
-=======
-
-- Frame support is not yet available. Purpose may not work as expected
-  when using Emacs with several frames.
-
-- Emacs features and plugins which don't use display-buffer are not yet
-  integrated with Purpose.
-
-  Often the solution is to use purpose-switch-buffer instead of
-  switch-to-buffer in strategic locations in those features' code. Bug
-  reports and code contributions are very welcome, and may help with
-  coming up with a more complete solution for integrating features with
-  Purpose.
