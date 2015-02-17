@@ -14,9 +14,6 @@
 ;; layout easily. Purpose is intended to help both regular users and
 ;; developers who want Emacs to have a more IDE-like behavior.
 
-;; Note: Currently Purpose is supported for Emacs 24.4 and newer. The
-;; main reason is because it uses `advice-add' and `advice-remove'.
-
 ;; Typical Usage (Regular User)
 ;; 1. Turn Purpose on (`purpose-mode').
 ;; 2. Configure which purposes you want your windows to have (see

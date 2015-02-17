@@ -127,10 +127,12 @@ terminal if it's non-nil."
 		      reusable-frames)
 	     nil)))))
 
-(defun purpose-display-reuse-window-purpose (buffer alist)
-  "Display BUFFER in a window that is already used for the same purpose.
+(defun purpose-display-reuse-window-purpose (buffer alist &optional purpose)
+  "Display BUFFER in a window that is already used for purpose PURPOSE.
 Return that window.  Return nil if no usable window is found.
 Windows that are dediacted to their buffers are not eligible for reuse.
+
+PURPOSE defaults to BUFFER's purpose.
 
 If ALIST has a non-nil `inhibit-same-window' entry, the selected window
 is not eligible for reuse.
@@ -152,7 +154,7 @@ that a window on another frame is chosen, avoid raising that frame."
   (let-alist alist
     (let* ((frames (purpose--reusable-frames alist))
 	   (windows (purpose-flatten (mapcar #'window-list frames)))
-	   (purpose (purpose-buffer-purpose buffer))
+	   (purpose (or purpose (purpose-buffer-purpose buffer)))
 	   window)
       (setq windows (cl-delete-if
 		     #'(lambda (window)
@@ -199,12 +201,14 @@ that frame."
       (purpose--change-buffer buffer window 'reuse alist))
     window))
 
-(defun purpose-display-reuse-window-purpose-other-frame (buffer alist)
-  "Display BUFFER in a window that is already used for the same purpose.
+(defun purpose-display-reuse-window-purpose-other-frame (buffer alist &optional purpose)
+  "Display BUFFER in a window that is already used for purpose PURPOSE.
 Return that window.  Return nil if no usable window is found.
 Windows that are dediacted to their buffers are not eligible for reuse.
 Windows in the selected frame are not eligible for reuse, even if
 `reusable-frames' says to search the selected frame.
+
+PURPOSE defaults to BUFFER's purpose.
 
 If ALIST has a non-nil `inhibit-same-window' entry, the selected window
 is not eligible for reuse.
@@ -226,7 +230,7 @@ that a window on another frame is chosen, avoid raising that frame."
   (let* ((frames (cl-delete (selected-frame)
 			    (purpose--reusable-frames alist)))
 	 (windows (purpose-flatten (mapcar #'window-list frames)))
-	 (purpose (purpose-buffer-purpose buffer))
+	 (purpose (or purpose (purpose-buffer-purpose buffer)))
 	 window)
     (setq windows (cl-delete-if
 		   #'(lambda (window)
