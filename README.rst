@@ -2,8 +2,7 @@
 Purpose
 =======
 
-IMPORTANT: this README is not accurate for version 1.1. The README will
-be updated shortly (together with the project's wiki).
+A full explanation can found in the wiki on GitHub.
 
 Purpose is a plugin for Emacs which introduces the concept of a
 "purpose" for windows and buffers. By setting purposes for your windows
@@ -37,25 +36,14 @@ bracket.
 Purpose-aware display
 ---------------------
 
-Purpose provides you with commands for displaying buffers in the
-correct windows. The main commands are purpose-find-file, purpose-switch-buffer
-and purpose-pop-buffer. Also, Purpose uses variable
-display-buffer-overriding-action to provide purpose-awareness to
-function display-buffer and anything else that uses display-buffer
-behind the scenes.
+Purpose uses advice to override the regular display functions with functions that
+are purpose-aware. Also, Purpose provides you with purpose-aware commands.
+The main commands are purpose-switch-buffer purpose-pop-buffer.
+Furthermore, Purpose uses variable display-buffer-overriding-action to provide
+purpose-awareness to function display-buffer.
 
-Programmers can use the hook purpose-display-buffer-hook to execute code
-after everytime that Purpose displays a buffer.
-
-For now, features and plugins that don't use display-buffer will not
-be handled properly by Purpose. This includes switch-to-buffer,
-Dired, recentf, and probably some more. Whenever you encounter a
-feature that isn't handled properly by Purpose, you are welcome to
-report it. If possible, I encourage you to solve it and send me the
-fix via a pull-request. Often the solution is to make the feature use
-purpose-switch-buffer instead of switch-to-buffer. With time, and as
-Purpose gains popularity (hopefully) and becomes mature, Purpose will
-handle more and more of those features and plugins.
+Programmers can use the hook purpose-select-buffer-hook to execute code
+after everytime that Purpose displays a buffer and selects its window.
 
 Purpose dedication
 ------------------
@@ -72,9 +60,8 @@ Purpose knows to respect.
 Persistent window layout
 ------------------------
 
-Purpose lets you save your current window layout with the command
-purpose-save-layout. It also lets you load a saved window layout with the
-command purpose-load-layout.
+Purpose lets you save and load your window layout with commands such as
+purpose-save-window-layout and purpose-load-window-layout.
 
 Programmers can use the hooks purpose-set-window-properties-functions and
 purpose-get-extra-window-params-function to save/load other window
