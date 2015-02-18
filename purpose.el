@@ -79,6 +79,8 @@
 ;;    while executing some piece of code.
 ;; - `without-purpose-command': use this macro to create a command that
 ;;    ignores purposes.
+;; - `purpose-special-action-sequences': use this to display some
+;;    buffers in a special way.
 
 ;;; Code:
 

@@ -71,6 +71,18 @@ it yourself.")
 
 (defvar purpose-default-action-sequence 'prefer-other-window)
 
+(defvar purpose-special-action-sequences nil
+  "This variable makes Purpose handle some buffers differently.
+`purpose-special-action-sequences' should be a list.  Each entry in the
+list is a list itself, where:
+1. the entry's first item (entry's car) is a condition
+2. the entry's rest items (entry's cdr) are display functions
+Condition is either a purpose, or a predicate function that takes 3
+arguments: PURPOSE, BUFFER, ALIST.
+When `purpose--action-function' tries to display a buffer, it will try
+first the action sequences in `purpose-special-action-sequences' whose
+condition was met.")
+
 
 
 ;;; Level1 actions
@@ -356,6 +368,27 @@ The display is done with `display-buffer-pop-up-frame'."
    (not (member (buffer-name buffer)
 		purpose-action-function-ignore-buffer-names))))
 
+(defun purpose--special-action-sequence (buffer alist)
+  "Return special action sequences to use for display BUFFER.
+This function loops over list `purpose-special-action-sequences' and for
+each entry in the list:
+- check if the entry's condition (entry's car):
+  a. is equal to BUFFER's purpose, or
+  b. is a function that returns non-nil when called with these 3
+     arguments: buffer's purpose, BUFFER, ALIST.
+- if so, append the entry's action sequence to the result
+The function returns a list of display functions that
+`purpose--action-function' should use before trying the regular action
+sequence."
+  (let ((purpose (purpose-buffer-purpose buffer)))
+    (purpose-flatten
+     (cl-loop
+      for (condition . action-sequence) in purpose-special-action-sequences
+      when (or (eql purpose condition)
+	       (and (functionp condition)
+		    (funcall condition purpose buffer alist)))
+      collect action-sequence))))
+
 ;; Purpose action function (integration with `display-buffer')
 (defun purpose--action-function (buffer alist)
   "Action function to use for overriding default display-buffer
@@ -368,9 +401,14 @@ If ALIST is nil, it is ignored and `purpose--alist' is used instead."
   (when (purpose--use-action-function-p buffer alist)
     (let-alist alist
       (let* ((old-frame (selected-frame))
-	     (action-sequence (purpose-alist-get
-			       (or .action-order purpose-default-action-sequence)
-			       purpose-action-sequences))
+	     (special-action-sequence (purpose--special-action-sequence buffer
+									alist))
+	     (normal-action-sequence (purpose-alist-get
+				      (or .action-order
+					  purpose-default-action-sequence)
+				      purpose-action-sequences))
+	     (action-sequence (append special-action-sequence
+				      normal-action-sequence))
 	     (new-window
 	      ;; call all display actions in action-sequence until one of them
 	      ;; succeeds, and return the window used for display (action's
