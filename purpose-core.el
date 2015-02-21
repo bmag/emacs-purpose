@@ -12,7 +12,7 @@
 (require 'purpose-configuration)
 
 (defgroup purpose nil
-  "purpose-mode configuration"
+  " purpose-mode configuration"
   :prefix "purpose-"
   :package-version "1.1.50")
 

@@ -17,7 +17,7 @@
   "Default file for saving/loading purpose layout."
   :group 'purpose
   :type 'file
-  :package-version)
+  :package-version "1.1.50")
 
 (defcustom purpose-get-extra-window-params-function nil
   "If non-nil, this variable should be a function.
