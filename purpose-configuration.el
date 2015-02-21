@@ -37,6 +37,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'eieio)
 (require 'purpose-utils)
 
 ;;; Types
@@ -44,14 +45,14 @@
 (defclass purpose-conf ()
   ((mode-purposes :initarg :mode-purposes
 		  :initform '()
-		  :type purpose-mode-alist-p
+		  :type purpose-mode-alist
 		  )
    (name-purposes :initarg :name-purposes
 		  :initform '()
-		  :type purpose-name-alist-p)
+		  :type purpose-name-alist)
    (regexp-purposes :initarg :regexp-purposes
 		    :initform '()
-		    :type purpose-regexp-alist-p)))
+		    :type purpose-regexp-alist)))
 
 (defmacro define-purpose-list-checker (name entry-pred)
   "Create a function named NAME to check the content of a list.
