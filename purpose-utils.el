@@ -80,5 +80,14 @@ This doesn't change the original alist, but returns a modified copy."
 					  result)))))
     result))
 
+(defun purpose-plist-values (plist)
+  "Return only the values of PLIST, as a list.
+PLIST is a property list.
+Example:
+ (plist-values '(:foo 1 :bar 2)) -> (1 2)"
+  (cl-loop for i from 0
+	   for item in plist
+	   when (oddp i) collect item))
+
 (provide 'purpose-utils)
 ;;; purpose-utils.el ends here

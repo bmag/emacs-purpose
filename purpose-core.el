@@ -53,23 +53,26 @@ dummy buffer with the purpose 'edit."
 
 
 ;;; simple purpose-finding operations for `purpose-buffer-purpose'
-(defun purpose--buffer-purpose-mode (buffer-or-name)
+(defun purpose--buffer-purpose-mode (buffer-or-name mode-conf)
   "Return the purpose of buffer BUFFER-OR-NAME, as determined by its
-mode."
+mode and MODE-CONF.
+MODE-CONF is a hash table mapping modes to purposes."
   (when (get-buffer buffer-or-name)	; check if buffer exists
     (let* ((major-mode (purpose--buffer-major-mode buffer-or-name))
 	   (derived-modes (purpose--iter-hash #'(lambda (mode purpose) mode)
-					      purpose-mode-purposes))
+					      mode-conf))
 	   (derived-mode (apply #'derived-mode-p derived-modes)))
       (when derived-mode
-	(purpose-get-mode-purpose derived-mode)))))
+	(gethash derived-mode mode-conf)))))
 
-(defun purpose--buffer-purpose-name (buffer-or-name)
+(defun purpose--buffer-purpose-name (buffer-or-name name-conf)
   "Return the purpose of buffer BUFFER-OR-NAME, as determined by its
-exact name."
-  (purpose-get-name-purpose (if (stringp buffer-or-name)
-				buffer-or-name
-			      (buffer-name buffer-or-name))))
+exact name and NAME-CONF.
+NAME-CONF is a hash table mapping names to purposes."
+  (gethash (if (stringp buffer-or-name)
+	       buffer-or-name
+	     (buffer-name buffer-or-name))
+	   name-conf))
 
 (defun purpose--buffer-purpose-name-regexp-1 (buffer-or-name regexp purpose)
   "Return purpose PURPOSE if buffer BUFFER-OR-NAME's name matches
@@ -79,30 +82,65 @@ regexp REGEXP."
 				   buffer-or-name))
     purpose))
 
-(defun purpose--buffer-purpose-name-regexp (buffer-or-name)
+(defun purpose--buffer-purpose-name-regexp (buffer-or-name regexp-conf)
   "Return the purpose of buffer BUFFER-OR-NAME, as determined by the
-regexps matched by its name."
+regexps matched by its name.
+REGEXP-CONF is a hash table mapping name regexps to purposes."
   (car (remove nil
 	       (purpose--iter-hash
 		#'(lambda (regexp purpose)
 		    (purpose--buffer-purpose-name-regexp-1 buffer-or-name
 							   regexp
 							   purpose))
-		purpose-name-regexp-purposes))))
+		regexp-conf))))
 
 (defun purpose-buffer-purpose (buffer-or-name)
   "Get the purpose of buffer BUFFER-OR-NAME.
 The purpose is determined by consulting these functions in this order:
 1. `purpose--dummy-buffer-purpose'
-2. `purpose--buffer-purpose-name'
-3. `purpose--buffer-purpose-name-regexp'
-4. `purpose--buffer-purpose-mode'
+2. `purpose--buffer-purpose-name' with the user configuration
+3. `purpose--buffer-purpose-name-regexp' with the user configuration
+4. `purpose--buffer-purpose-mode' with the user configuration
+5. `purpose--buffer-purpose-name' with the extended configuration
+6. `purpose--buffer-purpose-name-regexp' with the extended configuration
+7. `purpose--buffer-purpose-mode' with the extended configuration
+And if `purpose-use-default-configuration' is non-nil, consult also:
+8. `purpose--buffer-purpose-name' with the default configuration
+9. `purpose--buffer-purpose-name-regexp' with the default configuration
+10. `purpose--buffer-purpose-mode' with the default configuration
+
 If no purpose was determined, return `default-purpose'."
-  (or (purpose--dummy-buffer-purpose buffer-or-name)
-      (purpose--buffer-purpose-name buffer-or-name)
-      (purpose--buffer-purpose-name-regexp buffer-or-name)
-      (purpose--buffer-purpose-mode buffer-or-name)
-      default-purpose))
+  (or
+   ;; check dummy buffer
+   (purpose--dummy-buffer-purpose buffer-or-name)
+
+   ;; check user config
+   (purpose--buffer-purpose-name buffer-or-name purpose--user-name-purposes)
+   (purpose--buffer-purpose-name-regexp buffer-or-name
+					purpose--user-regexp-purposes)
+   (purpose--buffer-purpose-mode buffer-or-name purpose--user-mode-purposes)
+
+   ;; check extensions' config
+   (purpose--buffer-purpose-name buffer-or-name
+				 purpose--extended-name-purposes)
+   (purpose--buffer-purpose-name-regexp buffer-or-name
+					purpose--extended-regexp-purposes)
+   (purpose--buffer-purpose-mode buffer-or-name
+				 purpose--extended-mode-purposes)
+
+   ;; check default config
+   (and
+    purpose-use-default-configuration
+    (or
+     (purpose--buffer-purpose-name buffer-or-name
+				   purpose--default-name-purposes)
+     (purpose--buffer-purpose-name-regexp buffer-or-name
+					  purpose--default-regexp-purposes)
+     (purpose--buffer-purpose-mode buffer-or-name
+				   purpose--default-mode-purposes)))
+
+   ;; fallback to default purpose
+   default-purpose))
 
 (defun purpose-buffers-with-purpose (purpose)
   "Return a list of all existing buffers with purpose PURPOSE."
