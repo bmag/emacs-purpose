@@ -12,20 +12,29 @@
 (require 'purpose-core)
 (require 'purpose-utils)
 
-(defvar purpose-action-function-ignore-buffer-names
+(defcustom purpose-action-function-ignore-buffer-names
   '("*Completions*" "*Ido Completions*")
   "Names of buffers for which the default `display-buffer' behavior
-should not be overridden.  This is a list of names.")
+should not be overridden.  This is a list of names."
+  :group 'purpose
+  :type '(repeat string)
+  :package-version "1.1.50")
 
-(defvar purpose-display-fallback 'pop-up-frame
+(defcustom purpose-display-fallback 'pop-up-frame
   "Fallback action to use when `purpose--action-function' couldn't
 display a buffer.
 This should be either `pop-up-window' for displaying the buffer in a new
 window, `pop-up-frame' for displaying the buffer in a new frame, or nil
-for signalling an error.")
+for signalling an error.  Any other value is treated the same as nil."
+  :group 'purpose
+  :type 'symbol
+  :package-version "1.1.50")
 
-(defvar purpose-select-buffer-hook nil
-  "Hook to run after selecting a buffer with `purpose-select-buffer'.")
+(defcustom purpose-select-buffer-hook nil
+  "Hook to run after selecting a buffer with `purpose-select-buffer'."
+  :group 'purpose
+  :type 'hook
+  :package-version "1.1.50")
 
 (defvar purpose--active-p nil
   "When nil, Purpose's advices and `purpose--action-function' are not

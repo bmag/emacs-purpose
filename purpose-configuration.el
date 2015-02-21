@@ -256,7 +256,8 @@ This function calls `purpose-compile-extended-configuration' when its
 done."
   (unless (keywordp keyword)
     (signal 'wrong-type-argument '(keywordp keyword)))
-  (plist-put purpose-extended-configuration keyword config)
+  (setq purpose-extended-configuration
+	(plist-put purpose-extended-configuration keyword config))
   (purpose-compile-extended-configuration))
 
 (defun purpose-del-extension-configuration (keyword)
@@ -279,7 +280,8 @@ If this is nil, the default configuration is ignored when getting the
 purpose of a buffer.  The user configuration and extended configuration
 are used anyway."
   :group 'purpose
-  :type 'boolean)
+  :type 'boolean
+  :package-version "1.1.50")
 
 (defcustom purpose-user-mode-purposes nil
   "User configured alist mapping of modes to purposes.
@@ -292,7 +294,8 @@ If you set this variable in elisp-code, you should call the function
   :set #'(lambda (symbol value)
 	   (prog1 (set-default symbol value)
 	     (purpose--fill-hash purpose--user-mode-purposes
-				 purpose-user-mode-purposes))))
+				 purpose-user-mode-purposes)))
+  :package-version "1.1.50")
 
 (defcustom purpose-user-name-purposes nil
   "User configured alist mapping of names to purposes.
@@ -305,7 +308,8 @@ If you set this variable in elisp-code, you should call the function
   :set #'(lambda (symbol value)
 	   (prog1 (set-default symbol value)
 	     (purpose--fill-hash purpose--user-name-purposes
-				 purpose-user-name-purposes))))
+				 purpose-user-name-purposes)))
+  :package-version "1.1.50")
 
 (defcustom purpose-user-regexp-purposes nil
   "User configured alist mapping of regexps to purposes.
@@ -318,7 +322,8 @@ If you set this variable in elisp-code, you should call the function
   :set #'(lambda (symbol value)
 	   (prog1 (set-default symbol value)
 	     (purpose--fill-hash purpose--user-regexp-purposes
-				 purpose-user-regexp-purposes))))
+				 purpose-user-regexp-purposes)))
+  :package-version "1.1.50")
 
 
 

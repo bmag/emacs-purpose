@@ -8,8 +8,12 @@
 
 ;;; Code:
 
-(defvar purpose-message-on-p nil
-  "If non-nil, `purpose-message' will produce a message.")
+(defcustom purpose-message-on-p nil
+  "If non-nil, `purpose-message' will produce a message.
+Toggling this on will cause Purpose to produce some debug messages."
+  :group 'purpose
+  :type 'boolean
+  :package-version "1.1.50")
 
 (defun purpose-message (format-string &rest args)
   "Produce a message if `purpose-message-on-p' is non-nil.

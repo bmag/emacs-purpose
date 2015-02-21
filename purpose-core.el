@@ -11,8 +11,16 @@
 
 (require 'purpose-configuration)
 
-(defvar default-purpose 'general
-  "The default purpose for buffers which didn't get another purpose.")
+(defgroup purpose nil
+  "purpose-mode configuration"
+  :prefix "purpose-"
+  :package-version "1.1.50")
+
+(defcustom default-purpose 'general
+  "The default purpose for buffers which didn't get another purpose."
+  :group 'purpose
+  :type 'symbol
+  :package-version "1.1.50")
 
 
 ;;; utilities
