@@ -1,4 +1,4 @@
-;;; purpose-switch.el --- Purpose-aware display handling
+;;; purpose-switch.el --- Purpose-aware display handling -*- lexical-binding: t -*-
 
 ;; Author: Bar Magal (2015)
 ;; Package: purpose

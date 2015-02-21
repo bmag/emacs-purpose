@@ -1,11 +1,11 @@
-;;; purpose.el --- Handle buffers and windows by their purposes
+;;; purpose.el --- Handle buffers and windows by their purposes -*- lexical-binding: t -*-
 
 ;; Author: Bar Magal (2015)
 ;; Package: purpose
 ;; Version: 1.1.50
 ;; Keywords: frames
 ;; Homepage: https://github.com/bmag/emacs-purpose
-;; Package-Requires: ((cl-lib "0.5") (let-alist "1.0.3"))
+;; Package-Requires: ((emacs "24") (cl-lib "0.5") (let-alist "1.0.3"))
 
 ;;; Commentary:
 

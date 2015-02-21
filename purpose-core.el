@@ -1,4 +1,4 @@
-;;; purpose-core.el --- Core functions for Purpose
+;;; purpose-core.el --- Core functions for Purpose -*- lexical-binding: t -*-
 
 ;; Author: Bar Magal (2015)
 ;; Package: purpose

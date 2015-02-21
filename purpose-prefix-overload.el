@@ -1,4 +1,4 @@
-;;; purpose-prefix-overload.el --- Bind several commands to the same key
+;;; purpose-prefix-overload.el --- Bind several commands to the same key -*- lexical-binding: t -*-
 
 ;; Author: Bar Magal (2015)
 ;; Package: purpose

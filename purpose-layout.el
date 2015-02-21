@@ -1,4 +1,4 @@
-;;; purpose-layout.el --- Save and load window layout
+;;; purpose-layout.el --- Save and load window layout -*- lexical-binding: t -*-
 
 ;; Author: Bar Magal (2015)
 ;; Package: purpose

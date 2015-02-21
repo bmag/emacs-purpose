@@ -1,4 +1,4 @@
-;;; purpose-configuration.el --- Configuration handling for Purpose
+;;; purpose-configuration.el --- Configuration handling for Purpose -*- lexical-binding: t -*-
 
 ;; Author: Bar Magal (2015)
 ;; Package: purpose
@@ -228,7 +228,8 @@ Fill `purpose--extended-mode-purposes',
 			(occur-mode . search)
 			(grep-mode . search)
 			(compilation-mode . search)
-			(image-mode . image)))
+			(image-mode . image)
+			(package-menu-mode . package)))
 
   (purpose--fill-hash purpose--default-name-purposes
 		      '((".gitignore" . edit)

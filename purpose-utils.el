@@ -1,4 +1,4 @@
-;;; purpose-utils.el --- Utilities
+;;; purpose-utils.el --- Utilities -*- lexical-binding: t -*-
 
 ;; Author: Bar Magal (2015)
 ;; Package: purpose
