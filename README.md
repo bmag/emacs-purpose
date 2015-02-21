@@ -22,7 +22,8 @@ need.
 The purpose of a window is the same as the purpose of its current
 buffer. The purpose of buffer is determined by its name and its
 mode. Purpose comes with a default confiuration, but you can set your
-configuration by using the function `purpose-set-configuration`. The
+configuration by customizing `purpose-user-mode-purposes`,
+`purpose-user-name-purposes` and `purpose-user-regexp-purposes`. The
 documentation inside the code (purpose-configuration.el) provides more
 information.
 
