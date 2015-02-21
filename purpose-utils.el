@@ -8,8 +8,12 @@
 
 ;;; Code:
 
-(defvar purpose-message-on-p nil
-  "If non-nil, `purpose-message' will produce a message.")
+(defcustom purpose-message-on-p nil
+  "If non-nil, `purpose-message' will produce a message.
+Toggling this on will cause Purpose to produce some debug messages."
+  :group 'purpose
+  :type 'boolean
+  :package-version "1.1.50")
 
 (defun purpose-message (format-string &rest args)
   "Produce a message if `purpose-message-on-p' is non-nil.
@@ -79,6 +83,15 @@ This doesn't change the original alist, but returns a modified copy."
 					  (cdr element)
 					  result)))))
     result))
+
+(defun purpose-plist-values (plist)
+  "Return only the values of PLIST, as a list.
+PLIST is a property list.
+Example:
+ (plist-values '(:foo 1 :bar 2)) -> (1 2)"
+  (cl-loop for i from 0
+	   for item in plist
+	   when (oddp i) collect item))
 
 (provide 'purpose-utils)
 ;;; purpose-utils.el ends here

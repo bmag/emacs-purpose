@@ -12,16 +12,22 @@
 (require 'cl-lib)
 (require 'purpose-core)
 
-(defvar purpose-default-layout-file
+(defcustom purpose-default-layout-file
   (concat user-emacs-directory ".purpose-layout")
-  "Default file for saving/loading purpose layout.")
+  "Default file for saving/loading purpose layout."
+  :group 'purpose
+  :type 'file
+  :package-version "1.1.50")
 
-(defvar purpose-get-extra-window-params-function nil
+(defcustom purpose-get-extra-window-params-function nil
   "If non-nil, this variable should be a function.
 This variable is used by `purpose-window-params'.  See
-`purpose-window-params' for more details.")
+`purpose-window-params' for more details."
+  :group 'purpose
+  :type 'function
+  :package-version "1.1.50")
 
-(defvar purpose-set-window-properties-functions nil
+(defcustom purpose-set-window-properties-functions nil
   "Hook to run after calling `purpose-set-window-properties'.
 Use this to set additional properties for windows as they are created,
 when `purpose-set-window-layout' or `purpose-load-window-layout' is called.  Each
@@ -29,7 +35,10 @@ function in `purpose-set-window-properties-functions' is called with two
 arguments: PROPERTIES and WINDOW.  PROPERTIES is the window's property
 list as saved in the used layout, and WINDOW is the new window.  If
 WINDOW is nil, your function should act on the selected window
-instead.")
+instead."
+  :group 'purpose
+  :type 'hook
+  :package-version "1.1.50")
 
 (defvar purpose-mru-window-layout nil
   "Most recently used window layout.
