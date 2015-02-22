@@ -20,7 +20,7 @@ should not be overridden.  This is a list of names."
   :type '(repeat string)
   :package-version "1.1.50")
 
-(defcustom purpose-display-fallback 'pop-up-frame
+(defcustom purpose-display-fallback 'pop-up-window
   "Fallback action to use when `purpose--action-function' couldn't
 display a buffer.
 This should be either `pop-up-window' for displaying the buffer in a new
@@ -340,15 +340,37 @@ This function doesn't raise the new frame."
 	(purpose--change-buffer buffer window 'reuse alist)
 	window))))
 
-(defalias 'purpose-display-pop-up-window #'display-buffer-pop-up-window)
+(defun purpose-display-pop-up-window--internal (buffer alist force-split)
+  "Display BUFFER in a new window.
+If possible, the window is split in a sensible way.  Otherwise, if
+FORCE-SPLIT is non-nil, the window is split vertically.
+The window that is split is either the largest window, or the least
+recently used window.  If couldn't get the largest or least recently
+used window, split the selected window."
+  (let* ((old-window (or (get-largest-window nil t)
+			 (get-lru-window nil t)
+			 (selected-window)))
+	 (new-window (or (split-window-sensibly old-window)
+			 (and force-split
+			      (split-window old-window)))))
+    (purpose--change-buffer buffer new-window 'window alist)
+    new-window))
+
+(defun purpose-display-pop-up-window (buffer alist)
+  "Display BUFFER in a new window.
+The value of `pop-up-windows' is ignored.  If possible, the window is
+split in a sensible way.  Otherwise, it is simply split vertically.
+The window that is split is either the largest window, or the least
+recently used window.  If couldn't get the largest or least recently
+used window, split the selected window."
+  (purpose-display-pop-up-window--internal buffer alist t))
 
 (defun purpose-display-maybe-pop-up-window (buffer alist)
   "Display BUFFER in a new window, if possible.
 The display is possible if `pop-up-windows' is non-nil.
 The display is done with `display-buffer-pop-up-window'."
   (when pop-up-windows
-    ;; (display-buffer-pop-up-window buffer alist)
-    (purpose-display-pop-up-window buffer alist)))
+    (purpose-display-pop-up-window--internal buffer alist nil)))
 
 (defalias 'purpose-display-pop-up-frame #'display-buffer-pop-up-frame)
 
