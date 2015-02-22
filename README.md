@@ -1,6 +1,7 @@
 # Purpose
 
 [![MELPA](http://melpa.org/packages/purpose-badge.svg)](http://melpa.org/#/purpose)
+[![MELPA Stable](http://stable.melpa.org/packages/purpose-badge.svg)](http://stable.melpa.org/#/purpose)
 
 - **A full explanation can be found in the [GitHub wiki](https://github.com/bmag/emacs-purpose/wiki).**
 
