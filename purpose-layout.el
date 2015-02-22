@@ -147,10 +147,14 @@ WINDOW should be a live window, and defaults to the selected one.
 This function is mainly intended to be used by
 `purpose-restore-windows-1'."
   (append (list window)
-	  ;; starting from 2nd sub-tree, since N sub-trees require N-1 splits
-	  (cl-loop for sub-tree in (cl-cdddr tree)
-		   with direction = (not (car tree))
-		   collect (split-window window -5 direction))))
+	  ;; Starting from 2nd sub-tree, since N sub-trees require N-1 splits.
+	  ;; Reversing, because the selected window doesn't change, so the
+	  ;; first split window is actually the farthest away, and so matches
+	  ;; the last sub-treeb.
+	  (nreverse
+	   (cl-loop for sub-tree in (cl-cdddr tree)
+		    with direction = (not (car tree))
+		    collect (split-window window -5 direction)))))
 
 (defun purpose--set-size (width height &optional window)
   "Set the size of window WINDOW to width WIDTH and height HEIGHT.
