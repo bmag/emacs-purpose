@@ -1,86 +1,48 @@
-;;; purpose.el --- Handle buffers and windows by their purposes -*- lexical-binding: t -*-
+;;; purpose.el --- Purpose-based window management for Emacs -*- lexical-binding: t -*-
 
 ;; Author: Bar Magal (2015)
 ;; Package: purpose
-;; Version: 1.1.50
+;; Version: 1.2
 ;; Keywords: frames
 ;; Homepage: https://github.com/bmag/emacs-purpose
 ;; Package-Requires: ((emacs "24") (cl-lib "0.5") (let-alist "1.0.3"))
 
 ;;; Commentary:
 
+;; ---------------------------------------------------------------------
+;; Full information can be found on GitHub:
+;; https://github.com/bmag/emacs-purpose/wiki
+;; ---------------------------------------------------------------------
+
 ;; Purpose is a package that introduces the concept of a "purpose" for
 ;; windows and buffers, and then helps you maintain a robust window
-;; layout easily. Purpose is intended to help both regular users and
-;; developers who want Emacs to have a more IDE-like behavior.
+;; layout easily.
 
-;; More information can be found on GitHub: https://github.com/bmag/emacs-purpose/wiki
-
-;; Installation:
-;; Download Purpose's source files and put them in your `load-path'.
-;; Purpoes is available from MELPA, so the best way to do this is
-;; with Emacs' package manager.
-;; Next, add this line to your init file:
-;;    (purpose-mode)
-;; If you prefer to download manually, you need to add these lines as
-;; well (before calling `purpose-mode'):
+;; Installation and Setup:
+;; Install Purpose from MELPA, or download it manually from GitHub. If
+;; you download manually, add these lines to your init file:
 ;;    (add-to-list 'load-path "/path/to/purpose")
 ;;    (require 'purpose)
+;; To activate Purpose at start-up, add this line to your init file:
+;;    (purpose-mode)
 
-;; Typical Usage (Regular User)
-;; 1. Turn Purpose on (`purpose-mode').
-;; 2. Configure which purposes you want your windows to have (see
-;;    purpose-configuration.el).
-;; 3. Arrange your window layout as you want it to be. Any window which
-;;    you want to dedicate to a specific purpose (so it won't be used
-;;    for other purposes), you shuld dedicate with
-;;    `purpose-toggle-window-purpose-dedicated'.
-;; 4. Purpose uses advice, so Emacs uses purpose-aware commands instead
-;;    of the original commands when you need to change buffers. (e.g.
-;;    `purpose-switch-buffer' instead of `switch-to-buffer'). This will
-;;    open your buffers in the correct windows.
-;; - To save your layout, or load a previously saved layout, use
-;;    `purpose-save-window-layout', `purpose-load-window-layout',
-;;    `purpose-save-frame-layout' and `purpose-load-frame-layout'. You
-;;    can load a saved layout and skip phases 1 and 2, of course.
+;; Purpose Configuration:
+;; Customize `purpose-user-mode-purposes', `purpose-user-name-purposes',
+;; `purpose-user-regexp-purposes' and
+;; `purpose-use-default-configuration'.
 
-;; Important Features:
-;; - Configurable: Configure how Purpose decides what's your buffer's
-;;    purpose. Note that the window's purpose is determined by its
-;;    buffer.
-;; - Persistent Window Layout: You can save and load your window layout
-;;    between sessions by using `purpose-save-window-layout',
-;;    `purpose-load-window-layout', `purpose-save-frame-layout' and
-;;    `purpose-load-frame-layout'.
-;; - Purpose-Aware Buffer Switching: Purpose uses advices (overrides)
-;;    `display-buffer-overriding-action' in order to make Emacs' buffer
-;;    switching functions "purpose-aware".
-;; - Developer-Friendly: Purpose has hooks and an API that should make
-;;    it easy for developers to use it as a part of more sophisticated
-;;    plugins. If it isn't, your input is welcome.
-
-;; Developer Usage (informal API):
-;; - `purpose-set-window-layout', `purpose-load-window-layout': use this
-;;    to set a window layout that suits your plugin.  -
-;; - `purpose-get-window-layout' or `purpose-save-window-layout': use
-;;    this to save a layout so you can add it to your plugin later.
-;; - Functions for changing frame layout (similar to window layout)
-;; - `purpose-get-extra-window-params-function': use this if you want to
-;;    save additional window parameters that make sense for your plugin,
-;;    when `purpose-get-window-layout' is called.
-;; - `purpose-set-window-properties-functions': use this hook if you
-;;    want to set extra properties for new windows, when
-;;    `purpose-set-window-layout' is called.
-;; - `purpose-set-configuration', `purpose-add-configuration': use these
-;;    to change the purpose configuration to suit your plugin's needs.
-;; - `purpose-select-buffer-hook': use this if you want to run some
-;;    code every time a buffer is selected.
-;; - `without-purpose': use this macro if you need to ignore purposes
-;;    while executing some piece of code.
-;; - `without-purpose-command': use this macro to create a command that
-;;    ignores purposes.
-;; - `purpose-special-action-sequences': use this to display some
-;;    buffers in a special way.
+;; Basic Usage:
+;; 1. Load/Save window/frame layout (see `purpose-load-window-layout',
+;;    `purpose-save-window-layout', etc.)
+;; 2. Use regular switch-buffer functions - they will not mess your
+;;    window layout (Purpose overrides them).
+;; 3. If you don't want a window's purpose/buffer to change, dedicate
+;;    the window:
+;;    C-c , d: `purpose-toggle-window-purpose-dedicated'
+;;    C-c , D: `purpose-toggle-window-buffer-dedicated'
+;; 4. To use a switch-buffer function that ignores Purpose, prefix it
+;;    with C-u. For example, [C-u C-x b] calls
+;;    `switch-buffer-without-purpose'.
 
 ;;; Code:
 
@@ -90,7 +52,7 @@
 (require 'purpose-switch)
 (require 'purpose-prefix-overload)
 
-(defconst purpose-version "1.1.50"
+(defconst purpose-version "1.2"
   "Purpose's version.")
 
 

@@ -17,7 +17,7 @@
   "Default file for saving/loading purpose layout."
   :group 'purpose
   :type 'file
-  :package-version "1.1.50")
+  :package-version "1.2")
 
 (defcustom purpose-get-extra-window-params-function nil
   "If non-nil, this variable should be a function.
@@ -25,7 +25,7 @@ This variable is used by `purpose-window-params'.  See
 `purpose-window-params' for more details."
   :group 'purpose
   :type 'function
-  :package-version "1.1.50")
+  :package-version "1.2")
 
 (defcustom purpose-set-window-properties-functions nil
   "Hook to run after calling `purpose-set-window-properties'.
@@ -38,7 +38,7 @@ WINDOW is nil, your function should act on the selected window
 instead."
   :group 'purpose
   :type 'hook
-  :package-version "1.1.50")
+  :package-version "1.2")
 
 (defvar purpose-mru-window-layout nil
   "Most recently used window layout.

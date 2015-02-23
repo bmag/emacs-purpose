@@ -18,7 +18,7 @@
 should not be overridden.  This is a list of names."
   :group 'purpose
   :type '(repeat string)
-  :package-version "1.1.50")
+  :package-version "1.2")
 
 (defcustom purpose-display-fallback 'pop-up-window
   "Fallback action to use when `purpose--action-function' couldn't
@@ -28,13 +28,13 @@ window, `pop-up-frame' for displaying the buffer in a new frame, or nil
 for signalling an error.  Any other value is treated the same as nil."
   :group 'purpose
   :type 'symbol
-  :package-version "1.1.50")
+  :package-version "1.2")
 
 (defcustom purpose-select-buffer-hook nil
   "Hook to run after selecting a buffer with `purpose-select-buffer'."
   :group 'purpose
   :type 'hook
-  :package-version "1.1.50")
+  :package-version "1.2")
 
 (defvar purpose--active-p nil
   "When nil, Purpose's advices and `purpose--action-function' are not
@@ -384,7 +384,6 @@ The display is done with `display-buffer-pop-up-frame'."
   (when (if (eq pop-up-frames 'graphic-only)
 	    (display-graphic-p)
 	  pop-up-frames)
-    ;; (display-buffer-pop-up-frame buffer alist)
     (purpose-display-pop-up-frame buffer alist)))
 
 
