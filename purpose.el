@@ -2,7 +2,7 @@
 
 ;; Author: Bar Magal (2015)
 ;; Package: purpose
-;; Version: 1.2
+;; Version: 1.2.50
 ;; Keywords: frames
 ;; Homepage: https://github.com/bmag/emacs-purpose
 ;; Package-Requires: ((emacs "24") (cl-lib "0.5") (let-alist "1.0.3"))
@@ -52,7 +52,7 @@
 (require 'purpose-switch)
 (require 'purpose-prefix-overload)
 
-(defconst purpose-version "1.2"
+(defconst purpose-version "1.2.50"
   "Purpose's version.")
 
 
