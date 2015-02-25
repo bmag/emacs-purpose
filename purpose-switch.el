@@ -13,7 +13,10 @@
 (require 'purpose-utils)
 
 (defcustom purpose-action-function-ignore-buffer-names
-  '("*Completions*" "*Ido Completions*")
+  '("*Completions*"
+    "*Ido Completions*"
+    ;; hydra's special window for semi-permanent hints
+    "*LV*")
   "Names of buffers for which the default `display-buffer' behavior
 should not be overridden.  This is a list of names."
   :group 'purpose
@@ -579,7 +582,12 @@ Never selects the currently selected window."
 If Purpose is active (`purpose--active-p' is non-nil), call
 `purpose-switch-buffer', otherwise call `switch-to-buffer'."
 	(purpose-message "switch-to-buffer advice")
-	(if purpose--active-p
+	;; check the full `purpose--use-action-function-p' here, because
+	;; if purpose shouldn't be used for some reason (such as
+	;; `purpose-action-function-ignore-buffer-names'), then we want
+	;; to fallback to `switch-to-buffer', instead of
+	;; `display-buffer'
+	(if (purpose--use-action-function-p (window-normalize-buffer-to-switch-to buffer-or-name) nil)
 	    (purpose-switch-buffer buffer-or-name norecord force-same-window)
 	  (funcall oldfun buffer-or-name norecord force-same-window)))
 

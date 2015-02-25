@@ -257,7 +257,7 @@ Example:
 This function calls `purpose-compile-extended-configuration' when its
 done."
   (unless (keywordp keyword)
-    (signal 'wrong-type-argument '(keywordp keyword)))
+    (signal 'wrong-type-argument `(keywordp ,keyword)))
   (setq purpose-extended-configuration
 	(plist-put purpose-extended-configuration keyword config))
   (purpose-compile-extended-configuration))

@@ -153,7 +153,7 @@ purpose is 'edit: If (purpose-window-purpose-dedicated-p), return
 This function is called when `purpose-mode' is activated."
   (if (fboundp 'advice-add)
       ;; add advices for Emacs 24.4 and newer
-      (progn 
+      (progn
 	(advice-add 'switch-to-buffer
 		    :around #'purpose-switch-to-buffer-advice)
 	(advice-add 'switch-to-buffer-other-window
