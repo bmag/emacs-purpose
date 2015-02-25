@@ -564,136 +564,130 @@ Never selects the currently selected window."
   (when (not (listp action))		; non-nil, non-list
     'prefer-other-window))
 
-(if (fboundp 'advice-add)
-    ;; define advices for Emacs 24.4 and newer
-    (progn
-      (defun purpose-display-buffer-advice (oldfun buffer-or-name &optional action frame)
-	"Update `purpose--alist' when calling `display-buffer'."
-	(let* ((action-order (purpose-display--action-to-order action))
-	       (purpose--alist (if action-order
-				   (purpose-alist-set 'action-order
-						      action-order
-						      purpose--alist)
-				 purpose--alist)))
-	  (funcall oldfun buffer-or-name action frame)))
+(define-purpose-compatible-advice 'display-buffer
+  :around purpose-display-buffer-advice
+  (buffer-or-name &optional action frame)
+  "Update `purpose--alist' when calling `display-buffer'."
+  ;; new style advice
+  ((let* ((action-order (purpose-display--action-to-order action))
+	  (purpose--alist (if action-order
+			      (purpose-alist-set 'action-order
+						 action-order
+						 purpose--alist)
+			    purpose--alist)))
+     (funcall oldfun buffer-or-name action frame)))
 
-      (defun purpose-switch-to-buffer-advice (oldfun buffer-or-name &optional norecord force-same-window)
-	"Advice for overriding `switch-to-buffer' conditionally.
+  ;; old style advice
+  ((let* ((action-order (purpose-display--action-to-order action))
+	  (purpose--alist (if action-order
+			      (purpose-alist-set 'action-order
+						 action-order
+						 purpose--alist)
+			    purpose--alist)))
+     ad-do-it)))
+
+(define-purpose-compatible-advice 'switch-to-buffer
+  :around purpose-switch-to-buffer-advice
+  (buffer-or-name &optional norecord force-same-window)
+  "Advice for overriding `switch-to-buffer' conditionally.
 If Purpose is active (`purpose--active-p' is non-nil), call
 `purpose-switch-buffer', otherwise call `switch-to-buffer'."
-	(purpose-message "switch-to-buffer advice")
-	;; check the full `purpose--use-action-function-p' here, because
-	;; if purpose shouldn't be used for some reason (such as
-	;; `purpose-action-function-ignore-buffer-names'), then we want
-	;; to fallback to `switch-to-buffer', instead of
-	;; `display-buffer'
-	(if (purpose--use-action-function-p (window-normalize-buffer-to-switch-to buffer-or-name) nil)
-	    (purpose-switch-buffer buffer-or-name norecord force-same-window)
-	  (funcall oldfun buffer-or-name norecord force-same-window)))
+  ;; new style advice
+  ((purpose-message "switch-to-buffer advice")
+   ;; check the full `purpose--use-action-function-p' here, because
+   ;; if purpose shouldn't be used for some reason (such as
+   ;; `purpose-action-function-ignore-buffer-names'), then we want
+   ;; to fallback to `switch-to-buffer', instead of
+   ;; `display-buffer'
+   (if (purpose--use-action-function-p (window-normalize-buffer-to-switch-to buffer-or-name) nil)
+       (purpose-switch-buffer buffer-or-name norecord force-same-window)
+     (funcall oldfun buffer-or-name norecord force-same-window)))
 
-      (defun purpose-switch-to-buffer-other-window-advice (oldfun buffer-or-name &optional norecord)
-	"Advice for overriding `switch-to-buffer-other-window' conditionally.
+  ;; old style advice
+  ((purpose-message "switch-to-buffer advice")
+   (if (purpose--use-action-function-p (window-normalize-buffer-to-switch-to buffer-or-name) nil)
+       (purpose-switch-buffer buffer-or-name norecord force-same-window)
+     ad-do-it)))
+
+(define-purpose-compatible-advice 'switch-to-buffer-other-window
+  :around purpose-switch-to-buffer-other-window-advice
+  (buffer-or-name &optional norecord)
+  "Advice for overriding `switch-to-buffer-other-window' conditionally.
 If Purpose is active (`purpose--active-p' is non-nil), call
 `purpose-switch-buffer-other-window', otherwise call
 `switch-to-buffer-other-window'."
-	(purpose-message "switch-to-buffer-other-window advice")
-	(if purpose--active-p
-	    (purpose-switch-buffer-other-window buffer-or-name norecord)
-	  (funcall oldfun buffer-or-name norecord)))
-
-      (defun purpose-switch-to-buffer-other-frame-advice (oldfun buffer-or-name &optional norecord)
-	"Advice for overriding `switch-to-buffer-other-frame' conditionally.
-If Purpose is active (`purpose--active-p' is non-nil), call
-`purpose-switch-buffer-other-frame', otherwise call
-`switch-to-buffer-other-frame'."
-	(purpose-message "switch-to-buffer-other-frame advice")
-	(if purpose--active-p
-	    (purpose-switch-buffer-other-frame buffer-or-name norecord)
-	  (funcall oldfun buffer-or-name norecord)))
-      
-      (defun purpose-pop-to-buffer-advice (oldfun buffer-or-name &optional action norecord)
-	"Advice for overriding `pop-to-buffer' conditionally.
-If Purpose is active (`purpose--active-p' is non-nil) and ACTION is nil,
-call `purpose-pop-buffer', otherwise call `pop-to-buffer'."
-	(purpose-message "pop-to-buffer advice")
-	(if (and purpose--active-p
-		 (not action))
-	    (purpose-pop-buffer buffer-or-name norecord)
-	  (funcall oldfun buffer-or-name action norecord)))
-
-      (defun purpose-pop-to-buffer-same-window-advice (oldfun buffer-or-name &optional norecord)
-	"Advice for overriding `pop-to-buffer-same-window' conditionally.
-If Purpose is active (`purpose--active-p' is non-nil), call
-`purpose-pop-buffer-same-window', otherwise call
-`pop-to-buffer-same-window'."
-	(purpose-message "pop-to-buffer-same-window advice")
-	(if purpose--active-p
-	    (purpose-pop-buffer-same-window buffer-or-name norecord)
-	  (funcall oldfun buffer-or-name norecord)))
-      )
-
-  ;; define advices for Emacs 24.3 and older
-  (defadvice display-buffer (around purpose-override (buffer-or-name &optional action frame))
-    "Update `purpose--alist' when calling `display-buffer'."
-    (let* ((action-order (purpose-display--action-to-order action))
-	   (purpose--alist (if action-order
-			       (purpose-alist-set 'action-order
-						  action-order
-						  purpose--alist)
-			     purpose--alist)))
-      ad-do-it))
-
-  (defadvice switch-to-buffer (around purpose-override (buffer-or-name &optional norecord force-same-window))
-    "Advice for overriding `switch-to-buffer' conditionally.
-If Purpose is active (`purpose--active-p' is non-nil), call
-`purpose-switch-buffer', otherwise call `switch-to-buffer'."
-    (purpose-message "switch-to-buffer advice")
-    (if (purpose--use-action-function-p (window-normalize-buffer-to-switch-to buffer-or-name) nil)
-	(purpose-switch-buffer buffer-or-name norecord force-same-window)
-      ad-do-it))
-
-  (defadvice switch-to-buffer-other-window (around purpose-override (buffer-or-name &optional norecord))
-    "Advice for overriding `switch-to-buffer-other-window' conditionally.
-If Purpose is active (`purpose--active-p' is non-nil), call
-`purpose-switch-buffer-other-window', otherwise call
-`switch-to-buffer-other-window'."
-    (purpose-message "switch-to-buffer-other-window advice")
-    (if purpose--active-p
-	(purpose-switch-buffer-other-window buffer-or-name norecord)
-      (funcall oldfun buffer-or-name norecord)))
-
-  (defadvice switch-to-buffer-other-frame (around purpose-override (buffer-or-name &optional norecord))
-    "Advice for overriding `switch-to-buffer-other-frame' conditionally.
-If Purpose is active (`purpose--active-p' is non-nil), call
-`purpose-switch-buffer-other-frame', otherwise call
-`switch-to-buffer-other-frame'."
-    (purpose-message "switch-to-buffer-other-frame advice")
-    (if purpose--active-p
-	(purpose-switch-buffer-other-frame buffer-or-name norecord)
-      ad-do-it))
+  ;; new style advice
+  ((purpose-message "switch-to-buffer-other-window advice")
+   (if purpose--active-p
+       (purpose-switch-buffer-other-window buffer-or-name norecord)
+     (funcall oldfun buffer-or-name norecord)))
   
-  (defadvice pop-to-buffer (around purpose-override (buffer-or-name &optional action norecord))
-    "Advice for overriding `pop-to-buffer' conditionally.
+  ;; old style advice
+  ((purpose-message "switch-to-buffer-other-window advice")
+   (if purpose--active-p
+       (purpose-switch-buffer-other-window buffer-or-name norecord)
+     ad-do-it)))
+
+(define-purpose-compatible-advice 'switch-to-buffer-other-frame
+  :around purpose-switch-to-buffer-other-frame-advice
+  (buffer-or-name &optional norecord)
+  "Advice for overriding `switch-to-buffer-other-frame' conditionally.
+If Purpose is active (`purpose--active-p' is non-nil), call
+`purpose-switch-buffer-other-frame', otherwise call
+`switch-to-buffer-other-frame'."
+  ;; new style advice
+  ((purpose-message "switch-to-buffer-other-frame advice")
+   (if purpose--active-p
+       (purpose-switch-buffer-other-frame buffer-or-name norecord)
+     (funcall oldfun buffer-or-name norecord)))
+
+  ;; old style advice
+  ((purpose-message "switch-to-buffer-other-frame advice")
+   (if purpose--active-p
+       (purpose-switch-buffer-other-frame buffer-or-name norecord)
+     ad-do-it)))
+
+(define-purpose-compatible-advice 'pop-to-buffer
+  :around purpose-pop-to-buffer-advice
+  (buffer-or-name &optional action norecord)
+  "Advice for overriding `pop-to-buffer' conditionally.
 If Purpose is active (`purpose--active-p' is non-nil) and ACTION is nil,
 call `purpose-pop-buffer', otherwise call `pop-to-buffer'."
-    (purpose-message "pop-to-buffer advice")
-    (if (and purpose--active-p
-	     (not action))
-	(purpose-pop-buffer buffer-or-name norecord)
-      ad-do-it))
+  ;; new style advice
+  ((purpose-message "pop-to-buffer advice")
+   (if (and purpose--active-p
+	    (not action))
+       (purpose-pop-buffer buffer-or-name norecord)
+     (funcall oldfun buffer-or-name action norecord)))
 
-  (defadvice pop-to-buffer-same-window (around purpose-override (buffer-or-name &optional norecord))
-    "Advice for overriding `pop-to-buffer-same-window' conditionally.
+  ;; old style advice
+  ((purpose-message "pop-to-buffer advice")
+   (if (and purpose--active-p
+	    (not action))
+       (purpose-pop-buffer buffer-or-name norecord)
+     ad-do-it)))
+
+(define-purpose-compatible-advice 'pop-to-buffer-same-window
+  :around purpose-pop-to-buffer-same-window-advice
+  (buffer-or-name &optional norecord)
+  "Advice for overriding `pop-to-buffer-same-window' conditionally.
 If Purpose is active (`purpose--active-p' is non-nil), call
 `purpose-pop-buffer-same-window', otherwise call
 `pop-to-buffer-same-window'."
-    (purpose-message "pop-to-buffer-same-window advice")
-    (if purpose--active-p
-	(purpose-pop-buffer-same-window buffer-or-name norecord)
-      ad-do-it))
-  )
+  ;; new style advice
+  ((purpose-message "pop-to-buffer-same-window advice")
+   (if purpose--active-p
+       (purpose-pop-buffer-same-window buffer-or-name norecord)
+     (funcall oldfun buffer-or-name norecord)))
+  
+  ;; old style advice
+  ((purpose-message "pop-to-buffer-same-window advice")
+   (if purpose--active-p
+       (purpose-pop-buffer-same-window buffer-or-name norecord)
+     ad-do-it)))
 
 ;; anti-override:
+
 (defmacro without-purpose (&rest body)
   "Make Purpose inactive while executing BODY.
 This works internally by temporarily setting `purpose--active-p'."

@@ -46,6 +46,7 @@
 
 ;;; Code:
 
+(require 'purpose-utils)
 (require 'purpose-configuration)
 (require 'purpose-core)
 (require 'purpose-layout)
@@ -152,52 +153,34 @@ purpose is 'edit: If (purpose-window-purpose-dedicated-p), return
 (defun purpose--add-advices ()
   "Add all advices needed for Purpose to work.
 This function is called when `purpose-mode' is activated."
-  (if (fboundp 'advice-add)
-      ;; add advices for Emacs 24.4 and newer
-      (progn
-	(advice-add 'switch-to-buffer
-		    :around #'purpose-switch-to-buffer-advice)
-	(advice-add 'switch-to-buffer-other-window
-		    :around #'purpose-switch-to-buffer-other-window-advice)
-	(advice-add 'switch-to-buffer-other-frame
-		    :around #'purpose-switch-to-buffer-other-frame-advice)
-	(advice-add 'pop-to-buffer :around #'purpose-pop-to-buffer-advice)
-	(advice-add 'pop-to-buffer-same-window
-		    :around #'purpose-pop-to-buffer-same-window-advice)
-	(advice-add 'display-buffer :around #'purpose-display-buffer-advice))
-    ;; add advices for Emacs 24.3 and older
-    (dolist (function '(switch-to-buffer
-			switch-to-buffer-other-window
-			switch-to-buffer-other-frame
-			pop-to-buffer
-			pop-to-buffer-same-window))
-      (ad-enable-advice function 'around 'purpose-override)
-      (ad-update function)
-      (ad-activate function))))
+  (purpose-advice-add 'switch-to-buffer :around
+		      #'purpose-switch-to-buffer-advice)
+  (purpose-advice-add 'switch-to-buffer-other-window :around
+		      #'purpose-switch-to-buffer-other-window-advice)
+  (purpose-advice-add 'switch-to-buffer-other-frame :around
+		      #'purpose-switch-to-buffer-other-frame-advice)
+  (purpose-advice-add 'pop-to-buffer :around
+		      #'purpose-pop-to-buffer-advice)
+  (purpose-advice-add 'pop-to-buffer-same-window :around
+		      #'purpose-pop-to-buffer-same-window-advice)
+  (purpose-advice-add 'display-buffer :around
+		      #'purpose-display-buffer-advice))
 
 (defun purpose--remove-advices ()
   "Remove all advices needed for Purpose to work.
 This function is called when `purpose-mode' is deactivated."
-  (if (fboundp 'advice-remove)
-      ;; remove advices for Emacs 24.4 and newer
-      (progn
-	(advice-remove 'switch-to-buffer #'purpose-switch-to-buffer-advice)
-	(advice-remove 'switch-to-buffer-other-window
-		       #'purpose-switch-to-buffer-other-window-advice)
-	(advice-remove 'switch-to-buffer-other-frame
-		       #'purpose-switch-to-buffer-other-frame-advice)
-	(advice-remove 'pop-to-buffer #'purpose-pop-to-buffer-advice)
-	(advice-remove 'pop-to-buffer-same-window
-		       #'purpose-pop-to-buffer-same-window-advice)
-	(advice-remove 'display-buffer #'purpose-display-buffer-advice))
-    ;; remove advices for Emacs 24.3 and older
-    (dolist (function '(switch-to-buffer
-			switch-to-buffer-other-window
-			switch-to-buffer-other-frame
-			pop-to-buffer
-			pop-to-buffer-same-window))
-      (ad-disable-advice function 'around 'purpose-override)
-      (ad-update function))))
+  (purpose-advice-remove 'switch-to-buffer :around
+			 #'purpose-switch-to-buffer-advice)
+  (purpose-advice-remove 'switch-to-buffer-other-window :around
+			 #'purpose-switch-to-buffer-other-window-advice)
+  (purpose-advice-remove 'switch-to-buffer-other-frame :around
+			 #'purpose-switch-to-buffer-other-frame-advice)
+  (purpose-advice-remove 'pop-to-buffer :around
+			 #'purpose-pop-to-buffer-advice)
+  (purpose-advice-remove 'pop-to-buffer-same-window :around
+			 #'purpose-pop-to-buffer-same-window-advice)
+  (purpose-advice-remove 'display-buffer :around
+			 #'purpose-display-buffer-advice))
 
 (define-minor-mode purpose-mode
   nil :global t :lighter (:eval (purpose--modeline-string))
