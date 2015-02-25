@@ -9,6 +9,14 @@
 
 ;;; Code:
 
+(require 'purpose-switch)
+
+
+
+;;; `compilation-next-error-function' sometimes hides the compilation buffer
+;;; when Purpose is on. Solution: make the buffer's window dedicated while
+;;; executing `compilation-next-error-function'
+
 (define-purpose-compatible-advice 'compilation-next-error-function
   :around purpose--fix-compilation-next-error
   (&rest args)
@@ -34,17 +42,31 @@ This function should be advised around
 	 ad-do-it
        (set-window-dedicated-p compilation-window old-window-dedicated-p)))))
 
+
+
+;;; Hydra's *LV* buffer should be ignored by Purpose
+(defun purpose--fix-hydra-lv ()
+  "Add hydra's LV buffer to Purpose's ignore list."
+  (eval-after-load 'hydra
+    (lambda ()
+      (add-to-list 'purpose-action-function-ignore-buffer-names "*LV*"))))
+
+
+;;; install fixes
+
 (defun purpose-fix-install (&rest exclude)
   "Install fixes for integrating Purpose with other features.
 EXCLUDE is a list of integrations to skip.  Known members of EXCLUDE
 are:
 - 'compilation-next-error-function : don't integrate with
-  `compilation-next-error-function'."
+  `compilation-next-error-function'.
+- 'hydra : don't integrate with hydra"
   (interactive)
   (unless (member 'compilation-next-error-function exclude)
     (purpose-advice-add 'compilation-next-error-function
-			:around #'purpose--fix-compilation-next-error)))
+			:around #'purpose--fix-compilation-next-error))
+  (unless (member 'hydra exclude)
+    (purpose--fix-hydra-lv)))
 
 (provide 'purpose-fixes)
-
 ;;; purpose-fixes.el ends here

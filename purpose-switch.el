@@ -12,16 +12,12 @@
 (require 'purpose-core)
 (require 'purpose-utils)
 
-(defcustom purpose-action-function-ignore-buffer-names
+(defvar purpose-action-function-ignore-buffer-names
   '("*Completions*"
-    "*Ido Completions*"
-    ;; hydra's special window for semi-permanent hints
-    "*LV*")
-  "Names of buffers for which the default `display-buffer' behavior
-should not be overridden.  This is a list of names."
-  :group 'purpose
-  :type '(repeat string)
-  :package-version "1.2")
+    "*Ido Completions*")
+  "Names of buffers for which the default `display-buffer' and
+`switch-to-buffer' behavior should not be overridden.  This is a list of
+names.")
 
 (defcustom purpose-display-fallback 'pop-up-window
   "Fallback action to use when `purpose--action-function' couldn't
