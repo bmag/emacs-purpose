@@ -93,5 +93,65 @@ Example:
 	   for item in plist
 	   when (oddp i) collect item))
 
+
+
+;;; compatibility layer for advices
+
+(defun purpose-advice-convert-where-arg (where)
+  "Convert WHERE argument from new advice style to old advice style.
+New style is :before, :after, etc.  Old style is 'before, 'after, etc."
+  (unless (keywordp where)
+    (signal 'wrong-type-argument `(keywordp ,where)))
+  (intern (mapconcat #'identity (cdr (split-string (symbol-name where) ":")) ":")))
+
+(defun purpose-advice-new-style-arglist (arglist where)
+  "Convert ARGLIST to new style, according to WHERE.
+If WHERE is :around, add 'oldfun to the beginning of ARGLIST.
+Otherwise, return ARGLIST without changes."
+  (if (eql where :around)
+      (append '(oldfun) arglist)
+    arglist))
+
+(defmacro define-purpose-compatible-advice (symbol where name arglist docstring new-body old-body)
+  "Define advice, using new or old advice style as appropriate.
+SYMBOL and WHERE have the same meaning as in `advice-add'.  NAME
+has the same meaning as FUNCTION argument of `advice-add'.
+ARGLIST has the same meaning as in `defadvice'.  DOCSTRING is the
+advice's documentation.  NEW-BODY is the advice's body if the new
+advice style is available.  OLD-BODY is the advice's body if the
+new advice style is unavailable.
+
+`define-purpose-compatible-advice' properly supports only :around, :before and :after advices."
+  (if (fboundp 'advice-add)
+      `(defun ,name (,@(purpose-advice-new-style-arglist arglist where))
+	 ,docstring
+	 ,@new-body)
+    ;; ,(cadr symbol) turns <'foo> into <foo>
+    `(defadvice ,(cadr symbol) (,(purpose-advice-convert-where-arg where) ,name ,arglist)
+       ,docstring
+       ,@old-body)))
+
+(defmacro purpose-advice-add (symbol where name)
+  "Enable advice, using new or old advice style as appropriate.
+SYMBOL, WHERE and NAME have the same meaning as in
+`define-purpose-advice'."
+  (if (fboundp 'advice-add)
+      `(advice-add ,symbol ,where ,name)
+    `(progn
+       (ad-enable-advice ,symbol ',(purpose-advice-convert-where-arg where) ,name)
+       (ad-update ,symbol)
+       (ad-activate ,symbol))))
+
+(defmacro purpose-advice-remove (symbol where name)
+  "Disable advice, using new or old advice style as appropriate.
+SYMBOL, WHERE and NAME have the same meaning as in
+`define-purpose-advice'."
+  (if (fboundp 'advice-remove)
+      `(advice-remove ,symbol ,name)
+    `(progn
+       (ad-disable-advice ,symbol ',(purpose-advice-convert-where-arg where) ,name)
+       (ad-update ,symbol))))
+
+
 (provide 'purpose-utils)
 ;;; purpose-utils.el ends here

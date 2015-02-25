@@ -648,7 +648,7 @@ If Purpose is active (`purpose--active-p' is non-nil), call
 If Purpose is active (`purpose--active-p' is non-nil), call
 `purpose-switch-buffer', otherwise call `switch-to-buffer'."
     (purpose-message "switch-to-buffer advice")
-    (if purpose--active-p
+    (if (purpose--use-action-function-p (window-normalize-buffer-to-switch-to buffer-or-name) nil)
 	(purpose-switch-buffer buffer-or-name norecord force-same-window)
       ad-do-it))
 

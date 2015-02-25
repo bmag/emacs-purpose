@@ -51,6 +51,7 @@
 (require 'purpose-layout)
 (require 'purpose-switch)
 (require 'purpose-prefix-overload)
+(require 'purpose-fixes)
 
 (defconst purpose-version "1.2.50"
   "Purpose's version.")
@@ -205,7 +206,8 @@ This function is called when `purpose-mode' is deactivated."
 	(purpose--add-advices)
 	(setq display-buffer-overriding-action
 	      '(purpose--action-function . nil))
-	(setq purpose--active-p t))
+	(setq purpose--active-p t)
+	(purpose-fix-install))
     (purpose--remove-advices)
     (setq purpose--active-p nil)))
 
