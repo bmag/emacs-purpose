@@ -3,11 +3,19 @@
 (require 'purpose)
 
 (defvar pu-ext--window-layout
-  '(nil (0 0 152 35)
-	(:purpose edit :purpose-dedicated t :width 0.7466666666666667 :height 0.9722222222222222 :edges (0.0 0.0 0.7733333333333333 0.9722222222222222))
-	(t (116 0 152 35) (:purpose dired :purpose-dedicated t :width 0.21333333333333335 :height 0.5 :edges (0.7733333333333333 0.0 1.0133333333333334 0.5)) (:purpose ibuffer :purpose-dedicated t :width 0.22 :height 0.4722222222222222 :edges (0.7733333333333333 0.5 1.0133333333333334 0.9722222222222222)))))
+  '(nil
+    (0 0 152 35)
+    (:purpose edit :purpose-dedicated t :width 0.7466666666666667 :height 0.9722222222222222 :edges
+	      (0.0 0.0 0.7733333333333333 0.9722222222222222))
+    (t
+     (116 0 152 35)
+     (:purpose dired :purpose-dedicated t :width 0.21333333333333335 :height 0.5 :edges
+	       (0.7733333333333333 0.0 1.0133333333333334 0.5))
+     (:purpose ibuffer :purpose-dedicated t :width 0.22 :height 0.4722222222222222 :edges
+	       (0.7733333333333333 0.5 1.0133333333333334 0.9722222222222222)))))
 
-(defvar pu-ext-purpose-config (purpose-conf :mode-purposes
+(defvar pu-ext-purpose-config (purpose-conf "pu-ext-dired-ibuffer"
+					    :mode-purposes
 					    '((ibuffer-mode . ibuffer)
 					      (dired-mode . dired))))
 

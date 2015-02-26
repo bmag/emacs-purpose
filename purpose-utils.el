@@ -91,7 +91,7 @@ Example:
  (plist-values '(:foo 1 :bar 2)) -> (1 2)"
   (cl-loop for i from 0
 	   for item in plist
-	   when (oddp i) collect item))
+	   when (cl-oddp i) collect item))
 
 
 

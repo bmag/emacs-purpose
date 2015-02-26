@@ -21,8 +21,8 @@
 
 (require 'cl-lib)
 
-(defun purpose--prefix-arg-to-index (prefix-arg)
-  "Turn prefix argument PREFIX-ARG to a logical index.
+(defun purpose--prefix-arg-to-index (prefix-argument)
+  "Turn prefix argument PREFIX-ARGUMENT to a logical index.
 Examples:
 C-u <command>: index 1
 C-u C-u <command>: index 2
@@ -30,17 +30,17 @@ C-u 2 <command>: index 2
 C-u 1 2 <command>: index 12
 <command>: index 0 (no prefix argument used)"
   (cond
-   ((null prefix-arg)
+   ((null prefix-argument)
     0)
 	
-   ((listp prefix-arg)
-    (floor (log (car prefix-arg) 4)))
+   ((listp prefix-argument)
+    (floor (log (car prefix-argument) 4)))
 
-   ((eq prefix-arg '-)
+   ((eq prefix-argument '-)
     -1)
    
    (t
-    prefix-arg)))
+    prefix-argument)))
 
 (defun purpose--generate-documentation-def-prefix-overload (name commands)
   (let ((doc-first (format "\\[%s]: `%s'" name (car commands)))

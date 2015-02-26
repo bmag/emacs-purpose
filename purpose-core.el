@@ -12,7 +12,8 @@
 (require 'purpose-configuration)
 
 (defgroup purpose nil
-  " purpose-mode configuration"
+  "purpose-mode configuration"
+  :group 'windows
   :prefix "purpose-"
   :package-version "1.2")
 
