@@ -1,7 +1,24 @@
 ;;; purpose-configuration.el --- Configuration handling for Purpose -*- lexical-binding: t -*-
 
+;; Copyright (C) 2015 Bar Magal
+
 ;; Author: Bar Magal (2015)
 ;; Package: purpose
+
+;; This file is not part of GNU Emacs.
+
+;; This program is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 ;; This file contains the "purpose configuration". The "purpose
@@ -215,7 +232,7 @@ Fill `purpose--extended-mode-purposes',
 	    (purpose--fill-hash purpose--extended-regexp-purposes
 				(oref extension-config :regexp-purposes)
 				t))
-	(purpose-plist-values purpose-extended-configuration)))
+	(delq nil (purpose-plist-values purpose-extended-configuration))))
 
 (defun purpose-compile-default-configuration ()
   "Compile the default purpose configuraion."
@@ -225,6 +242,8 @@ Fill `purpose--extended-mode-purposes',
 			(text-mode . edit)
 			(comint-mode . terminal)
 			(dired-mode . dired)
+			(ibuffer-mode . buffers)
+			(Buffer-menu-mode . buffers)
 			(occur-mode . search)
 			(grep-mode . search)
 			(compilation-mode . search)
@@ -234,6 +253,8 @@ Fill `purpose--extended-mode-purposes',
   (purpose--fill-hash purpose--default-name-purposes
 		      '((".gitignore" . edit)
 			(".hgignore" . edit)
+			;; the `shell' command displays its buffer before
+			;; setting its major-mode, so we must detect it by name
 			("*shell*" . terminal)))
 
   (purpose--fill-hash purpose--default-regexp-purposes nil))
