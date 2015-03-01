@@ -7,7 +7,7 @@
 ;; Version: 1.2.50
 ;; Keywords: frames
 ;; Homepage: https://github.com/bmag/emacs-purpose
-;; Package-Requires: ((emacs "24") (cl-lib "0.5") (let-alist "1.0.3"))
+;; Package-Requires: ((emacs "24") (cl-lib "0.5") (let-alist "1.0.3") (imenu-list "0.1"))
 
 ;; This file is not part of GNU Emacs.
 
