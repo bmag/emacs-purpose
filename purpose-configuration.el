@@ -59,6 +59,7 @@
 
 ;;; Types
 
+;;;###autoload
 (defclass purpose-conf ()
   ((mode-purposes :initarg :mode-purposes
 		  :initform '()
@@ -263,6 +264,7 @@ Fill `purpose--extended-mode-purposes',
 
 ;;; API functions for extensions
 
+;;;###autoload
 (defun purpose-set-extension-configuration (keyword config)
   "Set an extension's entry in `purpose-extended-configuration'.
 KEYWORD should be a keyword used to identify the extension.

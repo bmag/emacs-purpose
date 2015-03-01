@@ -199,6 +199,7 @@ This function is called when `purpose-mode' is deactivated."
   (purpose-advice-remove 'display-buffer :around
 			 #'purpose-display-buffer-advice))
 
+;;;###autoload
 (define-minor-mode purpose-mode
   nil :global t :lighter (:eval (purpose--modeline-string))
   (if purpose-mode
