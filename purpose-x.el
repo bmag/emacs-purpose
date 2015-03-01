@@ -25,8 +25,11 @@
 ;; Extensions included:
 ;; - code1: 4-window display: main edit window, `dired' side window,
 ;;   `ibuffer' side window and `imenu-list' side window.
+;; - magit: purpose configurations for magit
 
 ;;; Code:
+
+(require 'purpose)
 
 ;;; --- purpose-x-code1 ---
 ;;; purpose-x-code1 extension creates a 4-window display:
@@ -40,7 +43,6 @@
 (require 'ibuffer)
 (require 'ibuf-ext)
 (require 'imenu-list)
-(require 'purpose)
 
 (defvar purpose-x-code1--window-layout
   '(nil
@@ -165,6 +167,57 @@ imenu."
 
 ;;; --- purpose-x-code1 ends here ---
 
+
+
+;;; --- purpose-x-magit ---
+;;; purpose-x-magit extension provides purpose configuration for magit.
+;;; Two configurations available:
+;;; - `purpose-x-magit-single-conf': all magit windows have the same purpose
+;;;                                  ('magit)
+;;; - `purpose-x-magit-multi-conf': each magit major-mode has a seperate
+;;;                                 purpose ('magit-status, 'magit-diff, ...)
+;;; Use these commands to enable and disable magit's purpose configurations:
+;;; - `purpose-x-magit-single-on'
+;;; - `purpose-x-magit-multi-on'
+;;; - `purpose-x-magit-off'
+
+(defvar purpose-x-magit-single-conf
+  (purpose-conf "magit-single"
+		:regexp-purposes '(("^\\*magit" . magit)))
+  "Configuration that gives each magit major-mode the same purpose.")
+
+(defvar purpose-x-magit-multi-conf
+  (purpose-conf
+   "magit-multi"
+   :mode-purposes '((magit-diff-mode . magit-diff)
+		    (magit-status-mode . magit-status)
+		    (magit-log-mode . magit-log)
+		    (magit-commit-mode . magit-commit)
+		    (magit-cherry-mode . magit-cherry)
+		    (magit-branch-manager-mode . magit-branch-manager)
+		    (magit-process-mode . magit-process)
+		    (magit-reflog-mode . magit-reflog)
+		    (magit-wazzup-mode . magit-wazzup)))
+  "Configuration that gives each magit major-mode its own purpose.")
+
+;;;###autoload
+(defun purpose-x-magit-single-on ()
+  "Turn on magit-single purpose configuration."
+  (interactive)
+  (purpose-set-extension-configuration :magit purpose-x-magit-single-conf))
+
+;;;###autoload
+(defun purpose-x-magit-multi-on ()
+  "Turn on magit-multi purpose configuration."
+  (interactive)
+  (purpose-set-extension-configuration :magit purpose-x-magit-multi-conf))
+
+(defun purpose-x-magit-off ()
+  "Turn off magit purpose configuration (single or multi)."
+  (interactive)
+  (purpose-del-extension-configuration :magit))
+
+;;; --- purpose-x-magit ends here ---
 
 (provide 'purpose-x)
 ;;; purpose-x.el ends here
