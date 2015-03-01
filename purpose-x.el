@@ -25,7 +25,8 @@
 ;; Extensions included:
 ;; - code1: 4-window display: main edit window, `dired' side window,
 ;;   `ibuffer' side window and `imenu-list' side window.
-;; - magit: purpose configurations for magit
+;; - magit: purpose configurations for magit.
+;; - golden-ratio: make `golden-ratio-mode' work correctly with Purpose.
 
 ;;; Code:
 
@@ -218,6 +219,38 @@ imenu."
   (purpose-del-extension-configuration :magit))
 
 ;;; --- purpose-x-magit ends here ---
+
+
+
+;;; --- purpose-x-golden-ration ---
+;;; Make `purpose-mode' and `golden-ratio-mode' work together properly.
+;;; Basically, this adds a hook to `purpose-select-buffer-hook' so
+;;; `golden-ratio' is called when a buffer is selected via Purpose.
+
+(defun purpose-x-sync-golden-ratio ()
+  "Add/remove `golden-ratio' to `purpose-select-buffer-hook'.
+Add `golden-ratio' at the end of `purpose-select-buffer-hook' if
+`golden-ratio-mode' is on, otherwise remove it."
+  (if golden-ratio-mode
+      (add-hook 'purpose-select-buffer-hook #'golden-ratio t)
+    (remove-hook 'purpose-select-buffer-hook #'golden-ratio)))
+
+;;;###autoload
+(defun purpose-x-golden-ratio-setup ()
+  "Make `golden-ratio-mode' aware of `purpose-mode'."
+  (interactive)
+  (add-hook 'golden-ratio-mode-hook #'purpose-x-sync-golden-ratio)
+  (when (and (boundp 'golden-ratio-mode) golden-ratio-mode)
+    (add-hook 'purpose-select-buffer-hook #'golden-ratio t)))
+
+(defun purpose-x-golden-ratio-unset ()
+  "Make `golden-ratio-mode' forget about `purpose-mode'."
+  (interactive)
+  (remove-hook 'golden-ratio-mode-hook #'purpose-x-sync-golden-ratio)
+  (when (and (boundp 'golden-ratio-mode) golden-ratio-mode)
+    (remove-hook 'purpose-select-buffer-hook #'golden-ratio)))
+
+;;; --- purpose-x-golden-ration ends here ---
 
 (provide 'purpose-x)
 ;;; purpose-x.el ends here
