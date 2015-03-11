@@ -136,6 +136,18 @@ condition was met.")
 
 (defalias 'purpose-display-reuse-window-buffer #'display-buffer-reuse-window)
 
+(defun purpose-window-buffer-reusable-p (window buffer)
+  "Return non-nil if WINDOW can be reused to display BUFFER.
+WINDOW can be reused if it already show BUFFER."
+  (eql (window-buffer window) buffer))
+
+(defun purpose-window-purpose-reusable-p (window purpose)
+  "Return non-nil of WINDOW can be reused for PURPOSE.
+WINDOW can be reused if it isn't buffer-dedicated and if it already has
+the purpose PURPOSE."
+  (and (not (window-dedicated-p window))
+       (eql purpose (purpose-window-purpose window))))
+
 (defun purpose--reusable-frames (alist)
   "Return a list of reusable frames.
 If ALIST contains a `reusable-frames' entry, its value determines which
@@ -201,11 +213,9 @@ that a window on another frame is chosen, avoid raising that frame."
 	   (windows (purpose-flatten (mapcar #'window-list frames)))
 	   (purpose (or purpose (purpose-buffer-purpose buffer)))
 	   window)
-      (setq windows (cl-delete-if
+      (setq windows (cl-delete-if-not
 		     #'(lambda (window)
-			 (or (window-dedicated-p window)
-			     (not (eql purpose
-				       (purpose-window-purpose window)))))
+			 (purpose-window-purpose-reusable-p window purpose))
 		     windows))
       (when .inhibit-same-window
 	(setq windows (delq (selected-window) windows)))
@@ -277,11 +287,9 @@ that a window on another frame is chosen, avoid raising that frame."
 	 (windows (purpose-flatten (mapcar #'window-list frames)))
 	 (purpose (or purpose (purpose-buffer-purpose buffer)))
 	 window)
-    (setq windows (cl-delete-if
+    (setq windows (cl-delete-if-not
 		   #'(lambda (window)
-		       (or (window-dedicated-p window)
-			   (not (eql purpose
-				     (purpose-window-purpose window)))))
+		       (purpose-window-purpose-reusable-p window purpose))
 		   windows))
     (setq window (car windows))
     (when window
@@ -409,6 +417,132 @@ The display is done with `display-buffer-pop-up-frame'."
 	    (display-graphic-p)
 	  pop-up-frames)
     (purpose-display-pop-up-frame buffer alist)))
+
+(defun purpose-get-top-window (&optional frame)
+  "Get FRAME's top window.
+The top window is a window that takes up all the of the frame's width
+and has no window above it.  If there is no top window, return nil."
+  (let (top-window)
+    (walk-window-tree #'(lambda (window)
+			  (unless (or (window-in-direction 'left window)
+				      (window-in-direction 'right window)
+				      (window-in-direction 'above window)
+				      (not (window-in-direction 'below window)))
+			    (setq top-window window)))
+		      frame)
+    top-window))
+
+(defun purpose-get-bottom-window (&optional frame)
+  "Get FRAME's bottom window.
+The bottom window is a window that takes up all the of the frame's width
+and has no window below it.  If there is no bottom window, return nil."
+  (let (bottom-window)
+    (walk-window-tree #'(lambda (window)
+			  (unless (or (window-in-direction 'left window)
+				      (window-in-direction 'right window)
+				      (window-in-direction 'below window)
+				      (not (window-in-direction 'above window)))
+			    (setq bottom-window window)))
+		      frame)
+    bottom-window))
+
+(defun purpose-get-left-window (&optional frame)
+  "Get FRAME's left window.
+The left window is a window that takes up all the of the frame's
+height and has no window to its left.  If there is no left window,
+return nil."
+  (let (left-window)
+    (walk-window-tree #'(lambda (window)
+			  (unless (or (window-in-direction 'top window)
+				      (window-in-direction 'bottom window)
+				      (window-in-direction 'left window)
+				      (not (window-in-direction 'right window)))
+			    (setq left-window window)))
+		      frame)
+    left-window))
+
+(defun purpose-get-right-window (&optional frame)
+  "Get FRAME's right window.
+The right window is a window that takes up all the of the frame's
+height and has no window to its right.  If there is no right window,
+return nil."
+  (let (right-window)
+    (walk-window-tree #'(lambda (window)
+			  (unless (or (window-in-direction 'top window)
+				      (window-in-direction 'bottom window)
+				      (window-in-direction 'right window)
+				      (not (window-in-direction 'left window)))
+			    (setq right-window window)))
+		      frame)
+    right-window))
+
+(defun purpose-display--at (window-getter window-creator buffer alist)
+  "Try to display a buffer in an existing window or in a new window.
+If the window returned by WINDOW-GETTER already displays BUFFER, or has
+the same purpose as BUFFER and is not buffer-dedicated, use it to
+display BUFFER.  Otherwise, call WINDOW-CREATOR to create a new window,
+and display BUFFER in the new WINDOW.
+
+WINDOW-GETTER specifies which existing window to reuse for display.  It
+should be a function that takes no arguments and returns a live window.
+WINDOW-CREATOR specifies how to create a new window for display, if
+necessary.  It should be a function that takes no arguments and returns
+a live window.
+BUFFER is a buffer that should be displayed.
+ALIST has the same meaning as in `display-buffer'."
+  (let ((window (funcall window-getter)))
+    (if (and window
+	     (or (purpose-window-buffer-reusable-p window buffer)
+		 (purpose-window-purpose-reusable-p window (purpose-buffer-purpose buffer))))
+	;; reuse bottom window
+	(progn
+	  (purpose--change-buffer buffer window 'reuse alist)
+	  window)
+      ;; create bottom window
+      (let ((new-window (funcall window-creator)))
+	(purpose--change-buffer buffer new-window 'window alist)
+	new-window))))
+
+(defun purpose-display-at-top (buffer alist)
+  "Display BUFFER at the top window, create such window if necessary.
+\"top window\" is a window as returned by `purpose-get-top-window'.
+ALIST is for compatibility with `display-buffer' and is ignored."
+  (purpose-display--at #'purpose-get-top-window
+		       #'(lambda ()
+			   (split-window (frame-root-window) nil 'above))
+		       buffer
+		       alist))
+
+(defun purpose-display-at-bottom (buffer alist)
+  "Display BUFFER at the bottom window, create such window if necessary.
+\"bottom window\" is a window as returned by
+`purpose-get-bottom-window'.
+ALIST is for compatibility with `display-buffer' and is ignored."
+  (purpose-display--at #'purpose-get-bottom-window
+		       #'(lambda ()
+			   (split-window (frame-root-window) nil 'below))
+		       buffer
+		       alist))
+
+(defun purpose-display-at-left (buffer alist)
+  "Display BUFFER at the left window, create such window if necessary.
+\"left window\" is a window as returned by `purpose-get-left-window'.
+ALIST is for compatibility with `display-buffer' and is ignored."
+  (purpose-display--at #'purpose-get-left-window
+		       #'(lambda ()
+			   (split-window (frame-root-window) nil 'left))
+		       buffer
+		       alist))
+
+(defun purpose-display-at-right (buffer alist)
+  "Display BUFFER at the right window, create such window if necessary.
+\"right window\" is a window as returned by `purpose-get-right-window'.
+ALIST is for compatibility with `display-buffer' and is ignored."
+  (purpose-display--at #'purpose-get-right-window
+		       #'(lambda ()
+			   (split-window (frame-root-window) nil 'right))
+		       buffer
+		       alist))
 
 
 
