@@ -116,6 +116,60 @@ When `purpose--action-function' tries to display a buffer, it will try
 first the action sequences in `purpose-special-action-sequences' whose
 condition was met.")
 
+(defcustom purpose-display-at-top-height 8
+  "Height for new windows created by `purpose-display-at-top'.
+This should be either a positive integer or a percentage between 0 to 1.
+If it is a positive integer, it is the number of lines in new windows
+created by `purpose-display-at-top'.  If it is a percentage, the height
+of new windows will be that percentage out of the frame's total height.
+`purpose-display-at-top-height' can also have a value of nil.  In this
+case, `purpose-display-at-top-height' is ignored."
+  :group 'purpose
+  :type '(choice number
+		 (const nil))
+  :package-version "1.2.50")
+
+(defcustom purpose-display-at-bottom-height 8
+  "Height for new windows created by `purpose-display-at-bottom'.
+This should be either a positive integer or a percentage between 0 to 1.
+If it is a positive integer, it is the number of lines in new windows
+created by `purpose-display-at-bottom'.  If it is a percentage, the
+height of new windows will be that percentage out of the frame's total
+height.
+`purpose-display-at-bottom-height' can also have a value of nil.  In
+this case, `purpose-display-at-bottom-height' is ignored."
+  :group 'purpose
+  :type '(choice number
+		 (const nil))
+  :package-version "1.2.50")
+
+(defcustom purpose-display-at-left-width 32
+  "Width for new windows created by `purpose-display-at-left'.
+This should be either a positive integer or a percentage between 0 to 1.
+If it is a positive integer, it is the number of lines in new windows
+created by `purpose-display-at-left'.  If it is a percentage, the width
+of new windows will be that percentage out of the frame's total width.
+`purpose-display-at-left-width' can also have a value of nil.  In this
+case, `purpose-display-at-left-width' is ignored."
+  :group 'purpose
+  :type '(choice number
+		 (const nil))
+  :package-version "1.2.50")
+
+(defcustom purpose-display-at-right-width 32
+  "Width for new windows created by `purpose-display-at-right'.
+This should be either a positive integer or a percentage between 0 to 1.
+If it is a positive integer, it is the number of lines in new windows
+created by `purpose-display-at-right'.  If it is a percentage, the
+width of new windows will be that percentage out of the frame's total
+width.
+`purpose-display-at-right-width' can also have a value of nil.  In
+this case, `purpose-display-at-right-width' is ignored."
+  :group 'purpose
+  :type '(choice number
+		 (const nil))
+  :package-version "1.2.50")
+
 
 
 ;;; Level1 actions
@@ -453,8 +507,8 @@ height and has no window to its left.  If there is no left window,
 return nil."
   (let (left-window)
     (walk-window-tree #'(lambda (window)
-			  (unless (or (window-in-direction 'top window)
-				      (window-in-direction 'bottom window)
+			  (unless (or (window-in-direction 'above window)
+				      (window-in-direction 'below window)
 				      (window-in-direction 'left window)
 				      (not (window-in-direction 'right window)))
 			    (setq left-window window)))
@@ -468,13 +522,55 @@ height and has no window to its right.  If there is no right window,
 return nil."
   (let (right-window)
     (walk-window-tree #'(lambda (window)
-			  (unless (or (window-in-direction 'top window)
-				      (window-in-direction 'bottom window)
+			  (unless (or (window-in-direction 'above window)
+				      (window-in-direction 'below window)
 				      (window-in-direction 'right window)
 				      (not (window-in-direction 'left window)))
 			    (setq right-window window)))
 		      frame)
     right-window))
+
+(defun purpose--normalize-height (height &optional frame)
+  "Convert HEIGHT into a number of lines.
+HEIGHT can be either a positive integer (number of lines), a percentage
+ (number of lines relative to FRAME's height) or nil.  If HEIGHT is nil,
+nil is returned, otherwise return the number of lines represented by
+HEIGHT.
+FRAME defaults to the selected frame."
+  (cond
+   ;; null height, return as it is
+   ((null height)
+    height)
+   ;; height is a percentage, convert it to number of lines
+   ((and (< 0 height) (< height 1))
+    (round (* height (frame-height frame))))
+   ;; height is an integer, return it as it is
+   ((and (integerp height) (> height 0))
+    height)
+   ;; wrong argument type
+   (t
+    (signal 'wrong-type-argument `("positive integer or percentage" ,height)))))
+
+(defun purpose--normalize-width (width &optional frame)
+  "Convert WIDTH into a number of lines.
+WIDTH can be either a positive integer (number of lines), a percentage
+ (number of lines relative to FRAME's width) or nil.  If WIDTH is nil,
+nil is returned, otherwise return the number of lines represented by
+WIDTH.
+FRAME defaults to the selected frame."
+  (cond
+   ;; null width, return as it is
+   ((null width)
+    width)
+   ;; width is a percentage, convert it to number of lines
+   ((and (< 0 width) (< width 1))
+    (round (* width (frame-width frame))))
+   ;; width is an integer, return it as it is
+   ((and (integerp width) (> width 0))
+    width)
+   ;; wrong argument type
+   (t
+    (signal 'wrong-type-argument `("positive integer or percentage" ,width)))))
 
 (defun purpose-display--at (window-getter window-creator buffer alist)
   "Try to display a buffer in an existing window or in a new window.
@@ -500,47 +596,88 @@ ALIST has the same meaning as in `display-buffer'."
 	  window)
       ;; create bottom window
       (let ((new-window (funcall window-creator)))
-	(purpose--change-buffer buffer new-window 'window alist)
-	new-window))))
+	(when new-window
+	  (purpose--change-buffer buffer new-window 'window alist)
+	  new-window)))))
 
-(defun purpose-display-at-top (buffer alist)
+(defun purpose-display-at-top (buffer alist &optional height)
   "Display BUFFER at the top window, create such window if necessary.
 \"top window\" is a window as returned by `purpose-get-top-window'.
-ALIST is for compatibility with `display-buffer' and is ignored."
+ALIST is for compatibility with `display-buffer' and is ignored.
+HEIGHT specifies the height of the new window, if a new window needs to
+be created, and can take the same values as
+`purpose-display-at-top-height'.  If HEIGHT is nil, then the height of
+the new window is specified by `purpose-display-at-top-height'.  If
+`purpose-display-at-top-height' is also nil, then the new window will
+have the default height."
   (purpose-display--at #'purpose-get-top-window
 		       #'(lambda ()
-			   (split-window (frame-root-window) nil 'above))
+			   (let* ((height (purpose--normalize-height (or height
+									 purpose-display-at-top-height)))
+				  (height (when height (- height))))
+			     (ignore-errors
+			       (split-window (frame-root-window) height 'above))))
 		       buffer
 		       alist))
 
-(defun purpose-display-at-bottom (buffer alist)
+(defun purpose-display-at-bottom (buffer alist &optional height)
   "Display BUFFER at the bottom window, create such window if necessary.
 \"bottom window\" is a window as returned by
 `purpose-get-bottom-window'.
-ALIST is for compatibility with `display-buffer' and is ignored."
+ALIST is for compatibility with `display-buffer' and is ignored.
+HEIGHT specifies the height of the new window, if a new window needs to
+be created, and can take the same values as
+`purpose-display-at-bottom-height'.  If HEIGHT is nil, then the height
+of the new window is specified by `purpose-display-at-bottom-height'.
+If `purpose-display-at-bottom-height' is also nil, then the new window
+will have the default height."
   (purpose-display--at #'purpose-get-bottom-window
 		       #'(lambda ()
-			   (split-window (frame-root-window) nil 'below))
+			   (let* ((height (purpose--normalize-height (or height
+									 purpose-display-at-bottom-height)))
+				  (height (when height (- height))))
+			     (ignore-errors
+			       (split-window (frame-root-window) height 'below))))
 		       buffer
 		       alist))
 
-(defun purpose-display-at-left (buffer alist)
+(defun purpose-display-at-left (buffer alist &optional width)
   "Display BUFFER at the left window, create such window if necessary.
 \"left window\" is a window as returned by `purpose-get-left-window'.
-ALIST is for compatibility with `display-buffer' and is ignored."
+ALIST is for compatibility with `display-buffer' and is ignored.
+WIDTH specifies the width of the new window, if a new window needs to
+be created, and can take the same values as
+`purpose-display-at-left-width'.  If WIDTH is nil, then the width of the
+new window is specified by `purpose-display-at-left-width'.  If
+`purpose-display-at-left-width' is also nil, then the new window will
+have the default width."
   (purpose-display--at #'purpose-get-left-window
 		       #'(lambda ()
-			   (split-window (frame-root-window) nil 'left))
+			   (let* ((width (purpose--normalize-width (or width
+								       purpose-display-at-left-width)))
+				  (width (when width (- width))))
+			     (ignore-errors
+			       (split-window (frame-root-window) width 'left))))
 		       buffer
 		       alist))
 
-(defun purpose-display-at-right (buffer alist)
+(defun purpose-display-at-right (buffer alist &optional width)
   "Display BUFFER at the right window, create such window if necessary.
 \"right window\" is a window as returned by `purpose-get-right-window'.
-ALIST is for compatibility with `display-buffer' and is ignored."
+ALIST is for compatibility with `display-buffer' and is ignored.
+WIDTH specifies the width of the new window, if a new window needs to be
+created, and can take the same values as
+`purpose-display-at-right-width'.  If WIDTH is nil, then the width of
+the new window is specified by `purpose-display-at-right-width'.  If
+`purpose-display-at-right-width' is also nil, then the new window will
+have the default width."
   (purpose-display--at #'purpose-get-right-window
 		       #'(lambda ()
-			   (split-window (frame-root-window) nil 'right))
+			   (let* ((width (purpose--normalize-width (or width
+								       purpose-display-at-right-width)))
+				  (width (when width (- width))))
+			     (ignore-errors
+			       (split-window (frame-root-window) width 'right))))
 		       buffer
 		       alist))
 
