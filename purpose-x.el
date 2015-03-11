@@ -252,5 +252,23 @@ Add `golden-ratio' at the end of `purpose-select-buffer-hook' if
 
 ;;; --- purpose-x-golden-ration ends here ---
 
+
+
+;;; --- purpose-x-popup-switcher ---
+;;; A command for combinining `popup-switcher' with
+;;; `purpose-switch-buffer-with-purpose'.
+;;; This requires package `popup-switcher'
+
+(when (require 'popup-switcher nil t)
+  (defun purpose-psw-switch-buffer-with-purpose ()
+    (interactive)
+    (psw-switcher :items-list (purpose-buffers-with-purpose
+			       (purpose-buffer-purpose (current-buffer)))
+		  :item-name-getter #'buffer-name
+		  :switcher #'purpose-switch-buffer)))
+
+;;; --- purpose-x-popup-switcher ends here ---
+
+
 (provide 'purpose-x)
 ;;; purpose-x.el ends here
