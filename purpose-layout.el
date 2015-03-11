@@ -370,5 +370,37 @@ the right purpose in it, or creating a dummy buffer."
   (unless dont-dedicate
     (purpose-set-window-purpose-dedicated-p nil t)))
 
+(defun purpose--delete-window-at (window-getter &optional frame)
+  "Delete window returned by WINDOW-GETTER.
+WINDOW-GETTER should be a function that takes one argument - FRAME."
+  (let ((window (funcall window-getter frame)))
+    (if window
+	(delete-window window)
+      (user-error "Couldn't find window."))))
+
+(defun purpose-delete-window-at-top (&optional frame)
+  "Delete window at top.
+FRAME defaults to the selected frame."
+  (interactive)
+  (purpose--delete-window-at #'purpose-get-top-window frame))
+
+(defun purpose-delete-window-at-bottom (&optional frame)
+  "Delete window at bottom.
+FRAME defaults to the selected frame."
+  (interactive)
+  (purpose--delete-window-at #'purpose-get-bottom-window frame))
+
+(defun purpose-delete-window-at-left (&optional frame)
+  "Delete window at left.
+FRAME defaults to the selected frame."
+  (interactive)
+  (purpose--delete-window-at #'purpose-get-left-window frame))
+
+(defun purpose-delete-window-at-right (&optional frame)
+  "Delete window at right.
+FRAME defaults to the selected frame."
+  (interactive)
+  (purpose--delete-window-at #'purpose-get-right-window frame))
+
 (provide 'purpose-layout)
 ;;; purpose-layout.el ends here

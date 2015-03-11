@@ -122,6 +122,12 @@
 
 
 
+(define-purpose-prefix-overload purpose-delete-window-at
+  '(purpose-delete-window-at-bottom
+    purpose-delete-window-at-right
+    purpose-delete-window-at-top
+    purpose-delete-window-at-left))
+
 (defvar purpose-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "C-x C-f") #'purpose-find-file-overload)
@@ -151,7 +157,9 @@
       (kbd "d") #'purpose-toggle-window-purpose-dedicated)
     (define-key purpose-mode-prefix-map
       (kbd "D") #'purpose-toggle-window-buffer-dedicated)
-
+    (define-key purpose-mode-prefix-map
+      (kbd "w") #'purpose-delete-window-at)
+    
     map)
   "Keymap for Purpose mode.")
 

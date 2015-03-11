@@ -51,7 +51,7 @@ C-u 1 2 <command>: index 12
     0)
 	
    ((listp prefix-argument)
-    (floor (log (car prefix-argument) 4)))
+    (round (log (car prefix-argument) 4)))
 
    ((eq prefix-argument '-)
     -1)

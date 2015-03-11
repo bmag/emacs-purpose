@@ -472,64 +472,6 @@ The display is done with `display-buffer-pop-up-frame'."
 	  pop-up-frames)
     (purpose-display-pop-up-frame buffer alist)))
 
-(defun purpose-get-top-window (&optional frame)
-  "Get FRAME's top window.
-The top window is a window that takes up all the of the frame's width
-and has no window above it.  If there is no top window, return nil."
-  (let (top-window)
-    (walk-window-tree #'(lambda (window)
-			  (unless (or (window-in-direction 'left window)
-				      (window-in-direction 'right window)
-				      (window-in-direction 'above window)
-				      (not (window-in-direction 'below window)))
-			    (setq top-window window)))
-		      frame)
-    top-window))
-
-(defun purpose-get-bottom-window (&optional frame)
-  "Get FRAME's bottom window.
-The bottom window is a window that takes up all the of the frame's width
-and has no window below it.  If there is no bottom window, return nil."
-  (let (bottom-window)
-    (walk-window-tree #'(lambda (window)
-			  (unless (or (window-in-direction 'left window)
-				      (window-in-direction 'right window)
-				      (window-in-direction 'below window)
-				      (not (window-in-direction 'above window)))
-			    (setq bottom-window window)))
-		      frame)
-    bottom-window))
-
-(defun purpose-get-left-window (&optional frame)
-  "Get FRAME's left window.
-The left window is a window that takes up all the of the frame's
-height and has no window to its left.  If there is no left window,
-return nil."
-  (let (left-window)
-    (walk-window-tree #'(lambda (window)
-			  (unless (or (window-in-direction 'above window)
-				      (window-in-direction 'below window)
-				      (window-in-direction 'left window)
-				      (not (window-in-direction 'right window)))
-			    (setq left-window window)))
-		      frame)
-    left-window))
-
-(defun purpose-get-right-window (&optional frame)
-  "Get FRAME's right window.
-The right window is a window that takes up all the of the frame's
-height and has no window to its right.  If there is no right window,
-return nil."
-  (let (right-window)
-    (walk-window-tree #'(lambda (window)
-			  (unless (or (window-in-direction 'above window)
-				      (window-in-direction 'below window)
-				      (window-in-direction 'right window)
-				      (not (window-in-direction 'left window)))
-			    (setq right-window window)))
-		      frame)
-    right-window))
-
 (defun purpose--normalize-height (height &optional frame)
   "Convert HEIGHT into a number of lines.
 HEIGHT can be either a positive integer (number of lines), a percentage
