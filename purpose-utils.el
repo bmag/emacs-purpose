@@ -42,7 +42,7 @@ return the formatted string. FORMAT-STRING and ARGS are passed to
     (apply #'format format-string args)))
 
 (if (fboundp 'alist-get)
-    ;; alist-get is defined in Emacs 24.4 and newer
+    ;; alist-get is defined in Emacs 24.5/25.1 and newer
     (progn
       (defalias 'purpose-alist-get #'alist-get)
       
@@ -60,7 +60,7 @@ This doesn't change the original alist, but returns a modified copy."
 	(setf (alist-get key alist 0 t) 0)
 	alist))
 
-  ;; define our (limited) version of alist-get for Emacs 24.3 and older
+  ;; define our (limited) version of alist-get for Emacs 24.4 and older
   (defun purpose-alist-get (key alist &optional default remove)
     "Get KEY's value in ALIST.
 If no such key, return DEFAULT.

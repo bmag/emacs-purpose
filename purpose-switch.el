@@ -44,10 +44,13 @@ window, `pop-up-frame' for displaying the buffer in a new frame, `error'
 for signalling an error, or nil for using the regular (purpose-less)
 `display-buffer' behavior.  Any other value is treated the same as nil."
   :group 'purpose
-  :type 'symbol
+  :type '(choice (const pop-up-window)
+		 (const pop-up-frame)
+		 (const error)
+		 (const nil))
   :package-version "1.2")
 
-(defcustom purpose-display-buffer-hook nil
+(defcustom purpose-display-buffer-functions nil
   "Hook to run after displaying a buffer with `purpose--action-function'.
 This hook is called with one argument - the window used for display."
   :group 'purpose
@@ -708,7 +711,7 @@ If ALIST is nil, it is ignored and `purpose--alist' is used instead."
 			  nil)))))
 	  (when window
 	    (prog1 window
-	      (run-hook-with-args 'purpose-display-buffer-hook window))))))))
+	      (run-hook-with-args 'purpose-display-buffer-functions window))))))))
 
 (defun purpose-select-buffer (buffer-or-name &optional action-order norecord)
   "Display buffer BUFFER-OR-NAME in window and then select that window.

@@ -148,17 +148,22 @@
     ;; We use "C-c ," for compatibility with key-binding conventions
     (define-key map (kbd "C-c ,") 'purpose-mode-prefix-map)
     (define-prefix-command 'purpose-mode-prefix-map)
-    (define-key purpose-mode-prefix-map (kbd "o") #'purpose-switch-buffer)
-    (define-key purpose-mode-prefix-map
-      (kbd "[") #'purpose-switch-buffer-other-frame)
-    (define-key purpose-mode-prefix-map
-      (kbd "p") #'purpose-switch-buffer-other-window)
-    (define-key purpose-mode-prefix-map
-      (kbd "d") #'purpose-toggle-window-purpose-dedicated)
-    (define-key purpose-mode-prefix-map
-      (kbd "D") #'purpose-toggle-window-buffer-dedicated)
-    (define-key purpose-mode-prefix-map
-      (kbd "w") #'purpose-delete-window-at)
+    (dolist (binding
+	     '(;; switch to any buffer
+	       ("o" . purpose-switch-buffer)
+	       ("[" . purpose-switch-buffer-other-frame)
+	       ("p" . purpose-switch-buffer-other-window)
+	       ;; switch to buffer with current buffer's purpose
+	       ("b" . purpose-switch-buffer-with-purpose)
+	       ("4 b" . purpose-switch-buffer-with-purpose-other-window)
+	       ("5 b" . purpose-switch-buffer-with-purpose-other-frame)
+	       ;; toggle window dedication (buffer, purpose)
+	       ("d" . purpose-toggle-window-purpose-dedicated)
+	       ("D" . purpose-toggle-window-buffer-dedicated)
+	       ;; delete windows
+	       ("w" . purpose-delete-window-at)
+	       ("1" . purpose-delete-non-dedicated-windows)))
+      (define-key purpose-mode-prefix-map (kbd (car binding)) (cdr binding)))
     
     map)
   "Keymap for Purpose mode.")
