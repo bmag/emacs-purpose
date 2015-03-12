@@ -105,7 +105,7 @@ it yourself.")
 			   purpose-display-reuse-window-purpose
 			   purpose-display-maybe-same-window))))
 
-(defvar purpose-default-action-sequence 'prefer-other-window)
+(defvar purpose-default-action-order 'prefer-other-window)
 
 (defvar purpose-special-action-sequences nil
   "This variable makes Purpose handle some buffers differently.
@@ -187,8 +187,10 @@ this case, `purpose-display-at-right-width' is ignored."
 ;; maybe-pop-up-window: display buffer in a new window in the selected frame, if possible (window can be split)
 ;; pop-up-frame: display buffer in a new frame
 
-(defun purpose--change-buffer (buffer window type alist)
-  "Make window WINDOW display buffer BUFFER, but don't select it."
+(defun purpose-change-buffer (buffer window type alist)
+  "Display BUFFER in WINDOW, but don't select it.
+BUFFER, WINDOW, TYPE and ALIST have the same meaning as
+`window--display-buffer'.'"
   (window--display-buffer buffer window type alist))
 
 (defalias 'purpose-display-reuse-window-buffer #'display-buffer-reuse-window)
@@ -278,7 +280,7 @@ that a window on another frame is chosen, avoid raising that frame."
 	(setq windows (delq (selected-window) windows)))
       (setq window (car windows))
       (when window
-	(purpose--change-buffer buffer window 'reuse alist))
+	(purpose-change-buffer buffer window 'reuse alist))
       window)))
 
 (defun purpose-display-reuse-window-buffer-other-frame (buffer alist)
@@ -310,7 +312,7 @@ that frame."
     (setq windows (cl-delete-if #'window-dedicated-p windows))
     (setq window (car windows))
     (when window
-      (purpose--change-buffer buffer window 'reuse alist))
+      (purpose-change-buffer buffer window 'reuse alist))
     window))
 
 (defun purpose-display-reuse-window-purpose-other-frame (buffer alist &optional purpose)
@@ -350,13 +352,13 @@ that a window on another frame is chosen, avoid raising that frame."
 		   windows))
     (setq window (car windows))
     (when window
-      (purpose--change-buffer buffer window 'reuse alist))
+      (purpose-change-buffer buffer window 'reuse alist))
     window))
 
 (defun purpose-display-same-window (buffer alist)
   "Display BUFFER in selected window, no matter what.
 This function ignores window dedication and any entry in ALIST."
-  (purpose--change-buffer buffer (selected-window) 'reuse alist)
+  (purpose-change-buffer buffer (selected-window) 'reuse alist)
   (selected-window))
 
 (defun purpose-display-maybe-same-window (buffer alist)
@@ -407,7 +409,7 @@ Possible windows to use match these requirements:
       (setq windows (delete (selected-window) windows))
       (setq window (car windows))
       (when window
-	(purpose--change-buffer buffer window 'reuse alist)
+	(purpose-change-buffer buffer window 'reuse alist)
 	window))))
 
 (defun purpose-display-maybe-other-frame (buffer alist)
@@ -426,7 +428,7 @@ This function doesn't raise the new frame."
 		     (remove (selected-frame) (frame-list)))))
 	   (window (car windows)))
       (when window
-	(purpose--change-buffer buffer window 'reuse alist)
+	(purpose-change-buffer buffer window 'reuse alist)
 	window))))
 
 (defun purpose-display-pop-up-window--internal (buffer alist force-split)
@@ -442,7 +444,7 @@ used window, split the selected window."
 	 (new-window (or (split-window-sensibly old-window)
 			 (and force-split
 			      (split-window old-window)))))
-    (purpose--change-buffer buffer new-window 'window alist)
+    (purpose-change-buffer buffer new-window 'window alist)
     new-window))
 
 (defun purpose-display-pop-up-window (buffer alist)
@@ -537,12 +539,12 @@ ALIST has the same meaning as in `display-buffer'."
 		 (purpose-window-purpose-reusable-p window (purpose-buffer-purpose buffer))))
 	;; reuse bottom window
 	(progn
-	  (purpose--change-buffer buffer window 'reuse alist)
+	  (purpose-change-buffer buffer window 'reuse alist)
 	  window)
       ;; create bottom window
       (let ((new-window (funcall window-creator)))
 	(when new-window
-	  (purpose--change-buffer buffer new-window 'window alist)
+	  (purpose-change-buffer buffer new-window 'window alist)
 	  new-window)))))
 
 (defun purpose-display-at-top (buffer alist &optional height)
@@ -675,7 +677,7 @@ If ALIST is nil, it is ignored and `purpose--alist' is used instead."
 									alist))
 	     (normal-action-sequence (purpose-alist-get
 				      (or .action-order
-					  purpose-default-action-sequence)
+					  purpose-default-action-order)
 				      purpose-action-sequences))
 	     (action-sequence (append special-action-sequence
 				      normal-action-sequence))
