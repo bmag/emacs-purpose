@@ -30,8 +30,8 @@
 (require 'purpose-utils)
 
 (defvar purpose-action-function-ignore-buffer-names
-  '("*Completions*"
-    "*Ido Completions*")
+  '("^\\*Completions\\*$"
+    "^\\*Ido Completions\\*$")
   "Names of buffers for which the default `display-buffer' and
 `switch-to-buffer' behavior should not be overridden.  This is a list of
 names.")
@@ -637,8 +637,10 @@ have the default width."
   (and
    purpose--active-p
    (not (cdr (assoc 'inhibit-purpose alist)))
-   (not (member (buffer-name buffer)
-		purpose-action-function-ignore-buffer-names))))
+   (let ((buffer-name (buffer-name buffer)))
+     (cl-loop for ignored-regexp
+   	      in purpose-action-function-ignore-buffer-names
+   	      never (string-match-p ignored-regexp buffer-name)))))
 
 (defun purpose--special-action-sequence (buffer alist)
   "Return special action sequences to use for display BUFFER.
@@ -831,7 +833,14 @@ If Purpose is active (`purpose--active-p' is non-nil), call
    ;; to fallback to `switch-to-buffer', instead of
    ;; `display-buffer'
    (if (purpose--use-action-function-p (window-normalize-buffer-to-switch-to buffer-or-name) nil)
-       (purpose-switch-buffer buffer-or-name norecord force-same-window)
+       (purpose-switch-buffer buffer-or-name
+			      norecord
+			      ;; when `switch-to-buffer' is called
+			      ;; interactively force-same-window is non-nil,
+			      ;; but want it to be nil, so we check
+			      ;; `called-interactively-p' as well
+			      (and force-same-window
+				   (not (called-interactively-p 'interactive))))
      (funcall oldfun buffer-or-name norecord force-same-window)))
 
   ;; old style advice
@@ -940,10 +949,13 @@ This works internally by using `without-purpose' and
 
 (defun purpose-read-buffers-with-purpose (purpose)
   "Prompt the user for a buffer with purpose PURPOSE."
-  (ido-completing-read "[PU] Buffer: "
-		       (mapcar #'buffer-name
-			       (delq (current-buffer)
-				     (purpose-buffers-with-purpose purpose)))))
+  (let ((reader (if ido-mode
+		    #'ido-completing-read
+		  #'completing-read)))
+    (funcall reader "[PU] Buffer: "
+	     (mapcar #'buffer-name
+		     (delq (current-buffer)
+			   (purpose-buffers-with-purpose purpose))))))
 
 (defun purpose-switch-buffer-with-purpose (&optional purpose)
   "Prompt the user and switch to a buffer with purpose PURPOSE.

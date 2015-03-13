@@ -75,48 +75,114 @@
   "Purpose's version.")
 
 
+
+;;; Commands that work with both `ido' and `helm'
+;; `helm' doesn't work well with `ido-find-file' (and other `ido' commands),
+;; but `find-file' can't benefit from all of `ido''s features, so we create
+;; commands that know when to use `ido-find-file' and when to use `find-file'.
+;; the result: Purpose works well both with `ido' and `helm'!!!
+
+(defmacro purpose-ido-caller (ido-fn other-fn)
+  "Create an interactive lambda to conditionally call an ido command.
+The lambda calls IDO-FN interactively when `ido-mode' is on, otherwise
+it calls OTHER-FN interactively.
+Example:
+  (purpose-ido-caller #'ido-find-file #'find-file)"
+  `(lambda (&rest args)
+     (interactive)
+     (call-interactively (if ido-mode ,ido-fn ,other-fn))))
+
+(defalias 'purpose-friendly-find-file
+  (purpose-ido-caller #'ido-find-file #'find-file)
+  "Call `find-file' or `ido-find-file' intelligently.
+If `ido-mode' is on, call `ido-find-file'.  Otherwise, call `find-file'.
+This allows Purpose to work well with both `ido' and `helm'.")
+
+(defalias 'purpose-friendly-find-file-other-window
+  (purpose-ido-caller #'ido-find-file-other-window #'find-file-other-window)
+  "Call `find-file-other-window' or `ido-find-file-other-window'
+intelligently.
+If `ido-mode' is on, call `ido-find-file-other-window'.  Otherwise, call
+`find-file-other-window'.
+This allows Purpose to work well with both `ido' and `helm'.")
+
+(defalias 'purpose-friendly-find-file-other-frame
+  (purpose-ido-caller #'ido-find-file-other-frame #'find-file-other-frame)
+  "Call `find-file-other-frame' or `ido-find-file-other-frame'
+intelligently.
+If `ido-mode' is on, call `ido-find-file-other-frame'.  Otherwise, call
+`find-file-other-frame'.
+This allows Purpose to work well with both `ido' and `helm'.")
+
+(defalias 'purpose-friendly-switch-buffer
+  (purpose-ido-caller #'ido-switch-buffer #'switch-to-buffer)
+  "Call `switch-to-buffer' or `ido-switch-buffer' intelligently.
+If `ido-mode' is on, call `ido-switch-buffer'.  Otherwise, call
+`switch-to-buffer'.
+This allows Purpose to work well with both `ido' and `helm'.")
+
+(defalias 'purpose-friendly-switch-buffer-other-window
+  (purpose-ido-caller #'ido-switch-buffer-other-window
+		      #'switch-to-buffer-other-window)
+  "Call `switch-to-buffer-other-window' or
+`ido-switch-buffer-other-window' intelligently.
+If `ido-mode' is on, call `ido-switch-buffer-other-window'.  Otherwise,
+call `switch-to-buffer-other-window'.
+This allows Purpose to work well with both `ido' and `helm'.")
+
+(defalias 'purpose-friendly-switch-buffer-other-frame
+  (purpose-ido-caller #'ido-switch-buffer-other-frame
+		      #'switch-to-buffer-other-frame)
+  "Call `switch-to-buffer-other-frame' or
+`ido-switch-buffer-other-frame' intelligently.
+If `ido-mode' is on, call `ido-switch-buffer-other-frame'.  Otherwise,
+call `switch-to-buffer-other-frame'.
+This allows Purpose to work well with both `ido' and `helm'.")
+
+
+
 ;;; Commands for using Purpose-less behavior
-(fset 'find-file-without-purpose
-      (without-purpose-command #'ido-find-file))
+(defalias 'find-file-without-purpose
+  (without-purpose-command #'find-file))
 
-(fset 'find-file-other-window-without-purpose
-      (without-purpose-command #'ido-find-file-other-window))
+(defalias 'find-file-other-window-without-purpose
+  (without-purpose-command #'find-file-other-window))
 
-(fset 'find-file-other-frame-without-purpose
-      (without-purpose-command #'ido-find-file-other-frame))
+(defalias 'find-file-other-frame-without-purpose
+  (without-purpose-command #'find-file-other-frame))
 
-(fset 'switch-buffer-without-purpose
-      (without-purpose-command #'ido-switch-buffer))
+(defalias 'switch-buffer-without-purpose
+  (without-purpose-command #'switch-to-buffer))
 
-(fset 'switch-buffer-other-window-without-purpose
-      (without-purpose-command #'ido-switch-buffer-other-window))
+(defalias 'switch-buffer-other-window-without-purpose
+  (without-purpose-command #'switch-to-buffer-other-window))
 
-(fset 'switch-buffer-other-frame-without-purpose
-      (without-purpose-command #'ido-switch-buffer-other-frame))
+(defalias 'switch-buffer-other-frame-without-purpose
+  (without-purpose-command #'switch-to-buffer-other-frame))
 
 
 ;;; Overloaded commands: (C-u to get original Purpose-less behavior)
 (define-purpose-prefix-overload purpose-find-file-overload
-  '(ido-find-file find-file-without-purpose))
+  '(purpose-friendly-find-file find-file-without-purpose))
 
 (define-purpose-prefix-overload purpose-find-file-other-window-overload
-  '(ido-find-file-other-window find-file-other-window-without-purpose))
+  '(purpose-friendly-find-file-other-window find-file-other-window-without-purpose))
 
 (define-purpose-prefix-overload purpose-find-file-other-frame-overload
-  '(ido-find-file-other-frame find-file-other-frame-without-purpose))
+  '(purpose-friendly-find-file-other-frame find-file-other-frame-without-purpose))
 
 (define-purpose-prefix-overload purpose-switch-buffer-overload
-  '(ido-switch-buffer
+  '(purpose-friendly-switch-buffer
     switch-buffer-without-purpose
     purpose-switch-buffer-with-purpose))
 
 (define-purpose-prefix-overload purpose-switch-buffer-other-window-overload
-  '(ido-switch-buffer-other-window
+  '(purpose-friendly-switch-buffer-other-window
     switch-buffer-other-window-without-purpose
     purpose-switch-buffer-with-purpose-other-window))
 
 (define-purpose-prefix-overload purpose-switch-buffer-other-frame-overload
-  '(ido-switch-buffer-other-frame
+  '(purpose-friendly-switch-buffer-other-frame
     switch-buffer-other-frame-without-purpose
     purpose-switch-buffer-with-purpose-other-frame))
 

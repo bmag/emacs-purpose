@@ -65,8 +65,17 @@ This function should be advised around
 (defun purpose--fix-hydra-lv ()
   "Add hydra's LV buffer to Purpose's ignore list."
   (eval-after-load 'hydra
-    '(add-to-list 'purpose-action-function-ignore-buffer-names "*LV*")))
+    '(add-to-list 'purpose-action-function-ignore-buffer-names "^\\*LV\\*$")))
 
+
+
+;;; Helm's buffers should be ignored
+(defun purpose--fix-helm ()
+  "Add helm's buffers to Purposes's ignore list."
+  (eval-after-load 'helm
+    '(add-to-list 'purpose-action-function-ignore-buffer-names "^\\*Helm"))
+  (eval-after-load 'helm
+    '(add-to-list 'purpose-action-function-ignore-buffer-names "^\\*helm")))
 
 ;;; install fixes
 
@@ -76,13 +85,16 @@ EXCLUDE is a list of integrations to skip.  Known members of EXCLUDE
 are:
 - 'compilation-next-error-function : don't integrate with
   `compilation-next-error-function'.
-- 'hydra : don't integrate with hydra"
+- 'hydra : don't integrate with hydra
+- 'helm : don't integrate with helm"
   (interactive)
   (unless (member 'compilation-next-error-function exclude)
     (purpose-advice-add 'compilation-next-error-function
 			:around #'purpose--fix-compilation-next-error))
   (unless (member 'hydra exclude)
-    (purpose--fix-hydra-lv)))
+    (purpose--fix-hydra-lv))
+  (unless (member 'helm exclude)
+    (purpose--fix-helm)))
 
 (provide 'purpose-fixes)
 ;;; purpose-fixes.el ends here
