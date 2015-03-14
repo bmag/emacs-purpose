@@ -5,61 +5,92 @@
 
 - **A full explanation can be found in the [GitHub wiki](https://github.com/bmag/emacs-purpose/wiki).**
 
-Purpose is a plugin for Emacs which introduces the concept of a
-"purpose" for windows and buffers. By setting purposes for your windows
-and for your buffers, Purpose helps you maintain a consistent window
-layout easily.
+## Introduction
 
-For instance, if you find yourself switching between files, interpreter
-buffers, help buffers and more, and have a hard time keeping the file
-you are actually trying to work on visible, Purpose may be what you
-need.
+Purpose provides a new window management system for Emacs, which gives
+you a better control over where Emacs displays buffers.
 
+With Purpose, each buffer has a configurable "purpose" and each window
+can interactivaly be dedicated to a certain "purpose". When you dedicate
+a window (`C-c , d`), Purpose makes sure that this window will be used
+only for buffers which have the same purpose as the buffer that is
+currently displayed in that window. The purpose of a buffer can be
+customized via the variables `purpose-user-mode-purposes`,
+`purpose-user-name-purposes`, `purpose-user-regexp-purposes` and
+`purpose-use-default-configuration` (see the
+[wiki](https://github.com/bmag/emacs-purpose/wiki/Purpose-Configuration)).
 
-## Features
+## Quickstart
 
-### Automatic purpose detection
+### Activate Purpose
+Manually: `M-x purpose-mode`
 
-The purpose of a window is the same as the purpose of its current
-buffer. The purpose of buffer is determined by its name and its
-mode. Purpose comes with a default confiuration, but you can set your
-configuration by customizing `purpose-user-mode-purposes`,
-`purpose-user-name-purposes` and `purpose-user-regexp-purposes`. The
-documentation inside the code (purpose-configuration.el) provides more
-information.
+In your init file:
+```elisp
+(require 'purpose)
+(purpose-mode)
+```
 
-The purpose of a window is shown in its modeline, between square
-brackets. If the window's purpose is dedicated, an exalamation mark
-("!") is added after the purpose's name and before the closing
-bracket.
+### Configure Purpose
+Manually: `M-x customize-group purpose`. Look at:
+- "Purpose User Mode Purposes": recognize purpose according to major mode
+- "Purpose User Name Purposes": recognize purpose according to buffer
+  name (for exact names)
+- "Purpose User Regexp Purposes": recognize purpose according to buffer
+  name (for name patterns)
+- "Purpose Use Default Configuration": toggle default configuration
+  on/off
 
-### Purpose-aware display
+In init file:
+```elisp
+(add-to-list 'purpose-user-mode-purposes '(<major-mode> . <purpose>))
+(add-to-list 'purpose-user-name-purposes '(<name> . <purpose>))
+(add-to-list 'purpose-user-regexp-purposes '(<pattern> . <purpose>))
+(setq purpose-use-default-configuration t) ; not really necessary, default is t
+(purpose-compile-user-configuration) ; activates your changes
+```
 
-Purpose uses advice to override the regular display functions with functions that
-are purpose-aware. Also, Purpose provides you with purpose-aware commands.
-The main commands are `purpose-switch-buffer` `purpose-pop-buffer`.
-Furthermore, Purpose uses variable `display-buffer-overriding-action` to provide
-purpose-awareness to function `display-buffer`.
+### Useful Commands
+| Key         | Command                                                                                                                   |
+| :---------- | :------------------------------------------------------------------------------------------------------------------------ |
+| `C-c , b`   | `purpose-switch-buffer-with-purpose`: switch to a buffer with the same purpose as the current one                         |
+| `C-u C-x b` | `switch-buffer-without-purpose`: switch to a buffer, but don't use Purpose for it. Handy for changing the current layout. |
+| `C-c , d`   | `purpose-toggle-window-purpose-dedicated`                                                                                 |
+| `C-c , D`   | `purpose-toggle-window-buffer-dedicated`                                                                                  |
+| `C-c , 1`   | `purpose-delete-non-dedicated-windows`                                                                                    |
+|             | `purpose-save-window-layout`: save current layout to file                                                                 |
+|             | `purpose-save-frame-layout`                                                                                               |
+|             | `purpose-load-window-layout`: load layout from file                                                                       |
+|             | `purpose-load-frame-layout`                                                                                               |
+|             | `purpose-reset-window-layout`: reload previously loaded layout                                                            |
+|             | `purpose-reset-frame-layout`                                                                                              |
 
-Programmers can use the hook `purpose-select-buffer-hook` to execute code
-after everytime that Purpose displays a buffer and selects its window.
+### Example: Simple Python Layout
+How to get a simple and persistent layout for coding in Python that
+looks like this:
 
-### Purpose dedication
+![simple python layout](https://github.com/bmag/emacs-purpose/blob/master/images/terminal-at-bottom.png)
 
-Commands `purpose-toggle-window-purpose-dedicated` and
-`purpose-toggle-window-buffer-dedicated` let you mark a window as dedicated
-to its current purpose or to its current buffer. Marking a window's
-purpose as dedicated means that Purpose won't use this window for
-buffers with other purposes. Marking a window's buffer as dedicated
-means that it won't be used for other buffers, even if they have the
-same purpose. Buffer dedication is a built-in Emacs feature, which
-Purpose knows to respect.
+#### step 1: configuration
+```elisp
+(add-to-list 'purpose-user-mode-purposes '(python-mode . py))
+(add-to-list 'purpose-user-mode-purposes '(inferior-python-mode . py-repl))
+(purpose-compile-user-configuration)
+```
 
-### Persistent window layout
+#### step 2: change window layout
+If you have a previously saved layout, you can load it with
+`purpose-load-window-layout` and skip step 2 and step 3.
 
-Purpose lets you save and load your window layout with commands such as
-`purpose-save-window-layout` and `purpose-load-window-layout`.
+1. open a Python file
+2. `C-c , d` (`purpose-toggle-window-purpose-dedicated`) so window is
+   dedicated ("[py]" in the status bar will change to "[py!]")
+3. `C-x 1` (`delete-other-windows`)
+4. `C-x 2` (`split-window-below`)
+5. `C-c C-z` (`python-shell-switch-to-shell`)
+6. `C-c , d` so window is dedicated
+7. `C-x o` (`other-window`) to select the python file's window
+8. `C-x ^` (`enlarge-window`) until you like the sizes of the windows
 
-Programmers can use the hooks `purpose-set-window-properties-functions` and
-`purpose-get-extra-window-params-function` to save/load other window
-properties that may interest them.
+#### step 3: save window layout
+`M-x purpose-save-window-layout`
