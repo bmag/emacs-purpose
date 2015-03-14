@@ -69,7 +69,7 @@ In init file:
 How to get a simple and persistent layout for coding in Python that
 looks like this:
 
-![simple python layout](https://github.com/bmag/emacs-purpose/blob/master/images/terminal-at-bottom.png)
+![simple python layout](https://github.com/bmag/emacs-purpose/blob/master/images/simple-python-layout.png)
 
 #### step 1: configuration
 ```elisp
