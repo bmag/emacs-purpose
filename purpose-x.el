@@ -27,6 +27,9 @@
 ;;   `ibuffer' side window and `imenu-list' side window.
 ;; - magit: purpose configurations for magit.
 ;; - golden-ratio: make `golden-ratio-mode' work correctly with Purpose.
+;; - popup-switcher: command `purpose-x-psw-switch-buffer-with-purpose'
+;;   uses `popup-switcher' to switch to another buffer with the same
+;;   purpose as the current buffer
 
 ;;; Code:
 
@@ -260,7 +263,8 @@ Add `golden-ratio' at the end of `purpose-select-buffer-hook' if
 ;;; This requires package `popup-switcher'
 
 (when (require 'popup-switcher nil t)
-  (defun purpose-psw-switch-buffer-with-purpose ()
+  (defun purpose-x-psw-switch-buffer-with-purpose ()
+    "Use `psw-switcher' to open another buffer with the current purpose."
     (interactive)
     (psw-switcher :items-list (purpose-buffers-with-purpose
 			       (purpose-buffer-purpose (current-buffer)))

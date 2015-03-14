@@ -31,7 +31,9 @@
 
 (defvar purpose-action-function-ignore-buffer-names
   '("^\\*Completions\\*$"
-    "^\\*Ido Completions\\*$")
+    "^\\*Ido Completions\\*$"
+    ;; `ispell' uses *Choices* buffer
+    "^\\*Choices\\*$")
   "Names of buffers for which the default `display-buffer' and
 `switch-to-buffer' behavior should not be overridden.  This is a list of
 names.")

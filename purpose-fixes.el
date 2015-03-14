@@ -27,6 +27,7 @@
 ;;; Code:
 
 (require 'purpose-switch)
+(require 'purpose-configuration)
 
 
 
@@ -69,13 +70,22 @@ This function should be advised around
 
 
 
-;;; Helm's buffers should be ignored
+;;; Helm's buffers should be ignored, and they should have their own purpose
+(defvar purpose--helm-conf
+  (purpose-conf "helm"
+		:regexp-purposes '(("^\\*Helm" . helm)
+				   ("^\\*helm" . helm)))
+  "Purpose configuration for helm.")
 (defun purpose--fix-helm ()
-  "Add helm's buffers to Purposes's ignore list."
+  "Fix issues with helm.
+Add helm's buffers to Purposes's ignore list.
+Install helm's purpose configuration."
   (eval-after-load 'helm
     '(add-to-list 'purpose-action-function-ignore-buffer-names "^\\*Helm"))
   (eval-after-load 'helm
-    '(add-to-list 'purpose-action-function-ignore-buffer-names "^\\*helm")))
+    '(add-to-list 'purpose-action-function-ignore-buffer-names "^\\*helm"))
+  (eval-after-load 'helm
+    '(purpose-set-extension-configuration :helm purpose--helm-conf)))
 
 ;;; install fixes
 
