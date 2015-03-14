@@ -172,7 +172,7 @@ If no purpose was determined, return `default-purpose'."
   "Return a list of all existing buffers with purpose PURPOSE."
   (cl-remove-if-not #'(lambda (buffer)
 			(or (eql purpose (purpose-buffer-purpose buffer))
-			    (not (minibufferp buf))))
+			    (not (minibufferp bufffer))))
 		    (buffer-list)))
 
 (defun purpose-window-purpose (&optional window)
