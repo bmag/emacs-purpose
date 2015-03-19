@@ -1,9 +1,11 @@
 (ignore-errors
-  (when (require 'undercover nil t)
+  (when (and (not (version< emacs-version "24.4"))
+	     (require 'undercover nil t))
     (message "setting undercover")
     (undercover "purpose.el" "purpose-configuration.el"
 		"purpose-core.el" "purpose-layout.el"
 		"purpose-prefix-overload.el" "purpose-switch.el"
+		"purpose-utils.el"
 		;; "purpose-fixes.el" "purpose-x.el"
 		)))
 (message "loading purpose")
