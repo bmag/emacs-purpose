@@ -1,14 +1,17 @@
-(when (require 'undercover nil t)
-  (undercover "purpose.el" "purpose-configuration.el"
-	      "purpose-core.el" "purpose-layout.el"
-	      "purpose-prefix-overload.el" "purpose-switch.el"
-	      ;; "purpose-fixes.el" "purpose-x.el"
-	      ))
+(ignore-errors
+  (when (require 'undercover nil t)
+    (message "setting undercover")
+    (undercover "purpose.el" "purpose-configuration.el"
+		"purpose-core.el" "purpose-layout.el"
+		"purpose-prefix-overload.el" "purpose-switch.el"
+		;; "purpose-fixes.el" "purpose-x.el"
+		)))
+(message "loading purpose")
 
 (require 'purpose)
 (require 'purpose-x)
 
-
+(message "defining tests")
 
 (unless (fboundp 'hash-table-keys)
   (defun hash-table-keys (hash-table)
@@ -262,6 +265,30 @@ Each item in BUFFERS is either a buffer or a buffer's name."
 	   nil '(("another-buffer" . foo)) '(("xxx-test" . test))
 	   (should (equal (purpose-windows-with-purpose 'test) windows)))))
     (purpose-kill-buffers-safely "xxx-test-1" "another-buffer")))
+
+(ert-deftest purpose-test-get-buffer-create ()
+  "Test `purpose--get-buffer-create' returns/creates correct buffer."
+  (unwind-protect
+      (purpose-with-temp-config
+       nil '(("xxx-test" . test)) nil
+       (should (equal (buffer-name (purpose--get-buffer-create 'test)) "*pu-dummy-test*"))
+       (purpose-kill-buffers-safely "*pu-dummy-test*")
+       (get-buffer-create "xxx-test")
+       (should (equal (buffer-name (purpose--get-buffer-create 'test)) "xxx-test")))
+    (purpose-kill-buffers-safely "*pu-dummy-test*" "xxx-test")))
+
+(ert-deftest purpose-test-set-window-buffer ()
+  "Test `purpose--set-window-buffer' sets correct buffer and window."
+  (unwind-protect
+      (save-window-excursion
+	(purpose-with-empty-config
+	 (delete-other-windows)
+	 (let* ((window (selected-window))
+		(other-window (split-window window)))
+	   (purpose--set-window-buffer 'test)
+	   (should (equal (buffer-name (window-buffer window)) "*pu-dummy-test*"))
+	   (should-not (equal (purpose-window-purpose other-window) 'test)))))
+    (purpose-kill-buffers-safely "*pu-dummy-test*")))
 
 (ert-deftest purpose-test-dedication-toggle ()
   "Test toggling of window dedication (purpose and buffer)."
