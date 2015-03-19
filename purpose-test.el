@@ -15,6 +15,25 @@
 
 
 
+(unless (fboundp 'hash-table-keys)
+  (defun hash-table-keys (hash-table)
+    "Return a list of keys in HASH-TABLE."
+    (let (result)
+      (maphash #'(lambda (key value)
+		   (setq result (append (list key) result)))
+	       hash-table)
+      result))
+
+  (defun hash-table-values (hash-table)
+    "Return a list of values in HASH-TABLE."
+    (let (result)
+      (maphash #'(lambda (key value)
+		   (setq result (append (list value) result)))
+	       hash-table)
+      result)))
+
+
+
 ;;; purpose-configuration.el
 
 (defmacro purpose-with-empty-config (&rest body)
