@@ -10,6 +10,13 @@
 ;;   ;; (undercover "purpose-x.el")
 ;;   )
 
+(when (require 'undercover nil t)
+  (undercover "purpose.el" "purpose-configuration.el"
+	      "purpose-core.el" "purpose-layout.el"
+	      "purpose-prefix-overload.el" "purpose-switch.el"
+	      ;; "purpose-fixes.el" "purpose-x.el"
+	      ))
+
 (require 'purpose)
 (require 'purpose-x)
 
