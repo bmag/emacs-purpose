@@ -202,8 +202,12 @@ correct hash tables."
        (rename-buffer "*pu-dummy-xxx*" t)
        (should (equal (purpose-buffer-purpose (current-buffer)) 'xxx))))))
 
-;;; TODO: toggle-window-buffer-dedicated, toggle-window-purpose-dedicated
-;;; TODO: get-top/bottom/left/right-window
+(defun purpose-kill-buffers-safely (&rest buffers)
+  "Safely kill BUFFERS.
+Each item in BUFFERS is either a buffer or a buffer's name."
+  (let ((kill-buffer-query-functions nil)
+	(kill-buffer-hook nil))
+    (mapc #'(lambda (buf) (ignore-errors (kill-buffer buf))) buffers)))
 
 (ert-deftest purpose-test-buffers-with-purpose ()
   "Test `purpose-buffers-with-purpose'."
@@ -216,11 +220,7 @@ correct hash tables."
 	 (get-buffer-create "another-buffer")
 	 (should (or (equal (purpose-buffers-with-purpose 'test) buffers)
 		     (equal (purpose-buffers-with-purpose 'test) (reverse buffers)))))
-     (let ((kill-buffer-query-functions nil)
-	   (kill-buffer-hook nil))
-       (ignore-errors (kill-buffer "xxx-test-1"))
-       (ignore-errors (kill-buffer "xxx-test-2"))
-       (ignore-errors (kill-buffer "another-buffer"))))))
+     (purpose-kill-buffers-safely "xxx-test-1" "xxx-test-2" "another-buffer"))))
 
 (ert-deftest purpose-test-window-purpose ()
   "Test `purpose-window-purpose'."
@@ -230,9 +230,7 @@ correct hash tables."
 	(purpose-with-temp-config
 	 nil '(("xxx-test-1" . test)) nil
 	 (should (equal (purpose-window-purpose) 'test))))
-    (let ((kill-buffer-query-functions nil)
-	  (kill-buffer-hook nil))
-      (ignore-errors (kill-buffer "xxx-test-1")))))
+    (purpose-kill-buffers-safely "xxx-test-1")))
 
 (ert-deftest purpose-test-windows-with-purpose ()
   "Test `purpose-windows-with-purpose'."
@@ -249,10 +247,55 @@ correct hash tables."
 	  (purpose-with-temp-config
 	   nil '(("another-buffer" . foo)) '(("xxx-test" . test))
 	   (should (equal (purpose-windows-with-purpose 'test) windows)))))
-    (let ((kill-buffer-query-functions nil)
-	  (kill-buffer-hook nil))
-      (mapc #'(lambda (buf) (ignore-errors (kill-buffer buf)))
-	    '("xxx-test-1" "xxx-test-2" "another-buffer")))))
+    (purpose-kill-buffers-safely "xxx-test-1" "another-buffer")))
+
+(ert-deftest purpose-test-dedication-toggle ()
+  "Test toggling of window dedication (purpose and buffer)."
+  (let ((buffer-dedication (window-dedicated-p))
+	(purpose-dedication (purpose-window-purpose-dedicated-p)))
+    (unwind-protect
+	(progn
+	  ;; buffer dedication
+	  (set-window-dedicated-p nil nil)
+	  (purpose-toggle-window-buffer-dedicated)
+	  (should (window-dedicated-p))
+	  (purpose-toggle-window-buffer-dedicated)
+	  (should-not (window-dedicated-p))
+	  ;; purpose dedication
+	  (purpose-set-window-purpose-dedicated-p nil nil)
+	  (purpose-toggle-window-purpose-dedicated)
+	  (should (purpose-window-purpose-dedicated-p))
+	  (purpose-toggle-window-purpose-dedicated)
+	  (should-not (purpose-window-purpose-dedicated-p)))
+      (set-window-dedicated-p nil buffer-dedication)
+      (purpose-set-window-purpose-dedicated-p nil purpose-dedication))))
+
+(ert-deftest purpose-test-get-window ()
+  "Test functions for getting top/bottom/left/right windows.
+Functions tested are:
+- `purpose-get-top-window'
+- `purpose-get-bottom-window'
+- `purpose-get-left-window'
+- `purpose-get-right-window'"
+  (save-window-excursion
+    (delete-other-windows)
+    (should-not (purpose-get-top-window))
+    (should-not (purpose-get-bottom-window))
+    (should-not (purpose-get-left-window))
+    (should-not (purpose-get-right-window))
+    (let ((top-window (selected-window))
+	  (bottom-window (split-window nil 5 'below)))
+      (should (equal (purpose-get-top-window) top-window))
+      (should (equal (purpose-get-bottom-window) bottom-window))
+      (should-not (purpose-get-left-window))
+      (should-not (purpose-get-right-window)))
+    (delete-other-windows)
+    (let ((left-window (selected-window))
+	  (right-window (split-window nil 5 'right)))
+      (should (equal (purpose-get-left-window) left-window))
+      (should (equal (purpose-get-right-window) right-window))
+      (should-not (purpose-get-top-window))
+      (should-not (purpose-get-bottom-window)))))
 
 
 
