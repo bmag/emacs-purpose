@@ -1,15 +1,3 @@
-;; (when (require 'undercover nil t)
-;;   (setq undercover-force-coverage t)
-;;   ;; (undercover "purpose.el")
-;;   (undercover "purpose-configuration.el" (:report-file "/tmp/undercover-report.json"))
-;;   ;; (undercover "purpose-core.el")
-;;   ;; (undercover "purpose-fixes.el")
-;;   ;; (undercover "purpose-layout.el")
-;;   ;; (undercover "purpose-prefix-overload.el")
-;;   ;; (undercover "purpose-switch.el")
-;;   ;; (undercover "purpose-x.el")
-;;   )
-
 (when (require 'undercover nil t)
   (undercover "purpose.el" "purpose-configuration.el"
 	      "purpose-core.el" "purpose-layout.el"
