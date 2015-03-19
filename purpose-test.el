@@ -323,3 +323,96 @@ Functions tested are:
   (should (equal 3 (purpose-call-with-prefix-arg '(64) '--purpose-prefix-test)))
   (should-error (purpose-call-with-prefix-arg '(256) '--purpose-prefix-test)))
 
+
+
+
+;;; purpose-switch.el
+
+(defun purpose-create-buffers (&rest buffer-names)
+  "Create buffers according to BUFFER-NAMES."
+  (mapcar #'get-buffer-create buffer-names))
+
+(cl-defun purpose-create-buffers-for-test (&key (p0 0) &key (p1 0) &key (p2 0))
+  "Create buffers for purposes 'p0, 'p1 and 'p2.
+P0, P1 and P2 should be integers denoting how many buffers should be
+created for each purpose.
+The buffers created have the names \"xxx-p0-0\", \"xxx-p0-1\",
+\"xxx-p1-0\", \"xxx-p1-1\", \"xxx-p2-0\", etc."
+  (cl-loop for times in (list p0 p1 p2)
+	   for purpose in '("p0" "p1" "p2")
+	   do (dotimes (index times)
+		(purpose-create-buffers (format "xxx-%s-%s" purpose index)))))
+
+(defun purpose-displayed-buffers (&optional frame)
+  "Return a list of buffers displayed in FRAME."
+  (mapcar #'window-buffer (window-list frame)))
+
+(defun purpose-displayed-buffer-names (&optional frame)
+  (mapcar #'buffer-name (purpose-displayed-buffers frame)))
+
+(defmacro purpose-check-displayed-buffers (buffer-names)
+  `(should (equal (sort (purpose-displayed-buffer-names) #'string-lessp)
+		  (sort ,buffer-names #'string-lessp))))
+
+(ert-deftest purpose-test-switch-buffer ()
+  "Test variations of `purpose-switch-buffer'.
+- 1 windows, switch to same purpose
+- 1 window, switch to different purpose
+- 1 window, p-dedicated, switch to same purpose
+- 1 window, p-dedicated, switch to different purpose
+- 1 window, b-dedicated, switch to same purpose
+- 1 window, b-dedicated, switch to different purpose
+- 2 windows (purposes p0 and p1), from p1 window, switch to buried p0
+  buffer"
+  (save-window-excursion
+    (unwind-protect
+	(purpose-with-temp-config
+	 nil nil '(("^xxx-p0-" . p0) ("^xxx-p1-" . p1))
+	 (purpose-create-buffers-for-test :p0 2 :p1 1)
+	 (purpose-mode 1)
+	 ;; 1
+	 (delete-other-windows)
+	 (set-window-buffer nil "xxx-p0-0")
+	 (purpose-switch-buffer "xxx-p0-1")
+	 (purpose-check-displayed-buffers '("xxx-p0-1"))
+	 ;; 2
+	 (delete-other-windows)
+	 (set-window-buffer nil "xxx-p0-0")
+	 (purpose-switch-buffer "xxx-p1-0")
+	 (purpose-check-displayed-buffers '("xxx-p1-0"))
+	 ;; 3
+	 (delete-other-windows)
+	 (set-window-buffer nil "xxx-p0-0")
+	 (purpose-set-window-purpose-dedicated-p nil t)
+	 (purpose-switch-buffer "xxx-p0-1")
+	 (purpose-check-displayed-buffers '("xxx-p0-1"))
+	 (purpose-set-window-purpose-dedicated-p nil nil)
+	 ;; 4
+	 (delete-other-windows)
+	 (set-window-buffer nil "xxx-p0-0")
+	 (purpose-set-window-purpose-dedicated-p nil t)
+	 (purpose-switch-buffer "xxx-p1-0")
+	 (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p1-0"))
+	 (purpose-set-window-purpose-dedicated-p nil nil)
+	 ;; 5
+	 (delete-other-windows)
+	 (set-window-buffer nil "xxx-p0-1")
+	 (set-window-dedicated-p nil t)
+	 (purpose-switch-buffer "xxx-p0-1")
+	 (purpose-check-displayed-buffers '("xxx-p0-1"))
+	 (set-window-dedicated-p nil nil)
+	 ;; 6
+	 (delete-other-windows)
+	 (set-window-buffer nil "xxx-p0-0")
+	 (set-window-dedicated-p nil t)
+	 (purpose-switch-buffer "xxx-p1-0")
+	 (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p1-0"))
+	 (set-window-dedicated-p nil nil)
+	 ;; 7
+	 (delete-other-windows)
+	 (set-window-buffer nil "xxx-p0-0")
+	 (select-window (split-window))
+	 (set-window-buffer nil "xxx-p1-0")
+	 (purpose-switch-buffer "xxx-p0-1")
+	 (purpose-check-displayed-buffers '("xxx-p0-1" "xxx-p1-0")))
+      (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p0-1" "xxx-p1-0"))))
