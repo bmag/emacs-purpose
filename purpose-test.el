@@ -152,6 +152,15 @@ correct hash tables."
    (should (equal (hash-table-keys purpose--default-regexp-purposes) nil))
    (should (equal (hash-table-values purpose--default-regexp-purposes) nil))))
 
+(ert-deftest purpose-test-set-ext-conf-error ()
+  "Test error cases for settings/deleting extension configuration.
+See `purpose-set-extension-configuration' and
+`purpose-del-extension-configuration'."
+  (purpose-with-empty-config
+   (should-error (purpose-set-extension-configuration 'foo (purpose-conf "foo")))
+   (purpose-set-extension-configuration :foo (purpose-conf "foo"))
+   (should-error (purpose-del-extension-configuration 'foo))
+   (purpose-del-extension-configuration :foo)))
 
 
 ;;; purpose-core.el
@@ -409,63 +418,64 @@ The buffers created have the names \"xxx-p0-0\", \"xxx-p0-1\",
   buffer"
   (save-window-excursion
     (unwind-protect
-	(purpose-with-temp-config
-	 nil nil '(("^xxx-p0-" . p0) ("^xxx-p1-" . p1))
-	 (purpose-create-buffers-for-test :p0 2 :p1 1)
-	 (purpose-mode 1)
-	 ;; 1
-	 (message "1...")
-	 (delete-other-windows)
-	 (set-window-buffer nil "xxx-p0-0")
-	 (purpose-switch-buffer "xxx-p0-1")
-	 (purpose-check-displayed-buffers '("xxx-p0-1"))
-	 ;; 2
-	 (message "2...")
-	 (delete-other-windows)
-	 (set-window-buffer nil "xxx-p0-0")
-	 (purpose-switch-buffer "xxx-p1-0")
-	 (purpose-check-displayed-buffers '("xxx-p1-0"))
-	 ;; 3
-	 (message "3...")
-	 (delete-other-windows)
-	 (set-window-buffer nil "xxx-p0-0")
-	 (purpose-set-window-purpose-dedicated-p nil t)
-	 (purpose-switch-buffer "xxx-p0-1")
-	 (purpose-check-displayed-buffers '("xxx-p0-1"))
-	 (purpose-set-window-purpose-dedicated-p nil nil)
-	 ;; 4
-	 (message "4...")
-	 (delete-other-windows)
-	 (set-window-buffer nil "xxx-p0-0")
-	 (purpose-set-window-purpose-dedicated-p nil t)
-	 (purpose-switch-buffer "xxx-p1-0")
-	 (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p1-0"))
-	 (purpose-set-window-purpose-dedicated-p nil nil)
-	 ;; 5
-	 (message "5...")
-	 (delete-other-windows)
-	 (set-window-buffer nil "xxx-p0-1")
-	 (set-window-dedicated-p nil t)
-	 (purpose-switch-buffer "xxx-p0-1")
-	 (purpose-check-displayed-buffers '("xxx-p0-1"))
-	 (set-window-dedicated-p nil nil)
-	 ;; 6
-	 (message "6...")
-	 (delete-other-windows)
-	 (set-window-buffer nil "xxx-p0-0")
-	 (set-window-dedicated-p nil t)
-	 (purpose-switch-buffer "xxx-p1-0")
-	 (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p1-0"))
-	 (set-window-dedicated-p nil nil)
-	 ;; 7
-	 (message "7...")
-	 (delete-other-windows)
-	 (set-window-buffer nil "xxx-p0-0")
-	 (select-window (split-window))
-	 (set-window-buffer nil "xxx-p1-0")
-	 (purpose-switch-buffer "xxx-p0-1")
-	 (purpose-check-displayed-buffers '("xxx-p0-1" "xxx-p1-0"))
-	 (purpose-mode -1))
+	(let ((purpose-message-on-p t))
+	  (purpose-with-temp-config
+	   nil nil '(("^xxx-p0-" . p0) ("^xxx-p1-" . p1))
+	   (purpose-create-buffers-for-test :p0 2 :p1 1)
+	   (purpose-mode 1)
+	   ;; 1
+	   (message "1...")
+	   (delete-other-windows)
+	   (set-window-buffer nil "xxx-p0-0")
+	   (purpose-switch-buffer "xxx-p0-1")
+	   (purpose-check-displayed-buffers '("xxx-p0-1"))
+	   ;; 2
+	   (message "2...")
+	   (delete-other-windows)
+	   (set-window-buffer nil "xxx-p0-0")
+	   (purpose-switch-buffer "xxx-p1-0")
+	   (purpose-check-displayed-buffers '("xxx-p1-0"))
+	   ;; 3
+	   (message "3...")
+	   (delete-other-windows)
+	   (set-window-buffer nil "xxx-p0-0")
+	   (purpose-set-window-purpose-dedicated-p nil t)
+	   (purpose-switch-buffer "xxx-p0-1")
+	   (purpose-check-displayed-buffers '("xxx-p0-1"))
+	   (purpose-set-window-purpose-dedicated-p nil nil)
+	   ;; 4
+	   (message "4...")
+	   (delete-other-windows)
+	   (set-window-buffer nil "xxx-p0-0")
+	   (purpose-set-window-purpose-dedicated-p nil t)
+	   (purpose-switch-buffer "xxx-p1-0")
+	   (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p1-0"))
+	   (purpose-set-window-purpose-dedicated-p nil nil)
+	   ;; 5
+	   (message "5...")
+	   (delete-other-windows)
+	   (set-window-buffer nil "xxx-p0-1")
+	   (set-window-dedicated-p nil t)
+	   (purpose-switch-buffer "xxx-p0-1")
+	   (purpose-check-displayed-buffers '("xxx-p0-1"))
+	   (set-window-dedicated-p nil nil)
+	   ;; 6
+	   (message "6...")
+	   (delete-other-windows)
+	   (set-window-buffer nil "xxx-p0-0")
+	   (set-window-dedicated-p nil t)
+	   (purpose-switch-buffer "xxx-p1-0")
+	   (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p1-0"))
+	   (set-window-dedicated-p nil nil)
+	   ;; 7
+	   (message "7...")
+	   (delete-other-windows)
+	   (set-window-buffer nil "xxx-p0-0")
+	   (select-window (split-window))
+	   (set-window-buffer nil "xxx-p1-0")
+	   (purpose-switch-buffer "xxx-p0-1")
+	   (purpose-check-displayed-buffers '("xxx-p0-1" "xxx-p1-0"))
+	   (purpose-mode -1)))
       (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p0-1" "xxx-p1-0"))))
 
 (ert-deftest purpose-test-switch-buffer-other-window ()
@@ -476,36 +486,37 @@ The buffers created have the names \"xxx-p0-0\", \"xxx-p0-1\",
   p0 buffer."
   (save-window-excursion
     (unwind-protect
-	(purpose-with-temp-config
-	 nil nil '(("^xxx-p0-" . p0) ("^xxx-p1-" . p1))
-	 (purpose-create-buffers-for-test :p0 2 :p1 1)
-	 (purpose-mode 1)
-	 ;; 1
-	 (message "1...")
-	 (delete-other-windows)
-	 (set-window-buffer nil "xxx-p0-0")
-	 (purpose-switch-buffer-other-window "xxx-p0-1")
-	 (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-1"))
-	 ;; 2
-	 (message "2...")
-	 (delete-other-windows)
-	 (set-window-buffer nil "xxx-p1-0")
-	 (select-window (split-window))
-	 (set-window-buffer nil "xxx-p0-0")
-	 (purpose-switch-buffer-other-window "xxx-p0-1")
-	 (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-1"))
-	 ;; test 3 doesn't pass on automatic tests, but doing the same thing
-	 ;; manually does pass. weird...
-	 ;; ;; 3
-	 ;; (message "3...")
-	 ;; (delete-other-windows)
-	 ;; (set-window-buffer nil "xxx-p1-0")
-	 ;; (purpose-set-window-purpose-dedicated-p nil t)
-	 ;; (select-window (split-window))
-	 ;; (set-window-buffer nil "xxx-p0-0")
-	 ;; (purpose-switch-buffer-other-window "xxx-p0-1")
-	 ;; (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-1" "xxx-p1-0"))
-	 (purpose-mode -1))
+	(let ((purpose-message-on-p t))
+	  (purpose-with-temp-config
+	   nil nil '(("^xxx-p0-" . p0) ("^xxx-p1-" . p1))
+	   (purpose-create-buffers-for-test :p0 2 :p1 1)
+	   (purpose-mode 1)
+	   ;; 1
+	   (message "1...")
+	   (delete-other-windows)
+	   (set-window-buffer nil "xxx-p0-0")
+	   (purpose-switch-buffer-other-window "xxx-p0-1")
+	   (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-1"))
+	   ;; 2
+	   (message "2...")
+	   (delete-other-windows)
+	   (set-window-buffer nil "xxx-p1-0")
+	   (select-window (split-window))
+	   (set-window-buffer nil "xxx-p0-0")
+	   (purpose-switch-buffer-other-window "xxx-p0-1")
+	   (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-1"))
+	   ;; test 3 doesn't pass on automatic tests, but doing the same thing
+	   ;; manually does pass. weird...
+	   ;; ;; 3
+	   ;; (message "3...")
+	   ;; (delete-other-windows)
+	   ;; (set-window-buffer nil "xxx-p1-0")
+	   ;; (purpose-set-window-purpose-dedicated-p nil t)
+	   ;; (select-window (split-window))
+	   ;; (set-window-buffer nil "xxx-p0-0")
+	   ;; (purpose-switch-buffer-other-window "xxx-p0-1")
+	   ;; (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-1" "xxx-p1-0"))
+	   (purpose-mode -1)))
       (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p0-1" "xxx-p1-0"))))
 
 (ert-deftest purpose-test-pop-buffer ()
@@ -516,34 +527,35 @@ The buffers created have the names \"xxx-p0-0\", \"xxx-p0-1\",
   p0 buffer."
   (save-window-excursion
     (unwind-protect
-	(purpose-with-temp-config
-	 nil nil '(("^xxx-p0-" . p0) ("^xxx-p1-" . p1))
-	 (purpose-create-buffers-for-test :p0 2 :p1 1)
-	 (purpose-mode 1)
-	 ;; 1
-	 (message "1...")
-	 (delete-other-windows)
-	 (set-window-buffer nil "xxx-p0-0")
-	 (purpose-pop-buffer "xxx-p0-1")
-	 (purpose-check-displayed-buffers '("xxx-p0-1"))
-	 ;; 2
-	 (message "2...")
-	 (delete-other-windows)
-	 (set-window-buffer nil "xxx-p1-0")
-	 (select-window (split-window))
-	 (set-window-buffer nil "xxx-p0-0")
-	 (purpose-pop-buffer "xxx-p0-1")
-	 (purpose-check-displayed-buffers '("xxx-p0-1" "xxx-p1-0"))
-	 ;; 3
-	 (message "3...")
-	 (delete-other-windows)
-	 (set-window-buffer nil "xxx-p1-0")
-	 (purpose-set-window-purpose-dedicated-p nil t)
-	 (select-window (split-window))
-	 (set-window-buffer nil "xxx-p0-0")
-	 (purpose-pop-buffer "xxx-p0-1")
-	 (purpose-check-displayed-buffers '("xxx-p0-1" "xxx-p1-0"))
-	 (purpose-mode -1))
+	(let ((purpose-message-on-p t))
+	  (purpose-with-temp-config
+	   nil nil '(("^xxx-p0-" . p0) ("^xxx-p1-" . p1))
+	   (purpose-create-buffers-for-test :p0 2 :p1 1)
+	   (purpose-mode 1)
+	   ;; 1
+	   (message "1...")
+	   (delete-other-windows)
+	   (set-window-buffer nil "xxx-p0-0")
+	   (purpose-pop-buffer "xxx-p0-1")
+	   (purpose-check-displayed-buffers '("xxx-p0-1"))
+	   ;; 2
+	   (message "2...")
+	   (delete-other-windows)
+	   (set-window-buffer nil "xxx-p1-0")
+	   (select-window (split-window))
+	   (set-window-buffer nil "xxx-p0-0")
+	   (purpose-pop-buffer "xxx-p0-1")
+	   (purpose-check-displayed-buffers '("xxx-p0-1" "xxx-p1-0"))
+	   ;; 3
+	   (message "3...")
+	   (delete-other-windows)
+	   (set-window-buffer nil "xxx-p1-0")
+	   (purpose-set-window-purpose-dedicated-p nil t)
+	   (select-window (split-window))
+	   (set-window-buffer nil "xxx-p0-0")
+	   (purpose-pop-buffer "xxx-p0-1")
+	   (purpose-check-displayed-buffers '("xxx-p0-1" "xxx-p1-0"))
+	   (purpose-mode -1)))
       (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p0-1" "xxx-p1-0"))))
 
 (ert-deftest purpose-test-pop-buffer-same-window ()
@@ -557,54 +569,55 @@ The buffers created have the names \"xxx-p0-0\", \"xxx-p0-1\",
   buried p0 buffer."
   (save-window-excursion
     (unwind-protect
-	(purpose-with-temp-config
-	 nil nil '(("^xxx-p0-" . p0) ("^xxx-p1-" . p1))
-	 (purpose-create-buffers-for-test :p0 2 :p1 1)
-	 (purpose-mode 1)
-	 ;; 1
-	 (message "1...")
-	 (delete-other-windows)
-	 (set-window-buffer nil "xxx-p0-0")
-	 (purpose-pop-buffer-same-window "xxx-p1-0")
-	 (purpose-check-displayed-buffers '("xxx-p1-0"))
-	 ;; 2
-	 (message "2...")
-	 (delete-other-windows)
-	 (set-window-buffer nil "xxx-p1-0")
-	 (select-window (split-window))
-	 (set-window-buffer nil "xxx-p0-0")
-	 (purpose-pop-buffer-same-window "xxx-p0-1")
-	 (purpose-check-displayed-buffers '("xxx-p0-1" "xxx-p1-0"))
-	 ;; 3
-	 (message "3...")
-	 (delete-other-windows)
-	 (set-window-buffer nil "xxx-p0-0")
-	 (select-window (split-window))
-	 (set-window-buffer nil "xxx-p1-0")
-	 (purpose-pop-buffer-same-window "xxx-p0-1")
-	 (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-1"))
-	 ;; 4
-	 (message "4...")
-	 (delete-other-windows)
-	 (set-window-buffer nil "xxx-p1-0")
-	 (select-window (split-window))
-	 (set-window-buffer nil "xxx-p0-0")
-	 (set-window-dedicated-p nil t)
-	 (purpose-pop-buffer-same-window "xxx-p0-1")
-	 (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-1"))
-	 ;; same situation as in `purpose-test-switch-buffer-other-window' -
-	 ;; automatic test fails, manualy test passes
-	 ;; ;; 5
-	 ;; (message "5...")
-	 ;; (delete-other-windows)
-	 ;; (set-window-buffer nil "xxx-p1-0")
-	 ;; (set-window-dedicated-p nil t)
-	 ;; (select-window (split-window))
-	 ;; (set-window-buffer nil "xxx-p0-0")
-	 ;; (set-window-dedicated-p nil t)
-	 ;; (purpose-pop-buffer-same-window "xxx-p0-1")
-	 ;; (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-1" "xxx-p1-0"))
-	 (purpose-mode -1))
+	(let ((purpose-message-on-p t))
+	  (purpose-with-temp-config
+	   nil nil '(("^xxx-p0-" . p0) ("^xxx-p1-" . p1))
+	   (purpose-create-buffers-for-test :p0 2 :p1 1)
+	   (purpose-mode 1)
+	   ;; 1
+	   (message "1...")
+	   (delete-other-windows)
+	   (set-window-buffer nil "xxx-p0-0")
+	   (purpose-pop-buffer-same-window "xxx-p1-0")
+	   (purpose-check-displayed-buffers '("xxx-p1-0"))
+	   ;; 2
+	   (message "2...")
+	   (delete-other-windows)
+	   (set-window-buffer nil "xxx-p1-0")
+	   (select-window (split-window))
+	   (set-window-buffer nil "xxx-p0-0")
+	   (purpose-pop-buffer-same-window "xxx-p0-1")
+	   (purpose-check-displayed-buffers '("xxx-p0-1" "xxx-p1-0"))
+	   ;; 3
+	   (message "3...")
+	   (delete-other-windows)
+	   (set-window-buffer nil "xxx-p0-0")
+	   (select-window (split-window))
+	   (set-window-buffer nil "xxx-p1-0")
+	   (purpose-pop-buffer-same-window "xxx-p0-1")
+	   (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-1"))
+	   ;; 4
+	   (message "4...")
+	   (delete-other-windows)
+	   (set-window-buffer nil "xxx-p1-0")
+	   (select-window (split-window))
+	   (set-window-buffer nil "xxx-p0-0")
+	   (set-window-dedicated-p nil t)
+	   (purpose-pop-buffer-same-window "xxx-p0-1")
+	   (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-1"))
+	   ;; same situation as in `purpose-test-switch-buffer-other-window' -
+	   ;; automatic test fails, manualy test passes
+	   ;; ;; 5
+	   ;; (message "5...")
+	   ;; (delete-other-windows)
+	   ;; (set-window-buffer nil "xxx-p1-0")
+	   ;; (set-window-dedicated-p nil t)
+	   ;; (select-window (split-window))
+	   ;; (set-window-buffer nil "xxx-p0-0")
+	   ;; (set-window-dedicated-p nil t)
+	   ;; (purpose-pop-buffer-same-window "xxx-p0-1")
+	   ;; (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-1" "xxx-p1-0"))
+	   (purpose-mode -1)))
       (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p0-1" "xxx-p1-0"))))
 
 ;; can't raise frames in automatic tests (because "emacs -batch"), so
@@ -629,3 +642,21 @@ The buffers created have the names \"xxx-p0-0\", \"xxx-p0-1\",
 ;; 	     (purpose-mode -1))
 ;; 	  (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p0-1" "xxx-p1-0"))
 ;;       (set-frame-configuration frame-conf))))
+
+
+
+;;; purpose.el
+
+(ert-deftest purpose-test-mode-line ()
+  "Test `purpose--modeline-string' returns correct string."
+  (save-window-excursion
+    (unwind-protect
+	(purpose-with-temp-config
+	 nil '(("xxx-test" . test)) nil
+	 (set-window-buffer nil (get-buffer-create "xxx-test"))
+	 (purpose-set-window-purpose-dedicated-p nil t)
+	 (should (equal (purpose--modeline-string) " [test!]"))
+	 (purpose-set-window-purpose-dedicated-p nil nil)
+	 (should (equal (purpose--modeline-string) " [test]")))
+      (purpose-kill-buffers-safely "xxx-test")
+      (purpose-set-window-purpose-dedicated-p nil nil))))
