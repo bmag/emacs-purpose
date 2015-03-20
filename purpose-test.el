@@ -434,8 +434,8 @@ The buffers created have the names \"xxx-p0-0\", \"xxx-p0-1\",
 	   (message "2...")
 	   (delete-other-windows)
 	   (set-window-buffer nil "xxx-p0-0")
-	   ;; (purpose-switch-buffer "xxx-p1-0")
-	   (switch-to-buffer "xxx-p1-0")
+	   (purpose-switch-buffer "xxx-p1-0")
+	   ;; (switch-to-buffer "xxx-p1-0")
 	   (purpose-check-displayed-buffers '("xxx-p1-0"))
 	   ;; 3
 	   (message "3...")
@@ -511,8 +511,8 @@ The buffers created have the names \"xxx-p0-0\", \"xxx-p0-1\",
 	   (set-window-buffer nil "xxx-p1-0")
 	   (select-window (split-window))
 	   (set-window-buffer nil "xxx-p0-0")
-	   ;; (purpose-switch-buffer-other-window "xxx-p0-1")
-	   (switch-to-buffer-other-window "xxx-p0-1")
+	   (purpose-switch-buffer-other-window "xxx-p0-1")
+	   ;; (switch-to-buffer-other-window "xxx-p0-1")
 	   (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-1"))
 	   ;; 3
 	   (message "3...")
@@ -553,8 +553,8 @@ The buffers created have the names \"xxx-p0-0\", \"xxx-p0-1\",
 	   (set-window-buffer nil "xxx-p1-0")
 	   (select-window (split-window))
 	   (set-window-buffer nil "xxx-p0-0")
-	   ;; (purpose-pop-buffer "xxx-p0-1")
-	   (pop-to-buffer "xxx-p0-1")
+	   (purpose-pop-buffer "xxx-p0-1")
+	   ;; (pop-to-buffer "xxx-p0-1")
 	   (purpose-check-displayed-buffers '("xxx-p0-1" "xxx-p1-0"))
 	   ;; 3
 	   (message "3...")
@@ -598,8 +598,8 @@ The buffers created have the names \"xxx-p0-0\", \"xxx-p0-1\",
 	   (set-window-buffer nil "xxx-p1-0")
 	   (select-window (split-window))
 	   (set-window-buffer nil "xxx-p0-0")
-	   ;; (purpose-pop-buffer-same-window "xxx-p0-1")
-	   (pop-to-buffer-same-window "xxx-p0-1")
+	   (purpose-pop-buffer-same-window "xxx-p0-1")
+	   ;; (pop-to-buffer-same-window "xxx-p0-1")
 	   (purpose-check-displayed-buffers '("xxx-p0-1" "xxx-p1-0"))
 	   ;; 3
 	   (message "3...")
@@ -717,7 +717,8 @@ The buffers created have the names \"xxx-p0-0\", \"xxx-p0-1\",
 	  (let ((window (selected-window)))
 	    (should (funcall display-fn (get-buffer-create "xxx-test") nil))
 	    (funcall delete-fn)
-	    (should (equal (window-list) (list window)))))
+	    (should (equal (window-list) (list window)))
+	    (should-error (funcall delete-fn))))
       (purpose-kill-buffers-safely "xxx-test"))))
 
 (ert-deftest purpose-test-delete-window-at-top ()
@@ -741,3 +742,23 @@ The buffers created have the names \"xxx-p0-0\", \"xxx-p0-1\",
   ;; `purpose-display-at-right-width'
   (let ((purpose-display-at-right-width 5))
     (purpose-test-delete-window-at #'purpose-display-at-right #'purpose-delete-window-at-right)))
+
+(ert-deftest purpose-test-set-purpose ()
+  "Test `purpose-set-window-purpose'"
+  (save-window-excursion
+    (unwind-protect
+	(progn
+	  (purpose-set-window-purpose 'foo)
+	  (should (equal (purpose-window-purpose) 'foo)))
+      (purpose-kill-buffers-safely "*pu-dummy-foo*")
+      (purpose-set-window-purpose-dedicated-p nil nil))))
+
+(ert-deftest purpose-cover-save-layout ()
+  "Test that `purpose-save-window-layout' and `purpose-save-frame-layout' don't cause errors."
+  (let ((filename "just-some-file"))
+    (unwind-protect
+	(progn
+	  (purpose-save-window-layout filename)
+	  (delete-file filename)
+	  (purpose-save-frame-layout filename))
+      (delete-file filename))))
