@@ -698,3 +698,50 @@ The buffers created have the names \"xxx-p0-0\", \"xxx-p0-1\",
 	 (should (equal (purpose--modeline-string) " [test]")))
       (purpose-kill-buffers-safely "xxx-test")
       (purpose-set-window-purpose-dedicated-p nil nil))))
+
+
+
+;;; purpose-layout.el
+
+(ert-deftest purpose-test-delete-non-dedicated-windows ()
+  "Test `purpose-delete-non-dedicated-windows'."
+  (save-window-excursion
+    (delete-other-windows)
+    (let ((window (selected-window)))
+      (purpose-set-window-purpose-dedicated-p window t)
+      (split-window window)
+      (purpose-delete-non-dedicated-windows)
+      (should (equal (window-list) (list window))))))
+
+(defun purpose-test-delete-window-at (display-fn delete-fn)
+  (save-window-excursion
+    (unwind-protect
+	(progn
+	  (delete-other-windows)
+	  (let ((window (selected-window)))
+	    (should (funcall display-fn (get-buffer-create "xxx-test") nil))
+	    (funcall delete-fn)
+	    (should (equal (window-list) (list window)))))
+      (purpose-kill-buffers-safely "xxx-test"))))
+
+(ert-deftest purpose-test-delete-window-at-top ()
+  "Test `purpose-delete-window-at-top'."
+  (purpose-test-delete-window-at #'purpose-display-at-top #'purpose-delete-window-at-top))
+
+(ert-deftest purpose-test-delete-window-at-bottom ()
+  "Test `purpose-delete-window-at-bottom'."
+  (purpose-test-delete-window-at #'purpose-display-at-bottom #'purpose-delete-window-at-bottom))
+
+(ert-deftest purpose-test-delete-window-at-left ()
+  "Test `purpose-delete-window-at-left'."
+  ;; split-window in batch mode doesn't work for big values of
+  ;; `purpose-display-at-left-width'
+  (let ((purpose-display-at-left-width 5))
+    (purpose-test-delete-window-at #'purpose-display-at-left #'purpose-delete-window-at-left)))
+
+(ert-deftest purpose-test-delete-window-at-right ()
+  "Test `purpose-delete-window-at-right'."
+  ;; split-window in batch mode doesn't work for big values of
+  ;; `purpose-display-at-right-width'
+  (let ((purpose-display-at-right-width 5))
+    (purpose-test-delete-window-at #'purpose-display-at-right #'purpose-delete-window-at-right)))
