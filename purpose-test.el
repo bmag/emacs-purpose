@@ -514,18 +514,16 @@ The buffers created have the names \"xxx-p0-0\", \"xxx-p0-1\",
 	   ;; (purpose-switch-buffer-other-window "xxx-p0-1")
 	   (switch-to-buffer-other-window "xxx-p0-1")
 	   (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-1"))
-	   ;; test 3 doesn't pass on automatic tests, but doing the same thing
-	   ;; manually does pass. weird...
-	   ;; ;; 3
-	   ;; (message "3...")
-	   ;; (delete-other-windows)
-	   ;; (set-window-buffer nil "xxx-p1-0")
-	   ;; (purpose-set-window-purpose-dedicated-p nil t)
-	   ;; (select-window (split-window))
-	   ;; (set-window-buffer nil "xxx-p0-0")
-	   ;; ;; (purpose-switch-buffer-other-window "xxx-p0-1")
-	   ;; (switch-to-buffer-other-window "xxx-p0-1")
-	   ;; (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-1" "xxx-p1-0"))
+	   ;; 3
+	   (message "3...")
+	   (delete-other-windows)
+	   (set-window-buffer nil "xxx-p1-0")
+	   (purpose-set-window-purpose-dedicated-p nil t)
+	   (select-window (split-window))
+	   (set-window-buffer nil "xxx-p0-0")
+	   ;; (purpose-switch-buffer-other-window "xxx-p0-1")
+	   (switch-to-buffer-other-window "xxx-p0-1")
+	   (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-1" "xxx-p1-0"))
 	   (purpose-mode -1)))
       (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p0-1" "xxx-p1-0"))))
 
@@ -622,19 +620,17 @@ The buffers created have the names \"xxx-p0-0\", \"xxx-p0-1\",
 	   ;; (purpose-pop-buffer-same-window "xxx-p0-1")
 	   (pop-to-buffer-same-window "xxx-p0-1")
 	   (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-1"))
-	   ;; same situation as in `purpose-test-switch-buffer-other-window' -
-	   ;; automatic test fails, manualy test passes
-	   ;; ;; 5
-	   ;; (message "5...")
-	   ;; (delete-other-windows)
-	   ;; (set-window-buffer nil "xxx-p1-0")
-	   ;; (set-window-dedicated-p nil t)
-	   ;; (select-window (split-window))
-	   ;; (set-window-buffer nil "xxx-p0-0")
-	   ;; (set-window-dedicated-p nil t)
-	   ;; ;; (purpose-pop-buffer-same-window "xxx-p0-1")
-	   ;; (pop-to-buffer-same-window "xxx-p0-1")
-	   ;; (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-1" "xxx-p1-0"))
+	   ;; 5
+	   (message "5...")
+	   (delete-other-windows)
+	   (set-window-buffer nil "xxx-p1-0")
+	   (set-window-dedicated-p nil t)
+	   (select-window (split-window))
+	   (set-window-buffer nil "xxx-p0-0")
+	   (set-window-dedicated-p nil t)
+	   ;; (purpose-pop-buffer-same-window "xxx-p0-1")
+	   (pop-to-buffer-same-window "xxx-p0-1")
+	   (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-1" "xxx-p1-0"))
 	   (purpose-mode -1)))
       (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p0-1" "xxx-p1-0"))))
 
