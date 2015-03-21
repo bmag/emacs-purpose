@@ -1,6 +1,7 @@
 (ignore-errors
-  (when (and (not (version< emacs-version "24.4"))
-	     (require 'undercover nil t))
+  (when (and  ; undercover.el causes error with Emacs 24.3 and Purpose
+	 (not (version< emacs-version "24.4"))
+	 (require 'undercover nil t))
     (message "setting undercover")
     (undercover "purpose.el" "purpose-configuration.el"
 		"purpose-core.el" "purpose-layout.el"
@@ -800,13 +801,53 @@ new buffer should be displayed in one of the two existing windows."
       (purpose-mode -1)
       (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p1-0" "xxx-p1-1"))))
 
+(ert-deftest purpose-test-special-action-sequences ()
+  "Test `purpose-special-action-sequences' properly affects display behavior.
+- (purpose . (display-functions)) causes <display-functions> to be
+  called for buffers with <purpose>.
+- (predicate . (display-functions)) causes <display-functions> to be
+  called for buffers that match <predicate>."
+  (save-window-excursion
+    (unwind-protect
+	(purpose-with-temp-config
+	 nil nil '(("^xxx-p0-" . p0) ("^xxx-p1-" . p1) ("^xxx-p2-" . p2))
+	 (purpose-create-buffers-for-test :p0 1 :p1 1 :p2 1)
+	 (purpose-mode 1)
+	 (let ((test-happened 0)
+	       (purpose-special-action-sequences
+		'((p1
+		   (lambda (buffer alist) (setq test-happened 1) (display-buffer-at-bottom buffer alist)))
+		  ((lambda (purpose buffer alist) (eql (purpose-buffer-purpose buffer) 'p2))
+		   (lambda (buffer alist) (setq test-happened 2) (display-buffer-at-bottom buffer alist))))))
+	   (delete-other-windows)
+	   (set-window-buffer nil "xxx-p0-0")
+	   (switch-to-buffer "xxx-p1-0")
+	   (message "Windows: %S" (window-list))
+	   (should (equal test-happened 1))
+	   (delete-other-windows)
+	   (set-window-buffer nil "xxx-p0-0")
+	   (switch-to-buffer "xxx-p2-0")
+	   (should (equal test-happened 2))))
+      (purpose-mode -1)
+      (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p1-0" "xxx-p2-0"))))
+
+(ert-deftest purpose-cover-select-buffer-without-action-order ()
+  "Test `purpose-select-buffer' does use `purpose-default-action-order'."
+  (save-window-excursion
+    (unwind-protect
+	(let ((purpose-default-action-order 'prefer-other-window))
+	  (purpose-mode 1)
+	  (delete-other-windows)
+	  (purpose-select-buffer (get-buffer-create "xxx-test"))
+	  (should (equal (length (window-list)) 2)))
+      (purpose-mode -1)
+      (purpose-kill-buffers-safely "xxx-test"))))
+
 ;;; TODO:
 ;;; - alist entry `reuasble-frames'
 ;;; - `purpose-display-reuse-window-buffer-other-frame'
 ;;; - `purpose-display-reuse-window-purpose-other-frame'
 ;;; - `purpose-display-maybe-pop-up-frame'
-;;; - `purpose-special-action-sequences'
-;;; - `purpose-default-action-order'
 ;;; - `purpose-read-buffers-with-purpose'
 ;;; - `purpose-switch-buffer-with-purpose' (other-window, other-frame)
 
