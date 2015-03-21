@@ -758,7 +758,36 @@ The buffers created have the names \"xxx-p0-0\", \"xxx-p0-1\",
   (let ((filename "just-some-file"))
     (unwind-protect
 	(progn
+	  (delete-other-windows)
+	  (split-window)
 	  (purpose-save-window-layout filename)
 	  (delete-file filename)
 	  (purpose-save-frame-layout filename))
       (delete-file filename))))
+
+(ert-deftest purpose-cover-load-layout ()
+  "Test that `purpose-load-window-layout' and `purpose-load-frame-layout' don't cause errors."
+  (let ((filename "just-some-file"))
+    (unwind-protect
+	(progn
+	  (delete-other-windows)
+	  (split-window)
+	  (purpose-save-window-layout filename)
+	  (delete-other-windows)
+	  (purpose-load-window-layout filename)
+	  (should (equal (length (window-list)) 2))
+	  (purpose-save-frame-layout filename)
+	  (purpose-load-frame-layout filename))
+      (delete-file filename))))
+
+(ert-deftest purpose-cover-reset-layout ()
+  "Test that `purpose-reset-window-layout' and `purpose-reset-frame-layout' don't cause errors."
+  (delete-other-windows)
+  (split-window)
+  (purpose-set-window-layout (purpose-get-window-layout))
+  (delete-other-windows)
+  (purpose-reset-window-layout)
+  (should (equal (length (window-list)) 2))
+  (delete-other-windows)
+  (purpose-set-frame-layout (purpose-get-frame-layout))
+  (purpose-reset-frame-layout))
