@@ -1,7 +1,6 @@
 (ignore-errors
-  (when ;; (and (not (version< emacs-version "24.4"))
-      ;;      (require 'undercover nil t))
-      (require 'undercover nil t)
+  (when (and (not (version< emacs-version "24.4"))
+	     (require 'undercover nil t))
     (message "setting undercover")
     (undercover "purpose.el" "purpose-configuration.el"
 		"purpose-core.el" "purpose-layout.el"
