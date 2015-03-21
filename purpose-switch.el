@@ -539,11 +539,11 @@ ALIST has the same meaning as in `display-buffer'."
     (if (and window
 	     (or (purpose-window-buffer-reusable-p window buffer)
 		 (purpose-window-purpose-reusable-p window (purpose-buffer-purpose buffer))))
-	;; reuse bottom window
+	;; reuse window
 	(progn
 	  (purpose-change-buffer buffer window 'reuse alist)
 	  window)
-      ;; create bottom window
+      ;; create window
       (let ((new-window (funcall window-creator)))
 	(when new-window
 	  (purpose-change-buffer buffer new-window 'window alist)
@@ -708,7 +708,8 @@ If ALIST is nil, it is ignored and `purpose--alist' is used instead."
 			   "trying fallback: purpose-display-pop-up-window")
 			  (purpose-display-pop-up-window buffer alist))
 
-			 ((eql purpose-display-fallback 'error)
+			 ((or (eql purpose-display-fallback 'error)
+			      (eql .action-order 'force-same-window))
 			  (error "No window available"))
 
 			 (t

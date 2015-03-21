@@ -1,6 +1,7 @@
 (ignore-errors
-  (when (and (not (version< emacs-version "24.4"))
-	     (require 'undercover nil t))
+  (when ;; (and (not (version< emacs-version "24.4"))
+      ;;      (require 'undercover nil t))
+      (require 'undercover nil t)
     (message "setting undercover")
     (undercover "purpose.el" "purpose-configuration.el"
 		"purpose-core.el" "purpose-layout.el"
@@ -662,19 +663,151 @@ The buffers created have the names \"xxx-p0-0\", \"xxx-p0-1\",
   "Test `purpose-window-buffer-reusable-p'."
   (should (purpose-window-buffer-reusable-p (selected-window) (window-buffer (selected-window)))))
 
+(ert-deftest purpose-test-display-fallback-pop-window ()
+  "Test value `pop-up-window' for `purpose-display-fallback'.
+From single buffer-dedicated window, switch with `force-same-window: a
+new window should be created."
+  (save-window-excursion
+    (unwind-protect
+	(let ((purpose-message-on-p t))
+	  (purpose-with-temp-config
+	   nil nil '(("^xxx-p0-" . p0) ("^xxx-p1-" . p1))
+	   (purpose-create-buffers-for-test :p0 1 :p1 1)
+	   (purpose-mode 1)
+	   (delete-other-windows)
+	   (set-window-buffer nil "xxx-p0-0")
+	   (set-window-dedicated-p nil t)
+	   (let ((purpose-display-fallback 'pop-up-window))
+	     (switch-to-buffer "xxx-p1-0" nil t)
+	     (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p1-0")))))
+      (purpose-mode -1)
+      (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p1-0"))))
+
+;; can't raise frames in automatic tests (because "emacs -batch"), so
+;; this test can't pass...
+;; (ert-deftest purpose-test-display-fallback-pop-frame ()
+;;   "Test value `pop-up-frame' for `purpose-display-fallback'.
+;; From single buffer-dedicated window, switch with `force-same-window: a
+;; new frame should be created."
+;;   (unwind-protect
+;;       (let ((purpose-message-on-p t))
+;; 	(purpose-with-temp-config
+;; 	 nil nil '(("^xxx-p0-" . p0) ("^xxx-p1-" . p1))
+;; 	 (purpose-create-buffers-for-test :p0 1 :p1 1)
+;; 	 (purpose-mode 1)
+;; 	 (delete-other-frames)
+;; 	 (delete-other-windows)
+;; 	 (set-window-buffer nil "xxx-p0-0")
+;; 	 (set-window-dedicated-p nil t)
+;; 	 (let ((purpose-display-fallback 'pop-up-frame))
+;; 	   (switch-to-buffer "xxx-p1-0" nil t)
+;; 	   (should (equal (length (frame-list)) 2)))))
+;;     (purpose-mode -1)
+;;     (delete-other-frames)
+;;     (delete-other-windows)
+;;     (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p1-0")))
+
+(ert-deftest purpose-test-display-fallback-error ()
+  "Test value `error' for `purpose-display-fallback'.
+From single buffer-dedicated window, switch with `force-same-window: an
+error should be signaled."
+  (save-window-excursion
+    (unwind-protect
+	(let ((purpose-message-on-p t))
+	  (purpose-with-temp-config
+	   nil nil '(("^xxx-p0-" . p0) ("^xxx-p1-" . p1))
+	   (purpose-create-buffers-for-test :p0 1 :p1 1)
+	   (purpose-mode 1)
+	   (delete-other-windows)
+	   (set-window-buffer nil "xxx-p0-0")
+	   (set-window-dedicated-p nil t)
+	   (let ((purpose-display-fallback 'error))
+	     (should-error (switch-to-buffer "xxx-p1-0" nil t)))))
+      (purpose-mode -1)
+      (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p1-0"))))
+
+(ert-deftest purpose-test-display-fallback-nil ()
+  "Test value `nil' for `purpose-display-fallback'.
+From single buffer-dedicated window, switch with `force-same-window': an
+error should be signaled.
+With two purpose-dedicated windows, switch to a third purpose window:
+new buffer should be displayed in one of the two existing windows."
+  (save-window-excursion
+    (unwind-protect
+	(let ((purpose-message-on-p t))
+	  (purpose-with-temp-config
+	   nil nil '(("^xxx-p0-" . p0) ("^xxx-p1-" . p1) ("^xxx-p2-" . p2))
+	   (purpose-create-buffers-for-test :p0 1 :p1 1 :p2 1)
+	   (purpose-mode 1)
+	   (delete-other-windows)
+	   (set-window-buffer nil "xxx-p0-0")
+	   (set-window-dedicated-p nil t)
+	   (let ((purpose-display-fallback nil))
+	     (message "testing error ...")
+	     (should-error (switch-to-buffer "xxx-p1-0" nil t)))
+
+	   (set-window-dedicated-p nil nil)
+	   (delete-other-windows)
+	   (set-window-buffer nil "xxx-p0-0")
+	   (purpose-set-window-purpose-dedicated-p nil t)
+	   (let ((other-window (split-window)))
+	     (set-window-buffer other-window "xxx-p1-0")
+	     (purpose-set-window-purpose-dedicated-p other-window t))
+	   (let ((purpose-display-fallback nil))
+	     (message "testing successful display ...")
+	     (switch-to-buffer "xxx-p2-0")
+	     (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p2-0")))))
+      (purpose-mode -1)
+      (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p1-0"))))
+
+(ert-deftest purpose-test-normalize-sizes ()
+  "Test sanity for `purpose--normalize-width' and `purpose--normalize-height'."
+  (message "testing purpose--normalize-width ...")
+  (should (equal (purpose--normalize-width 5) 5))
+  (should (equal (purpose--normalize-width 0.5) (/ (frame-width) 2)))
+  (should (equal (purpose--normalize-width nil) nil))
+  (should-error (purpose--normalize-width -5))
+
+  (message "testing purpose--normalize-height ...")
+  (should (equal (purpose--normalize-height 5) 5))
+  (should (equal (purpose--normalize-height 0.5) (/ (frame-height) 2)))
+  (should (equal (purpose--normalize-height nil) nil))
+  (should-error (purpose--normalize-height -5)))
+
+(ert-deftest purpose-test-display-at ()
+  "Test scenarios of `purpose-display--at'."
+  (save-window-excursion
+    (unwind-protect
+	(purpose-with-temp-config
+	 nil nil '(("^xxx-p0-" . p0) ("^xxx-p1-" . p1) ("^xxx-p2-" . p2))
+	 (purpose-create-buffers-for-test :p0 1 :p1 2)
+	 (purpose-mode 1)
+	 (delete-other-windows)
+	 (let ((first-window (selected-window)))
+	   (set-window-buffer first-window "xxx-p0-0")
+	   (message "testing popup ...")
+	   (purpose-display-at-bottom (get-buffer "xxx-p1-0") nil)
+	   (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p1-0"))
+
+	   (message "testing reuse buffer ...")
+	   (select-window first-window)
+	   (purpose-display-at-bottom (get-buffer "xxx-p1-0") nil)
+	   (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p1-0"))
+
+	   (message "testing reuse purpose ...")
+	   (select-window first-window)
+	   (purpose-display-at-bottom (get-buffer "xxx-p1-1") nil)
+	   (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p1-1"))))
+      (purpose-mode -1)
+      (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p1-0" "xxx-p1-1"))))
+
 ;;; TODO:
 ;;; - alist entry `reuasble-frames'
 ;;; - `purpose-display-reuse-window-buffer-other-frame'
 ;;; - `purpose-display-reuse-window-purpose-other-frame'
-;;; - `purpose-display-pop-up-window' (probably should be covered in one of
-;;;   the mysteriously failing test)
 ;;; - `purpose-display-maybe-pop-up-frame'
-;;; - `purpose--normalize-width'
-;;; - `purpose--normalize-height'
-;;; - `purpose-display-at-*' functions
 ;;; - `purpose-special-action-sequences'
 ;;; - `purpose-default-action-order'
-;;; - different values for `purpose-display-fallback'
 ;;; - `purpose-read-buffers-with-purpose'
 ;;; - `purpose-switch-buffer-with-purpose' (other-window, other-frame)
 
@@ -772,11 +905,15 @@ The buffers created have the names \"xxx-p0-0\", \"xxx-p0-1\",
 	(progn
 	  (delete-other-windows)
 	  (split-window)
+	  (message "saving window layout ...")
 	  (purpose-save-window-layout filename)
 	  (delete-other-windows)
+	  (message "loading window layout ...")
 	  (purpose-load-window-layout filename)
 	  (should (equal (length (window-list)) 2))
+	  (message "saving frame layout ...")
 	  (purpose-save-frame-layout filename)
+	  (message "loading frame layout")
 	  (purpose-load-frame-layout filename))
       (delete-file filename))))
 
@@ -786,8 +923,10 @@ The buffers created have the names \"xxx-p0-0\", \"xxx-p0-1\",
   (split-window)
   (purpose-set-window-layout (purpose-get-window-layout))
   (delete-other-windows)
+  (message "resetting window layout ...")
   (purpose-reset-window-layout)
   (should (equal (length (window-list)) 2))
   (delete-other-windows)
   (purpose-set-frame-layout (purpose-get-frame-layout))
+  (message "resetting frame layout ...")
   (purpose-reset-frame-layout))
