@@ -2,6 +2,7 @@
 
 [![MELPA](http://melpa.org/packages/purpose-badge.svg)](http://melpa.org/#/purpose)
 [![MELPA Stable](http://stable.melpa.org/packages/purpose-badge.svg)](http://stable.melpa.org/#/purpose)
+[![Build Status](https://travis-ci.org/bmag/emacs-purpose.svg?branch=master)](https://travis-ci.org/bmag/emacs-purpose)
 
 - **A full explanation can be found in the [GitHub wiki](https://github.com/bmag/emacs-purpose/wiki).**
 
