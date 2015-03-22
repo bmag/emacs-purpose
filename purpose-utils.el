@@ -72,6 +72,11 @@ This doesn't change the original alist, but returns a modified copy."
   (apply #'append seq))
 
 (defun purpose-alist-combine (&rest alists)
+  "Combine ALISTS into one alist.
+If several alists have the same key, the entry from the first alist with
+that key is used.  Example:
+  (purpose-alist-combine '((a . 1) (b . 2)) '((a . 3) (c . 4)))
+  => '((a . 1) (b . 2) (c . 4))"
   ;; (purpose-flatten alists)
   (let ((result nil))
     (dolist (alist alists)

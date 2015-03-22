@@ -195,8 +195,6 @@ BUFFER, WINDOW, TYPE and ALIST have the same meaning as
 `window--display-buffer'.'"
   (window--display-buffer buffer window type alist))
 
-(defalias 'purpose-display-reuse-window-buffer #'display-buffer-reuse-window)
-
 (defun purpose-window-buffer-reusable-p (window buffer)
   "Return non-nil if WINDOW can be reused to display BUFFER.
 WINDOW can be reused if it already show BUFFER."
@@ -244,6 +242,44 @@ terminal if it's non-nil."
 	     (message "Bad value for reusable-frames in ALIST: %S"
 		      reusable-frames)
 	     nil)))))
+
+(defun purpose-display-reuse-window-buffer (buffer alist)
+  "Return a window that is already displaying BUFFER.
+Return nil if no usable window is found.
+
+If ALIST has a non-nil `inhibit-same-window' entry, the selected window
+is not eligible for reuse.
+
+If ALIST contains a `reusable-frames' entry, its value determines
+which frames to search for a reusable window:
+  nil -- the selected frame (actually the last non-minibuffer frame)
+  A frame   -- just that frame
+  `visible' -- all visible frames
+  0   -- all frames on the current terminal
+  t   -- all frames.
+
+If ALIST contains no `reusable-frames' entry, search just the
+selected frame if `display-buffer-reuse-frames' and
+`pop-up-frames' are both nil; search all frames on the current
+terminal if either of those variables is non-nil.
+
+If ALIST has a non-nil `inhibit-switch-frame' entry, then in the
+event that a window on another frame is chosen, avoid raising
+that frame."
+  (let-alist alist
+    (let* ((frames (purpose--reusable-frames alist))
+	   (windows (purpose-flatten (mapcar #'window-list frames)))
+	   window)
+      (setq windows (cl-delete-if-not
+		     #'(lambda (window)
+			 (purpose-window-buffer-reusable-p window buffer))
+		     windows))
+      (when .inhibit-same-window
+	(setq windows (delq (selected-window) windows)))
+      (setq window (car windows))
+      (when window
+	(purpose-change-buffer buffer window 'reuse alist))
+      window)))
 
 (defun purpose-display-reuse-window-purpose (buffer alist &optional purpose)
   "Display BUFFER in a window that is already used for purpose PURPOSE.
@@ -311,7 +347,10 @@ that frame."
 			    (purpose--reusable-frames alist)))
 	 (windows (purpose-flatten (mapcar #'window-list frames)))
 	 window)
-    (setq windows (cl-delete-if #'window-dedicated-p windows))
+    (setq windows (cl-delete-if-not
+		   #'(lambda (window)
+		       (purpose-window-buffer-reusable-p window buffer))
+		   windows))
     (setq window (car windows))
     (when window
       (purpose-change-buffer buffer window 'reuse alist))
@@ -465,7 +504,28 @@ The display is done with `display-buffer-pop-up-window'."
   (when pop-up-windows
     (purpose-display-pop-up-window--internal buffer alist nil)))
 
-(defalias 'purpose-display-pop-up-frame #'display-buffer-pop-up-frame)
+(defun purpose-display-pop-up-frame (buffer alist)
+  "Display BUFFER in a new frame.
+This works by calling `pop-up-frame-function'.  If successful, return
+the window used.  Otherwise return nil.
+
+If ALIST has a non-nil `inhibit-switch-frame' entry, avoid raising the
+new frame.
+
+Variable `pop-up-frame-alist' is an alist of frame parameters for the
+new frame.  If ALIST has a non-nil `pop-up-frame-parameters' entry, its 
+value should be an alist of frame parameters to give the new frame.  The
+values of `pop-up-frame-alist' and `pop-up-frame-parameters' are used
+both.  In case of conflict, `pop-up-frame-parameters' takes precedence."
+  (let-alist alist
+    (let* ((pop-up-frame-alist (purpose-alist-combine .pop-up-frame-parameters
+						      pop-up-frame-alist))
+	   (frame (when pop-up-frame-function
+		    (with-current-buffer buffer
+		      (funcall pop-up-frame-function))))
+	   (window (and frame (frame-selected-window frame))))
+      (when window
+	(purpose-change-buffer buffer window 'frame alist)))))
 
 (defun purpose-display-maybe-pop-up-frame (buffer alist)
   "Display BUFFER in a new frame, if possible.
