@@ -1,10 +1,11 @@
 # Purpose
 
-[![MELPA](http://melpa.org/packages/purpose-badge.svg)](http://melpa.org/#/purpose)
-[![MELPA Stable](http://stable.melpa.org/packages/purpose-badge.svg)](http://stable.melpa.org/#/purpose)
+[![MELPA](http://melpa.org/packages/window-purpose-badge.svg)](http://melpa.org/#/window-purpose)
+[![MELPA Stable](http://stable.melpa.org/packages/window-purpose-badge.svg)](http://stable.melpa.org/#/window-purpose)
 [![Build Status](https://travis-ci.org/bmag/emacs-purpose.svg?branch=master)](https://travis-ci.org/bmag/emacs-purpose)
 
 - **A full explanation can be found in the [GitHub wiki](https://github.com/bmag/emacs-purpose/wiki).**
+- **Update: The package on Melpa was renamed from "purpose" to "window-purpose", and the files have been renamed accordingly.  Users should update their configurations to `(require 'window-purpose)` instead of `'purpose`.  The names of functions and variables remains unchanged.**
 
 ## Introduction
 
