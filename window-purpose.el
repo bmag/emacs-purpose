@@ -1,4 +1,4 @@
-;;; purpose.el --- Purpose-based window management for Emacs -*- lexical-binding: t -*-
+;;; window-purpose.el --- Purpose-based window management for Emacs -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2015 Bar Magal
 
@@ -39,7 +39,7 @@
 ;; Install Purpose from MELPA, or download it manually from GitHub. If
 ;; you download manually, add these lines to your init file:
 ;;    (add-to-list 'load-path "/path/to/purpose")
-;;    (require 'purpose)
+;;    (require 'window-purpose)
 ;; To activate Purpose at start-up, add this line to your init file:
 ;;    (purpose-mode)
 
@@ -63,13 +63,13 @@
 
 ;;; Code:
 
-(require 'purpose-utils)
-(require 'purpose-configuration)
-(require 'purpose-core)
-(require 'purpose-layout)
-(require 'purpose-switch)
-(require 'purpose-prefix-overload)
-(require 'purpose-fixes)
+(require 'window-purpose-utils)
+(require 'window-purpose-configuration)
+(require 'window-purpose-core)
+(require 'window-purpose-layout)
+(require 'window-purpose-switch)
+(require 'window-purpose-prefix-overload)
+(require 'window-purpose-fixes)
 
 (defconst purpose-version "1.2.50"
   "Purpose's version.")
@@ -291,5 +291,5 @@ This function is called when `purpose-mode' is deactivated."
     (purpose--remove-advices)
     (setq purpose--active-p nil)))
 
-(provide 'purpose)
-;;; purpose.el ends here
+(provide 'window-purpose)
+;;; window-purpose.el ends here

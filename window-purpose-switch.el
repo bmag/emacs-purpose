@@ -1,4 +1,4 @@
-;;; purpose-switch.el --- Purpose-aware display handling -*- lexical-binding: t -*-
+;;; window-purpose-switch.el --- Purpose-aware display handling -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2015 Bar Magal
 
@@ -26,8 +26,8 @@
 
 (require 'cl-lib)
 (require 'let-alist)
-(require 'purpose-core)
-(require 'purpose-utils)
+(require 'window-purpose-core)
+(require 'window-purpose-utils)
 
 (defvar purpose-action-function-ignore-buffer-names
   '("^\\*Completions\\*$"
@@ -1049,5 +1049,5 @@ current buffer's purpose."
    (purpose-read-buffers-with-purpose
     (or purpose (purpose-buffer-purpose (current-buffer))))))
 
-(provide 'purpose-switch)
-;;; purpose-switch.el ends here
+(provide 'window-purpose-switch)
+;;; window-purpose-switch.el ends here

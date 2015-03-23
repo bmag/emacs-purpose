@@ -1,4 +1,4 @@
-;;; purpose-layout.el --- Save and load window layout -*- lexical-binding: t -*-
+;;; window-purpose-layout.el --- Save and load window layout -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2015 Bar Magal
 
@@ -27,7 +27,7 @@
 ;;; Code:
 
 (require 'cl-lib)
-(require 'purpose-core)
+(require 'window-purpose-core)
 
 (defcustom purpose-default-layout-file
   (concat user-emacs-directory ".purpose-layout")
@@ -402,5 +402,5 @@ FRAME defaults to the selected frame."
   (interactive)
   (purpose--delete-window-at #'purpose-get-right-window frame))
 
-(provide 'purpose-layout)
-;;; purpose-layout.el ends here
+(provide 'window-purpose-layout)
+;;; window-purpose-layout.el ends here

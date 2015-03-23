@@ -1,4 +1,4 @@
-;;; purpose-core.el --- Core functions for Purpose -*- lexical-binding: t -*-
+;;; window-purpose-core.el --- Core functions for Purpose -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2015 Bar Magal
 
@@ -26,7 +26,7 @@
 
 ;;; Code:
 
-(require 'purpose-configuration)
+(require 'window-purpose-configuration)
 
 (defgroup purpose nil
   "purpose-mode configuration"
@@ -310,5 +310,5 @@ return nil."
 		      frame)
     right-window))
 
-(provide 'purpose-core)
-;;; purpose-core.el ends here
+(provide 'window-purpose-core)
+;;; window-purpose-core.el ends here

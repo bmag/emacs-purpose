@@ -11,8 +11,8 @@
 		)))
 (message "loading purpose")
 
-(require 'purpose)
-(require 'purpose-x)
+(require 'window-purpose)
+(require 'window-purpose-x)
 
 (message "defining tests")
 

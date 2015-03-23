@@ -1,4 +1,4 @@
-;;; purpose-configuration.el --- Configuration handling for Purpose -*- lexical-binding: t -*-
+;;; window-purpose-configuration.el --- Configuration handling for Purpose -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2015 Bar Magal
 
@@ -55,7 +55,7 @@
 
 (require 'cl-lib)
 (require 'eieio)
-(require 'purpose-utils)
+(require 'window-purpose-utils)
 
 ;;; Types
 
@@ -359,6 +359,6 @@ If you set this variable in elisp-code, you should call the function
 (purpose-compile-default-configuration)
 
 
-(provide 'purpose-configuration)
+(provide 'window-purpose-configuration)
 
-;;; purpose-configuration.el ends here
+;;; window-purpose-configuration.el ends here

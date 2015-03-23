@@ -1,4 +1,4 @@
-;;; purpose-utils.el --- Utilities -*- lexical-binding: t -*-
+;;; window-purpose-utils.el --- Utilities -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2015 Bar Magal
 
@@ -156,5 +156,5 @@ SYMBOL, WHERE and NAME have the same meaning as in
        (ad-update ,symbol))))
 
 
-(provide 'purpose-utils)
-;;; purpose-utils.el ends here
+(provide 'window-purpose-utils)
+;;; window-purpose-utils.el ends here

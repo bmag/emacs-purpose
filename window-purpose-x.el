@@ -1,4 +1,4 @@
-;;; purpose-x.el --- Extensions for Purpose -*- lexical-binding: t -*-
+;;; window-purpose-x.el --- Extensions for Purpose -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2015 Bar Magal
 
@@ -33,7 +33,7 @@
 
 ;;; Code:
 
-(require 'purpose)
+(require 'window-purpose)
 
 ;;; --- purpose-x-code1 ---
 ;;; purpose-x-code1 extension creates a 4-window display:
@@ -274,5 +274,5 @@ Add `golden-ratio' at the end of `purpose-select-buffer-hook' if
 ;;; --- purpose-x-popup-switcher ends here ---
 
 
-(provide 'purpose-x)
-;;; purpose-x.el ends here
+(provide 'window-purpose-x)
+;;; window-purpose-x.el ends here

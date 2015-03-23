@@ -1,4 +1,4 @@
-;;; purpose-prefix-overload.el --- Bind several commands to the same key -*- lexical-binding: t -*-
+;;; window-purpose-prefix-overload.el --- Bind several commands to the same key -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2015 Bar Magal
 
@@ -103,5 +103,5 @@ Use it like this:
 	   (call-interactively command)
 	 (error "Index %s too big" index)))))
 
-(provide 'purpose-prefix-overload)
-;;; purpose-prefix-overload.el ends here
+(provide 'window-purpose-prefix-overload)
+;;; window-purpose-prefix-overload.el ends here

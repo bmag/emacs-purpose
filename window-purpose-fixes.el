@@ -1,4 +1,4 @@
-;;; purpose-fixes.el --- fix integration issues with other features -*- lexical-binding: t -*-
+;;; window-purpose-fixes.el --- fix integration issues with other features -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2015 Bar Magal
 
@@ -26,8 +26,8 @@
 
 ;;; Code:
 
-(require 'purpose-switch)
-(require 'purpose-configuration)
+(require 'window-purpose-switch)
+(require 'window-purpose-configuration)
 
 
 
@@ -106,5 +106,5 @@ are:
   (unless (member 'helm exclude)
     (purpose--fix-helm)))
 
-(provide 'purpose-fixes)
-;;; purpose-fixes.el ends here
+(provide 'window-purpose-fixes)
+;;; window-purpose-fixes.el ends here
