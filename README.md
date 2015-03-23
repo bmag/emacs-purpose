@@ -29,7 +29,7 @@ Manually: `M-x purpose-mode`
 
 In your init file:
 ```elisp
-(require 'purpose)
+(require 'window-purpose)
 (purpose-mode)
 ```
 
