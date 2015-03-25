@@ -908,8 +908,10 @@ If Purpose is active (`purpose--active-p' is non-nil), call
 
   ;; old style advice
   ((purpose-message "switch-to-buffer advice")
-   (if (purpose--use-action-function-p (window-normalize-buffer-to-switch-to buffer-or-name) nil)
-       (purpose-switch-buffer buffer-or-name norecord force-same-window)
+   (if (purpose--use-action-function-p
+	(window-normalize-buffer-to-switch-to buffer-or-name) nil)
+       (setq ad-return-value
+	     (purpose-switch-buffer buffer-or-name norecord force-same-window))
      ad-do-it)))
 
 (define-purpose-compatible-advice 'switch-to-buffer-other-window
@@ -928,7 +930,8 @@ If Purpose is active (`purpose--active-p' is non-nil), call
   ;; old style advice
   ((purpose-message "switch-to-buffer-other-window advice")
    (if purpose--active-p
-       (purpose-switch-buffer-other-window buffer-or-name norecord)
+       (setq ad-return-value
+	     (purpose-switch-buffer-other-window buffer-or-name norecord))
      ad-do-it)))
 
 (define-purpose-compatible-advice 'switch-to-buffer-other-frame
@@ -947,7 +950,8 @@ If Purpose is active (`purpose--active-p' is non-nil), call
   ;; old style advice
   ((purpose-message "switch-to-buffer-other-frame advice")
    (if purpose--active-p
-       (purpose-switch-buffer-other-frame buffer-or-name norecord)
+       (setq ad-return-value
+	     (purpose-switch-buffer-other-frame buffer-or-name norecord))
      ad-do-it)))
 
 (define-purpose-compatible-advice 'pop-to-buffer
@@ -967,7 +971,7 @@ call `purpose-pop-buffer', otherwise call `pop-to-buffer'."
   ((purpose-message "pop-to-buffer advice")
    (if (and purpose--active-p
 	    (not action))
-       (purpose-pop-buffer buffer-or-name norecord)
+       (setq ad-return-value (purpose-pop-buffer buffer-or-name norecord))
      ad-do-it)))
 
 (define-purpose-compatible-advice 'pop-to-buffer-same-window
@@ -986,7 +990,8 @@ If Purpose is active (`purpose--active-p' is non-nil), call
   ;; old style advice
   ((purpose-message "pop-to-buffer-same-window advice")
    (if purpose--active-p
-       (purpose-pop-buffer-same-window buffer-or-name norecord)
+       (setq ad-return-value
+	     (purpose-pop-buffer-same-window buffer-or-name norecord))
      ad-do-it)))
 
 ;; anti-override:

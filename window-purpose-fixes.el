@@ -88,6 +88,7 @@ Install helm's purpose configuration."
     '(purpose-set-extension-configuration :helm purpose--helm-conf)))
 
 
+
 ;;; Neotree handles display of its own buffer and of opening files from the
 ;;; neotree buffer in a way that doesn't work well with Purpose.
 ;;; We override how neotree displays its buffer.  When neotree tries to open a
@@ -153,6 +154,7 @@ When `purpose--active-p' is nil, call original `neo-global--create-window'."
   "Call `purpose--fix-neotree-1' after `neotree' is loaded."
   (eval-after-load 'neotree
     '(purpose--fix-neotree-1)))
+
 
 
 ;;; install fixes
