@@ -354,11 +354,11 @@ If `purpose-mru-frame-layout' is nil, do nothing."
   "Delete all windows that aren't dedicated to their purpose or buffer."
   (interactive)
   (mapc #'(lambda (window)
-	    (when (window-deletable-p window)
+	    (when (and (window-deletable-p window)
+		       (not (window-dedicated-p window))
+		       (not (purpose-window-purpose-dedicated-p window)))
 	      (delete-window window)))
-	(cl-delete-if #'window-dedicated-p
-		      (cl-delete-if #'purpose-window-purpose-dedicated-p
-				    (window-list)))))
+	(window-list)))
 
 (defun purpose-set-window-purpose (purpose &optional dont-dedicate)
   "Set window's purpose to PURPOSE, and dedicate it.
