@@ -87,6 +87,74 @@ Install helm's purpose configuration."
   (eval-after-load 'helm
     '(purpose-set-extension-configuration :helm purpose--helm-conf)))
 
+
+;;; Neotree handles display of its own buffer and of opening files from the
+;;; neotree buffer in a way that doesn't work well with Purpose.
+;;; We override how neotree displays its buffer.  When neotree tries to open a
+;;; file in a fancy way, we let it.
+(defun purpose--fix-create-neo-window ()
+  "Create neotree window, with Purpose."
+  (let* ((buffer (neo-global--get-buffer t))
+	 (window (display-buffer buffer)))
+    (neo-window--init window buffer)
+    (setq neo-global--window window)))
+
+(defun purpose--fix-display-neotree (buffer alist)
+  "Display neotree window, with Purpose."
+  (let* ((first-window (neo-global--get-first-window))
+	 (new-window (split-window first-window nil 'left)))
+    (purpose-change-buffer buffer new-window 'window alist)
+    new-window))
+
+(defun purpose--fix-neotree-1 ()
+  "Integrate neotree with Purpose.
+Override the display and creation of the neotree window.
+When opening files from the neotree window, use Purpose only when
+necessary.
+Note: Don't call this function before `neotree' is loaded."
+  (define-purpose-compatible-advice 'neo-global--create-window
+    :around purpose-fix-neotree-create-window-advice
+    (&rest args)
+    "Override `neo-global--create-window' with `purpose--fix-create-neo-window'.
+When `purpose--active-p' is nil, call original `neo-global--create-window'."
+    ;; new style adivce
+    ((if purpose--active-p
+	 (purpose--fix-create-neo-window)
+       (apply oldfun args)))
+    ;; old style advice
+    ((if purpose--active-p
+	 (setq ad-return-value (purpose--fix-create-neo-window))
+       ad-do-it)))
+
+  (define-purpose-compatible-advice 'neo-open-file
+    :around purpose-fix-neotree-open-file-advice
+    (full-path &optional arg)
+    "When ARG is nil, make sure Purpose is off while executing `neo-open-file'."
+    ;; new style advice
+    ((if (and purpose--active-p (null arg))
+	 (find-file full-path)
+       (without-purpose (funcall oldfun full-path arg))))
+    ;; old style advice
+    ((if (and purpose--active-p (null arg))
+	 (setq ad-return-value (find-file full-path))
+       (without-purpose ad-do-it))))
+  
+  ;; using purpose 'Neotree, because using 'neotree causes problems with
+  ;; `purpose-special-action-sequences' ('neotree is also a function, so
+  ;; `purpose--special-action-sequence' will try to call it)
+  (purpose-set-extension-configuration :neotree (purpose-conf "Neotree" :name-purposes `((,neo-buffer-name . Neotree))))
+  (add-to-list 'purpose-special-action-sequences '(Neotree purpose-display-reuse-window-buffer
+							   purpose-display-reuse-window-purpose
+							   purpose--fix-display-neotree))
+  (purpose-advice-add 'neo-global--create-window :around 'purpose-fix-neotree-create-window-advice)
+  (purpose-advice-add 'neo-open-file :around 'purpose-fix-neotree-open-file-advice))
+
+(defun purpose--fix-neotree ()
+  "Call `purpose--fix-neotree-1' after `neotree' is loaded."
+  (eval-after-load 'neotree
+    '(purpose--fix-neotree-1)))
+
+
 ;;; install fixes
 
 (defun purpose-fix-install (&rest exclude)
@@ -96,7 +164,8 @@ are:
 - 'compilation-next-error-function : don't integrate with
   `compilation-next-error-function'.
 - 'hydra : don't integrate with hydra
-- 'helm : don't integrate with helm"
+- 'helm : don't integrate with helm
+- 'neotree : don't integrate with neotree"
   (interactive)
   (unless (member 'compilation-next-error-function exclude)
     (purpose-advice-add 'compilation-next-error-function
@@ -104,7 +173,9 @@ are:
   (unless (member 'hydra exclude)
     (purpose--fix-hydra-lv))
   (unless (member 'helm exclude)
-    (purpose--fix-helm)))
+    (purpose--fix-helm))
+  (unless (member 'neotree exclude)
+    (purpose--fix-neotree)))
 
 (provide 'window-purpose-fixes)
 ;;; window-purpose-fixes.el ends here
