@@ -246,6 +246,9 @@ This function doesn't change the selected frame (uses
 `with-selected-frame' internally)."
   (with-selected-frame (or frame (selected-frame))
     (delete-other-windows)
+    ;; ensure that the remaining window is not dedicated, otherwise we won't be
+    ;; able to change its buffer, and an error will be signaled (issue #38)
+    (set-window-dedicated-p nil nil)
     ;; 1. split
     ;; 2. let each window splits itself/set its size
 
