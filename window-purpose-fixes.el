@@ -157,6 +157,26 @@ When `purpose--active-p' is nil, call original `neo-global--create-window'."
 
 
 
+;;; popwin uses `switch-to-buffer' when it replicates the window tree, so
+;;; Purpose has to be deactivated during that time. this affects guide-key too
+(defun purpose--fix-popwin-1 ()
+  "Make Purpose inactive during `popwin:replicate-window-config'.
+Don't call this function before `popwin' is loaded."
+  (define-purpose-compatible-advice 'popwin:replicate-window-config
+    :around purpose--fix-popwin-replicate
+    (&rest args)
+    "Make Purpose inactive during `popwin:replicate-window-config'."
+    ;; new style advice
+    ((without-purpose (apply oldfun args)))
+    ;; old style advice
+    ((without-purpose ad-do-it)))
+  (purpose-advice-add 'popwin:replicate-window-config :around 'purpose--fix-popwin-replicate))
+
+(defun purpose--fix-popwin ()
+  "Call `purpose--fix-popwin-1' after `popwin' is loaded."
+  (eval-after-load 'popwin
+    '(purpose--fix-popwin-1)))
+
 ;;; install fixes
 
 (defun purpose-fix-install (&rest exclude)
@@ -177,7 +197,9 @@ are:
   (unless (member 'helm exclude)
     (purpose--fix-helm))
   (unless (member 'neotree exclude)
-    (purpose--fix-neotree)))
+    (purpose--fix-neotree))
+  (unless (member 'popwin exclude)
+    (purpose--fix-popwin)))
 
 (provide 'window-purpose-fixes)
 ;;; window-purpose-fixes.el ends here
