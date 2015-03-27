@@ -177,6 +177,19 @@ Don't call this function before `popwin' is loaded."
   (eval-after-load 'popwin
     '(purpose--fix-popwin-1)))
 
+
+
+;;; Use a seperate purpose for guide-key window (not 'general)
+(defun purpose--fix-guide-key ()
+  "Use a seperate purpose for guide-key window."
+  (eval-after-load 'guide-key
+    '(purpose-set-extension-configuration
+      :guide-key
+      (purpose-conf "guide-key"
+                    :name-purposes `((,guide-key/guide-buffer-name . guide-key))))))
+
+
+
 ;;; install fixes
 
 (defun purpose-fix-install (&rest exclude)
@@ -187,7 +200,9 @@ are:
   `compilation-next-error-function'.
 - 'hydra : don't integrate with hydra
 - 'helm : don't integrate with helm
-- 'neotree : don't integrate with neotree"
+- 'neotree : don't integrate with neotree
+- 'popwin : don't integrate with popwin
+- 'guide-key : don't integrate with guide-key"
   (interactive)
   (unless (member 'compilation-next-error-function exclude)
     (purpose-advice-add 'compilation-next-error-function
@@ -199,7 +214,9 @@ are:
   (unless (member 'neotree exclude)
     (purpose--fix-neotree))
   (unless (member 'popwin exclude)
-    (purpose--fix-popwin)))
+    (purpose--fix-popwin))
+  (unless (member 'guide-key exclude)
+    (purpose--fix-guide-key)))
 
 (provide 'window-purpose-fixes)
 ;;; window-purpose-fixes.el ends here

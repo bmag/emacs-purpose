@@ -57,13 +57,13 @@ instead."
   :type 'hook
   :package-version "1.2")
 
-(defvar purpose-mru-window-layout nil
-  "Most recently used window layout.
-This is the last layout used by `purpose-set-window-layout'.")
+(defvar purpose-recent-window-layouts (make-ring 50)
+  "Most recently used window layouts.
+This variable stores recent layouts used by `purpose-set-window-layout'.")
 
-(defvar purpose-mru-frame-layout nil
-  "Most recently used frame layout.
-This is the last layout used by `purpose-set-frame-layout'.")
+(defvar purpose-recent-frame-layouts (make-ring 50)
+  "Most recently used frame layouts.
+This variable stores recent layouts used by `purpose-set-frame-layout'.")
 
 
 
@@ -243,7 +243,7 @@ FRAME defaults to the selected frame."
 FRAME defaults to the selected frame.
 LAYOUT must be a layout as returned by `purpose-get-window-layout'.
 Unless NORECORD is non-nil, this function sets LAYOUT as the value of
-`purpose-mru-window-layout'.
+`purpose-recent-window-layouts'.
 This function doesn't change the selected frame (uses
 `with-selected-frame' internally)."
   (with-selected-frame (or frame (selected-frame))
@@ -260,7 +260,7 @@ This function doesn't change the selected frame (uses
 	(purpose-set-window-properties layout)
       (purpose--set-window-layout-1 layout (selected-window)))
     (unless norecord
-      (setq purpose-mru-window-layout layout))))
+      (ring-insert purpose-recent-window-layouts layout))))
 
 (defun purpose-save-window-layout (&optional filename)
   "Save window layout of current frame to file FILENAME.
@@ -289,11 +289,18 @@ If FILENAME is nil, use `purpose-default-layout-file' instead."
      (read (point-marker)))))
 
 (defun purpose-reset-window-layout ()
-  "Load window layout from `purpose-mru-window-layout'.
-If `purpose-mru-window-layout' is nil, do nothing."
+  "Load most recent window layout from `purpose-reset-window-layouts'.
+If there is no recent layout, do nothing."
   (interactive)
-  (when purpose-mru-window-layout
-    (purpose-set-window-layout purpose-mru-window-layout)))
+  (unless (ring-empty-p purpose-recent-window-layouts)
+    (purpose-load-recent-window-layout 0)))
+
+(defun purpose-load-recent-window-layout (index)
+  "Load window layout from `purpose-recent-window-layouts'.
+Use INDEX=0 for most recent."
+  (purpose-set-window-layout (ring-ref purpose-recent-window-layouts index)
+                             nil
+                             (zerop index)))
 
 ;;; get/set/load/save frame layout
 
@@ -307,8 +314,8 @@ window-layout is a window-layout as returned by
 (defun purpose-set-frame-layout (layout &optional norecord)
   "Set LAYOUT as Emacs' frame layout.
 LAYOUT must be a layout as returned by `purpose-get-frame-layout'.
-Unless NORECORD is non-nil, this function sets LAYOUT as the value of
-`purpose-mru-frame-layout'.
+Unless NORECORD is non-nil, this function adds LAYOUT to
+`purpose-recent-frame-layouts'.
 This function deletes all existing frames and creates frames as
 specified by LAYOUT."
   (delete-other-frames)
@@ -316,7 +323,7 @@ specified by LAYOUT."
   (dolist (window-layout (cdr layout))
     (purpose-set-window-layout window-layout (make-frame) t))
   (unless norecord
-    (setq purpose-mru-frame-layout layout)))
+    (ring-insert purpose-recent-frame-layouts layout)))
 
 (defun purpose-save-frame-layout (&optional filename)
   "Save frame layout of Emacs to file FILENAME.
@@ -345,11 +352,17 @@ If FILENAME is nil, use `purpose-default-layout-file' instead."
      (read (point-marker)))))
 
 (defun purpose-reset-frame-layout ()
-  "Load frame layout from `purpose-mru-frame-layout'.
-If `purpose-mru-frame-layout' is nil, do nothing."
+  "Load most recent frame layout from `purpose-reset-frame-layouts'.
+If there is no recent layout, do nothing."
   (interactive)
-  (when purpose-mru-frame-layout
-    (purpose-set-frame-layout purpose-mru-frame-layout)))
+  (unless (ring-empty-p purpose-recent-frame-layouts)
+    (purpose-load-recent-frame-layout 0)))
+
+(defun purpose-load-recent-frame-layout (index)
+  "Load frame layout from `purpose-recent-frame-layouts'.
+Use INDEX=0 for most recent."
+  (purpose-set-frame-layout (ring-ref purpose-recent-frame-layouts 0)
+                            (zerop index)))
 
 
 
