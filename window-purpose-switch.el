@@ -513,7 +513,7 @@ If ALIST has a non-nil `inhibit-switch-frame' entry, avoid raising the
 new frame.
 
 Variable `pop-up-frame-alist' is an alist of frame parameters for the
-new frame.  If ALIST has a non-nil `pop-up-frame-parameters' entry, its 
+new frame.  If ALIST has a non-nil `pop-up-frame-parameters' entry, its
 value should be an alist of frame parameters to give the new frame.  The
 values of `pop-up-frame-alist' and `pop-up-frame-parameters' are used
 both.  In case of conflict, `pop-up-frame-parameters' takes precedence."
@@ -926,7 +926,7 @@ If Purpose is active (`purpose--active-p' is non-nil), call
    (if purpose--active-p
        (purpose-switch-buffer-other-window buffer-or-name norecord)
      (funcall oldfun buffer-or-name norecord)))
-  
+
   ;; old style advice
   ((purpose-message "switch-to-buffer-other-window advice")
    (if purpose--active-p
@@ -986,7 +986,7 @@ If Purpose is active (`purpose--active-p' is non-nil), call
    (if purpose--active-p
        (purpose-pop-buffer-same-window buffer-or-name norecord)
      (funcall oldfun buffer-or-name norecord)))
-  
+
   ;; old style advice
   ((purpose-message "pop-to-buffer-same-window advice")
    (if purpose--active-p

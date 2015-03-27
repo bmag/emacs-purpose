@@ -83,12 +83,12 @@ size."
 (defun purpose--window-width-to-percentage (&optional window)
   "Return a percentage of WINDOW's width to its frame's width.
 WINDOW defaults to the selected window."
-  (/ (window-width window) (frame-width (window-frame window)) 1.0))
+  (/ (window-total-width window) (frame-width (window-frame window)) 1.0))
 
 (defun purpose--window-height-to-percentage (&optional window)
   "Return a percentage of WINDOW's height to its frame's height.
 WINDOW defaults to the selected window."
-  (/ (window-height window) (frame-height (window-frame window)) 1.0))
+  (/ (window-total-height window) (frame-height (window-frame window)) 1.0))
 
 (defun purpose--window-percentage-to-width (percentage &optional window)
   "Return a window width as an integer.
@@ -179,8 +179,8 @@ This function is mainly intended to be used by
   "Set the size of window WINDOW to width WIDTH and height HEIGHT.
 WINDOW must be a live window and defaults to the selected one."
   (unless (one-window-p)
-    (let ((width-delta (- width (window-width window)))
-	  (height-delta (- height (window-height window))))
+    (let ((width-delta (- width (window-total-width window)))
+	  (height-delta (- height (window-total-height window))))
       (window-resize window
 		     (window-resizable window width-delta t nil)
 		     t nil)
@@ -221,7 +221,7 @@ WINDOW must be a live window and defaults to the selected one."
     ;;   (purpose--set-size-percentage (- (third edges) (first edges))
     ;; 			   (- (fourth edges) (second edges))
     ;; 			   window))
-    
+
     (let ((windows (purpose--split-window tree window)))
       (cl-loop for sub-tree in (cddr tree)
 	       for window in windows

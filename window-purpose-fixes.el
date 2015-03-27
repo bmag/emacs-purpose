@@ -139,7 +139,7 @@ When `purpose--active-p' is nil, call original `neo-global--create-window'."
     ((if (and purpose--active-p (null arg))
 	 (setq ad-return-value (find-file full-path))
        (without-purpose ad-do-it))))
-  
+
   ;; using purpose 'Neotree, because using 'neotree causes problems with
   ;; `purpose-special-action-sequences' ('neotree is also a function, so
   ;; `purpose--special-action-sequence' will try to call it)

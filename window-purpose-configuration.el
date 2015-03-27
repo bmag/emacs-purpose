@@ -126,7 +126,7 @@ actually check that the car is a valid regexp.")
 (defvar purpose-extended-configuration nil
   "A plist containing `purpose-conf' objects.
 An example of `purpose-extended-configuration':
- (list :python (purpose-conf 
+ (list :python (purpose-conf
                 :mode-purposes '((python-mode . python)
                                 (python-inferior-mode . interpreter)))
        :popups (purpose-conf
@@ -208,7 +208,7 @@ Fill `purpose--user-mode-purposes', `purpose--user-name-purposes' and
 `purpose-user-mode-purposes', `purpose-user-name-purposes' and
 `purpose-user-regexp-purposes'."
   (purpose--fill-hash purpose--user-mode-purposes purpose-user-mode-purposes)
-  (purpose--fill-hash purpose--user-name-purposes purpose-user-name-purposes)  
+  (purpose--fill-hash purpose--user-name-purposes purpose-user-name-purposes)
   (purpose--fill-hash purpose--user-regexp-purposes purpose-user-regexp-purposes))
 
 (defun purpose-compile-extended-configuration ()
@@ -268,7 +268,7 @@ Fill `purpose--extended-mode-purposes',
 (defun purpose-set-extension-configuration (keyword config)
   "Set an extension's entry in `purpose-extended-configuration'.
 KEYWORD should be a keyword used to identify the extension.
-CONFIG is a `purpose-conf' object containing the extension's purpose 
+CONFIG is a `purpose-conf' object containing the extension's purpose
 configuration.
 Example:
  (purpose-set-extension-configuration

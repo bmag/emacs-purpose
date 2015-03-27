@@ -49,13 +49,13 @@ C-u 1 2 <command>: index 12
   (cond
    ((null prefix-argument)
     0)
-	
+
    ((listp prefix-argument)
     (round (log (car prefix-argument) 4)))
 
    ((eq prefix-argument '-)
     -1)
-   
+
    (t
     prefix-argument)))
 

@@ -201,7 +201,7 @@ This allows Purpose to work well with both `ido' and `helm'.")
     (define-key map (kbd "C-x 4 C-f") #'purpose-find-file-other-window-overload)
     (define-key map (kbd "C-x 5 f") #'purpose-find-file-other-frame-overload)
     (define-key map (kbd "C-x 5 C-f") #'purpose-find-file-other-frame-overload)
-    
+
     (define-key map (kbd "C-x b") #'purpose-switch-buffer-overload)
     (define-key map (kbd "C-x 4 b") #'purpose-switch-buffer-other-window-overload)
     (define-key map (kbd "C-x 5 b") #'purpose-switch-buffer-other-frame-overload)
@@ -230,7 +230,7 @@ This allows Purpose to work well with both `ido' and `helm'.")
 	       ("w" . purpose-delete-window-at)
 	       ("1" . purpose-delete-non-dedicated-windows)))
       (define-key purpose-mode-prefix-map (kbd (car binding)) (cdr binding)))
-    
+
     map)
   "Keymap for Purpose mode.")
 
