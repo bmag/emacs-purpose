@@ -36,13 +36,13 @@
   :type 'file
   :package-version "1.2")
 
-(defcustom purpose-get-extra-window-params-function nil
-  "If non-nil, this variable should be a function.
+(defcustom purpose-get-extra-window-params-functions nil
+  "If non-nil, this variable should be a list of functions.
 This variable is used by `purpose-window-params'.  See
 `purpose-window-params' for more details."
   :group 'purpose
-  :type 'function
-  :package-version "1.2")
+  :type 'hook
+  :package-version "1.3.50")
 
 (defcustom purpose-set-window-properties-functions nil
   "Hook to run after calling `purpose-set-window-properties'.
@@ -125,22 +125,24 @@ height.
 
 WINDOW defaults to the selected window.
 
-If the variable `purpose-get-extra-window-params-function' is non-nil,
-it should be a function that receives a window as an optional argument
-and returns a plist.  That plist is concatenated into the plist that
-`purpose-window-params' returns.  The plist returned by
-`purpose-get-extra-window-params-function' shouldn't contain any of the
-keys described above (:purpose, :purpose-dedicated, :width, :height,
-:edges).  If it does, the behavior is not defined."
+If the variable `purpose-get-extra-window-params-functions' is non-nil,
+it should be a list of functions, where each function receives a window
+as an optional argument and returns a plist.  Each plist is concatenated
+into the plist that `purpose-window-params' returns.  The plists returned
+by `purpose-get-extra-window-params-functions' shouldn't contain any of
+the keys described above (:purpose, :purpose-dedicated, :width, :height,
+:edges).  If any of them does contain any of these keys, the behavior is
+not defined."
   (let ((buffer (window-buffer window)))
-    (append
-     (list :purpose (purpose-buffer-purpose buffer)
-	   :purpose-dedicated (purpose-window-purpose-dedicated-p window)
-	   :width (purpose--window-width-to-percentage window)
-	   :height (purpose--window-height-to-percentage window)
-	   :edges (purpose--window-edges-to-percentage window))
-     (and purpose-get-extra-window-params-function
-	  (funcall purpose-get-extra-window-params-function window)))))
+    (apply #'append
+           (list :purpose (purpose-buffer-purpose buffer)
+                 :purpose-dedicated (purpose-window-purpose-dedicated-p window)
+                 :width (purpose--window-width-to-percentage window)
+                 :height (purpose--window-height-to-percentage window)
+                 :edges (purpose--window-edges-to-percentage window))
+           (mapcar #'(lambda (fn)
+                       (funcall fn window))
+                   purpose-get-extra-window-params-functions))))
 
 (defun purpose-set-window-properties (properties &optional window)
   "Set the buffer and window-parameters of window WINDOW, according to

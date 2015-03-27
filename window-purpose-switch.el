@@ -57,7 +57,7 @@ for signalling an error, or nil for using the regular (purpose-less)
 This hook is called with one argument - the window used for display."
   :group 'purpose
   :type 'hook
-  :package-version "1.3")
+  :package-version "1.3.50")
 
 (defcustom purpose-select-buffer-hook nil
   "Hook to run after selecting a buffer with `purpose-select-buffer'."
@@ -132,7 +132,7 @@ case, `purpose-display-at-top-height' is ignored."
   :group 'purpose
   :type '(choice number
 		 (const nil))
-  :package-version "1.3")
+  :package-version "1.3.50")
 
 (defcustom purpose-display-at-bottom-height 8
   "Height for new windows created by `purpose-display-at-bottom'.
@@ -146,7 +146,7 @@ this case, `purpose-display-at-bottom-height' is ignored."
   :group 'purpose
   :type '(choice number
 		 (const nil))
-  :package-version "1.3")
+  :package-version "1.3.50")
 
 (defcustom purpose-display-at-left-width 32
   "Width for new windows created by `purpose-display-at-left'.
@@ -159,7 +159,7 @@ case, `purpose-display-at-left-width' is ignored."
   :group 'purpose
   :type '(choice number
 		 (const nil))
-  :package-version "1.3")
+  :package-version "1.3.50")
 
 (defcustom purpose-display-at-right-width 32
   "Width for new windows created by `purpose-display-at-right'.
@@ -173,7 +173,7 @@ this case, `purpose-display-at-right-width' is ignored."
   :group 'purpose
   :type '(choice number
 		 (const nil))
-  :package-version "1.3")
+  :package-version "1.3.50")
 
 
 
