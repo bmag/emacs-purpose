@@ -177,8 +177,10 @@ correct hash tables."
 		  '("*shell*" ".hgignore" ".gitignore")))
    (should (equal (hash-table-values purpose--default-name-purposes)
 		  '(terminal edit edit)))
-   (should (equal (hash-table-keys purpose--default-regexp-purposes) nil))
-   (should (equal (hash-table-values purpose--default-regexp-purposes) nil))))
+   (should (equal (hash-table-keys purpose--default-regexp-purposes)
+                  '("^ \\*Minibuf-[0-9]*\\*$")))
+   (should (equal (hash-table-values purpose--default-regexp-purposes)
+                  '(minibuf)))))
 
 (ert-deftest purpose-test-set-ext-conf-error ()
   "Test error cases for settings/deleting extension configuration.

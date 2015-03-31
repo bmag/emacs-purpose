@@ -46,18 +46,18 @@ This function should be advised around
 `compilation-next-error-function'."
   ;; new style advice
   ((let* ((compilation-window (get-buffer-window (marker-buffer (point-marker))))
-	  (old-window-dedicated-p (window-dedicated-p compilation-window)))
+          (old-window-dedicated-p (window-dedicated-p compilation-window)))
      (set-window-dedicated-p compilation-window t)
      (unwind-protect
-	 (apply oldfun args)
+         (apply oldfun args)
        (set-window-dedicated-p compilation-window old-window-dedicated-p))))
 
   ;; old style advice
   ((let* ((compilation-window (get-buffer-window (marker-buffer (point-marker))))
-	  (old-window-dedicated-p (window-dedicated-p compilation-window)))
+          (old-window-dedicated-p (window-dedicated-p compilation-window)))
      (set-window-dedicated-p compilation-window t)
      (unwind-protect
-	 ad-do-it
+         ad-do-it
        (set-window-dedicated-p compilation-window old-window-dedicated-p)))))
 
 
@@ -65,7 +65,7 @@ This function should be advised around
 ;;; Hydra's *LV* buffer should be ignored by Purpose
 (defun purpose--fix-hydra-lv ()
   "Add hydra's LV buffer to Purpose's ignore list."
-  (eval-after-load 'hydra
+  (eval-after-load 'lv
     '(add-to-list 'purpose-action-function-ignore-buffer-names "^\\*LV\\*$")))
 
 
@@ -73,8 +73,8 @@ This function should be advised around
 ;;; Helm's buffers should be ignored, and they should have their own purpose
 (defvar purpose--helm-conf
   (purpose-conf "helm"
-		:regexp-purposes '(("^\\*Helm" . helm)
-				   ("^\\*helm" . helm)))
+                :regexp-purposes '(("^\\*Helm" . helm)
+                                   ("^\\*helm" . helm)))
   "Purpose configuration for helm.")
 (defun purpose--fix-helm ()
   "Fix issues with helm.
@@ -96,14 +96,14 @@ Install helm's purpose configuration."
 (defun purpose--fix-create-neo-window ()
   "Create neotree window, with Purpose."
   (let* ((buffer (neo-global--get-buffer t))
-	 (window (display-buffer buffer)))
+         (window (display-buffer buffer)))
     (neo-window--init window buffer)
     (setq neo-global--window window)))
 
 (defun purpose--fix-display-neotree (buffer alist)
   "Display neotree window, with Purpose."
   (let* ((first-window (neo-global--get-first-window))
-	 (new-window (split-window first-window nil 'left)))
+         (new-window (split-window first-window nil 'left)))
     (purpose-change-buffer buffer new-window 'window alist)
     new-window))
 
@@ -120,11 +120,11 @@ Note: Don't call this function before `neotree' is loaded."
 When `purpose--active-p' is nil, call original `neo-global--create-window'."
     ;; new style adivce
     ((if purpose--active-p
-	 (purpose--fix-create-neo-window)
+         (purpose--fix-create-neo-window)
        (apply oldfun args)))
     ;; old style advice
     ((if purpose--active-p
-	 (setq ad-return-value (purpose--fix-create-neo-window))
+         (setq ad-return-value (purpose--fix-create-neo-window))
        ad-do-it)))
 
   (define-purpose-compatible-advice 'neo-open-file
@@ -133,22 +133,27 @@ When `purpose--active-p' is nil, call original `neo-global--create-window'."
     "When ARG is nil, make sure Purpose is off while executing `neo-open-file'."
     ;; new style advice
     ((if (and purpose--active-p (null arg))
-	 (find-file full-path)
+         (find-file full-path)
        (without-purpose (funcall oldfun full-path arg))))
     ;; old style advice
     ((if (and purpose--active-p (null arg))
-	 (setq ad-return-value (find-file full-path))
+         (setq ad-return-value (find-file full-path))
        (without-purpose ad-do-it))))
 
   ;; using purpose 'Neotree, because using 'neotree causes problems with
   ;; `purpose-special-action-sequences' ('neotree is also a function, so
   ;; `purpose--special-action-sequence' will try to call it)
-  (purpose-set-extension-configuration :neotree (purpose-conf "Neotree" :name-purposes `((,neo-buffer-name . Neotree))))
-  (add-to-list 'purpose-special-action-sequences '(Neotree purpose-display-reuse-window-buffer
-							   purpose-display-reuse-window-purpose
-							   purpose--fix-display-neotree))
-  (purpose-advice-add 'neo-global--create-window :around 'purpose-fix-neotree-create-window-advice)
-  (purpose-advice-add 'neo-open-file :around 'purpose-fix-neotree-open-file-advice))
+  (purpose-set-extension-configuration
+   :neotree
+   (purpose-conf "Neotree" :name-purposes `((,neo-buffer-name . Neotree))))
+  (add-to-list 'purpose-special-action-sequences
+               '(Neotree purpose-display-reuse-window-buffer
+                         purpose-display-reuse-window-purpose
+                         purpose--fix-display-neotree))
+  (purpose-advice-add 'neo-global--create-window
+                      :around 'purpose-fix-neotree-create-window-advice)
+  (purpose-advice-add 'neo-open-file
+                      :around 'purpose-fix-neotree-open-file-advice))
 
 (defun purpose--fix-neotree ()
   "Call `purpose--fix-neotree-1' after `neotree' is loaded."
@@ -170,7 +175,8 @@ Don't call this function before `popwin' is loaded."
     ((without-purpose (apply oldfun args)))
     ;; old style advice
     ((without-purpose ad-do-it)))
-  (purpose-advice-add 'popwin:replicate-window-config :around 'purpose--fix-popwin-replicate))
+  (purpose-advice-add 'popwin:replicate-window-config
+                      :around 'purpose--fix-popwin-replicate))
 
 (defun purpose--fix-popwin ()
   "Call `purpose--fix-popwin-1' after `popwin' is loaded."
@@ -185,8 +191,9 @@ Don't call this function before `popwin' is loaded."
   (eval-after-load 'guide-key
     '(purpose-set-extension-configuration
       :guide-key
-      (purpose-conf "guide-key"
-                    :name-purposes `((,guide-key/guide-buffer-name . guide-key))))))
+      (purpose-conf
+       "guide-key"
+       :name-purposes `((,guide-key/guide-buffer-name . guide-key))))))
 
 
 
@@ -198,7 +205,7 @@ EXCLUDE is a list of integrations to skip.  Known members of EXCLUDE
 are:
 - 'compilation-next-error-function : don't integrate with
   `compilation-next-error-function'.
-- 'hydra : don't integrate with hydra
+- 'lv : don't integrate with lv (hydra)
 - 'helm : don't integrate with helm
 - 'neotree : don't integrate with neotree
 - 'popwin : don't integrate with popwin
@@ -206,8 +213,8 @@ are:
   (interactive)
   (unless (member 'compilation-next-error-function exclude)
     (purpose-advice-add 'compilation-next-error-function
-			:around #'purpose--fix-compilation-next-error))
-  (unless (member 'hydra exclude)
+                        :around #'purpose--fix-compilation-next-error))
+  (unless (member 'lv exclude)
     (purpose--fix-hydra-lv))
   (unless (member 'helm exclude)
     (purpose--fix-helm))

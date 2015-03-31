@@ -62,15 +62,14 @@
 ;;;###autoload
 (defclass purpose-conf ()
   ((mode-purposes :initarg :mode-purposes
-		  :initform '()
-		  :type purpose-mode-alist
-		  )
+                  :initform '()
+                  :type purpose-mode-alist)
    (name-purposes :initarg :name-purposes
-		  :initform '()
-		  :type purpose-name-alist)
+                  :initform '()
+                  :type purpose-name-alist)
    (regexp-purposes :initarg :regexp-purposes
-		    :initform '()
-		    :type purpose-regexp-alist)))
+                    :initform '()
+                    :type purpose-regexp-alist)))
 
 (defmacro define-purpose-list-checker (name entry-pred)
   "Create a function named NAME to check the content of a list.
@@ -79,8 +78,8 @@ list and each entry in it satisifies ENTRY-PRED."
   `(defun ,name (obj)
      "Check that OBJ is a list, and each entry in it satisifies ,entry-pred."
      (and (listp obj)
-	  (cl-loop for entry in obj
-		   always (funcall ,entry-pred entry)))))
+          (cl-loop for entry in obj
+                   always (funcall ,entry-pred entry)))))
 
 (defun purpose-non-nil-symbol-p (obj)
   "Check that OBJ is a symbol and not nil."
@@ -105,8 +104,9 @@ OBJ should be a cons cell, whose car is a string and cdr is a
 (defalias 'purpose-regexp-alist-entry-p #'purpose-name-alist-entry-p
   "Check that OBJ is a pair of regexp and purpose.
 OBJ should be a cons cell, whose car is a string and cdr is a
-`purpose-non-nil-symbol-p'.  Strictly speaking, `purpose-regexp-alist-entry-p' doesn't
-actually check that the car is a valid regexp.")
+`purpose-non-nil-symbol-p'.  Strictly speaking,
+`purpose-regexp-alist-entry-p' doesn't actually check that the car is a
+valid regexp.")
 
 (define-purpose-list-checker purpose-mode-alist-p
   #'purpose-mode-alist-entry-p)
@@ -191,8 +191,8 @@ TABLE is cleared before filling it, unless DONT-CLEAR is non-nil."
   (unless dont-clear
     (clrhash table))
   (mapc #'(lambda (entry)
-	    (puthash (car entry) (cdr entry) table))
-	alist))
+            (puthash (car entry) (cdr entry) table))
+        alist))
 
 (defun purpose--set-and-compile-configuration (symbol value)
   "Set SYMBOL's value to VALUE and recompile user configuration.
@@ -209,7 +209,8 @@ Fill `purpose--user-mode-purposes', `purpose--user-name-purposes' and
 `purpose-user-regexp-purposes'."
   (purpose--fill-hash purpose--user-mode-purposes purpose-user-mode-purposes)
   (purpose--fill-hash purpose--user-name-purposes purpose-user-name-purposes)
-  (purpose--fill-hash purpose--user-regexp-purposes purpose-user-regexp-purposes))
+  (purpose--fill-hash purpose--user-regexp-purposes
+                      purpose-user-regexp-purposes))
 
 (defun purpose-compile-extended-configuration ()
   "Compile the purpose configuration of extensions.
@@ -224,41 +225,42 @@ Fill `purpose--extended-mode-purposes',
 
   ;; populate compiled purposes
   (mapc #'(lambda (extension-config)
-	    (purpose--fill-hash purpose--extended-mode-purposes
-				(oref extension-config :mode-purposes)
-				t)
-	    (purpose--fill-hash purpose--extended-name-purposes
-				(oref extension-config :name-purposes)
-				t)
-	    (purpose--fill-hash purpose--extended-regexp-purposes
-				(oref extension-config :regexp-purposes)
-				t))
-	(delq nil (purpose-plist-values purpose-extended-configuration))))
+            (purpose--fill-hash purpose--extended-mode-purposes
+                                (oref extension-config :mode-purposes)
+                                t)
+            (purpose--fill-hash purpose--extended-name-purposes
+                                (oref extension-config :name-purposes)
+                                t)
+            (purpose--fill-hash purpose--extended-regexp-purposes
+                                (oref extension-config :regexp-purposes)
+                                t))
+        (delq nil (purpose-plist-values purpose-extended-configuration))))
 
 (defun purpose-compile-default-configuration ()
   "Compile the default purpose configuraion."
 
   (purpose--fill-hash purpose--default-mode-purposes
-		      '((prog-mode . edit)
-			(text-mode . edit)
-			(comint-mode . terminal)
-			(dired-mode . dired)
-			(ibuffer-mode . buffers)
-			(Buffer-menu-mode . buffers)
-			(occur-mode . search)
-			(grep-mode . search)
-			(compilation-mode . search)
-			(image-mode . image)
-			(package-menu-mode . package)))
+                      '((prog-mode . edit)
+                        (text-mode . edit)
+                        (comint-mode . terminal)
+                        (dired-mode . dired)
+                        (ibuffer-mode . buffers)
+                        (Buffer-menu-mode . buffers)
+                        (occur-mode . search)
+                        (grep-mode . search)
+                        (compilation-mode . search)
+                        (image-mode . image)
+                        (package-menu-mode . package)))
 
   (purpose--fill-hash purpose--default-name-purposes
-		      '((".gitignore" . edit)
-			(".hgignore" . edit)
-			;; the `shell' command displays its buffer before
-			;; setting its major-mode, so we must detect it by name
-			("*shell*" . terminal)))
+                      '((".gitignore" . edit)
+                        (".hgignore" . edit)
+                        ;; the `shell' command displays its buffer before
+                        ;; setting its major-mode, so we must detect it by name
+                        ("*shell*" . terminal)))
 
-  (purpose--fill-hash purpose--default-regexp-purposes nil))
+  (purpose--fill-hash purpose--default-regexp-purposes
+                      '(("^ \\*Minibuf-[0-9]*\\*$" . minibuf))))
 
 
 
@@ -282,7 +284,7 @@ done."
   (unless (keywordp keyword)
     (signal 'wrong-type-argument `(keywordp ,keyword)))
   (setq purpose-extended-configuration
-	(plist-put purpose-extended-configuration keyword config))
+        (plist-put purpose-extended-configuration keyword config))
   (purpose-compile-extended-configuration))
 
 (defun purpose-del-extension-configuration (keyword)
@@ -315,11 +317,11 @@ If you set this variable in elisp-code, you should call the function
 `purpose-compile-user-configuration' immediately afterwards."
   :group 'purpose
   :type '(alist :key-type (symbol :tag "major mode")
-  		:value-type (symbol :tag "purpose"))
+                :value-type (symbol :tag "purpose"))
   :set #'(lambda (symbol value)
-	   (prog1 (set-default symbol value)
-	     (purpose--fill-hash purpose--user-mode-purposes
-				 purpose-user-mode-purposes)))
+           (prog1 (set-default symbol value)
+             (purpose--fill-hash purpose--user-mode-purposes
+                                 purpose-user-mode-purposes)))
   :package-version "1.2")
 
 (defcustom purpose-user-name-purposes nil
@@ -329,11 +331,11 @@ If you set this variable in elisp-code, you should call the function
 `purpose-compile-user-configuration' immediately afterwards."
   :group 'purpose
   :type '(alist :key-type (string :tag "name")
-  		:value-type (symbol :tag "purpose"))
+                :value-type (symbol :tag "purpose"))
   :set #'(lambda (symbol value)
-	   (prog1 (set-default symbol value)
-	     (purpose--fill-hash purpose--user-name-purposes
-				 purpose-user-name-purposes)))
+           (prog1 (set-default symbol value)
+             (purpose--fill-hash purpose--user-name-purposes
+                                 purpose-user-name-purposes)))
   :package-version "1.2")
 
 (defcustom purpose-user-regexp-purposes nil
@@ -343,11 +345,11 @@ If you set this variable in elisp-code, you should call the function
 `purpose-compile-user-configuration' immediately afterwards."
   :group 'purpose
   :type '(alist :key-type (string :tag "regexp")
-  		:value-type (symbol :tag "purpose"))
+                :value-type (symbol :tag "purpose"))
   :set #'(lambda (symbol value)
-	   (prog1 (set-default symbol value)
-	     (purpose--fill-hash purpose--user-regexp-purposes
-				 purpose-user-regexp-purposes)))
+           (prog1 (set-default symbol value)
+             (purpose--fill-hash purpose--user-regexp-purposes
+                                 purpose-user-regexp-purposes)))
   :package-version "1.2")
 
 

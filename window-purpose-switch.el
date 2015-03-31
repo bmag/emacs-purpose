@@ -44,13 +44,18 @@ display a buffer.
 This should be either `pop-up-window' for displaying the buffer in a new
 window, `pop-up-frame' for displaying the buffer in a new frame, `error'
 for signalling an error, or nil for using the regular (purpose-less)
-`display-buffer' behavior.  Any other value is treated the same as nil."
+`display-buffer' behavior.
+`purpose-display-fallback' can also be a display function.  In this
+case, the function is called with two arguments: BUFFER and ALIST, and
+should return the window that it used to display the buffer.
+Any other value is treated the same as nil."
   :group 'purpose
   :type '(choice (const pop-up-window)
-		 (const pop-up-frame)
-		 (const error)
-		 (const nil))
-  :package-version "1.2")
+                 (const pop-up-frame)
+                 (const error)
+                 (const nil)
+                 function)
+  :package-version "1.3.50")
 
 (defcustom purpose-display-buffer-functions nil
   "Hook to run after displaying a buffer with `purpose--action-function'.
@@ -76,36 +81,36 @@ it yourself.")
 
 (defvar purpose-action-sequences
   '((switch-to-buffer . (purpose-display-reuse-window-buffer
-			 purpose-display-reuse-window-purpose
-			 purpose-display-maybe-same-window
-			 purpose-display-maybe-other-window
-			 purpose-display-maybe-other-frame
-			 purpose-display-maybe-pop-up-window
-			 purpose-display-maybe-pop-up-frame))
+                         purpose-display-reuse-window-purpose
+                         purpose-display-maybe-same-window
+                         purpose-display-maybe-other-window
+                         purpose-display-maybe-other-frame
+                         purpose-display-maybe-pop-up-window
+                         purpose-display-maybe-pop-up-frame))
     (prefer-same-window . (purpose-display-maybe-same-window
-			   purpose-display-reuse-window-buffer
-			   purpose-display-reuse-window-purpose
-			   purpose-display-maybe-other-window
-			   purpose-display-maybe-other-frame
-			   purpose-display-maybe-pop-up-window
-			   purpose-display-maybe-pop-up-frame))
+                           purpose-display-reuse-window-buffer
+                           purpose-display-reuse-window-purpose
+                           purpose-display-maybe-other-window
+                           purpose-display-maybe-other-frame
+                           purpose-display-maybe-pop-up-window
+                           purpose-display-maybe-pop-up-frame))
     (force-same-window . (purpose-display-maybe-same-window))
     (prefer-other-window . (purpose-display-reuse-window-buffer
-			    purpose-display-reuse-window-purpose
-			    purpose-display-maybe-other-window
-			    purpose-display-maybe-pop-up-window
-			    purpose-display-maybe-other-frame
-			    purpose-display-maybe-pop-up-frame
-			    purpose-display-maybe-same-window))
+                            purpose-display-reuse-window-purpose
+                            purpose-display-maybe-other-window
+                            purpose-display-maybe-pop-up-window
+                            purpose-display-maybe-other-frame
+                            purpose-display-maybe-pop-up-frame
+                            purpose-display-maybe-same-window))
     (prefer-other-frame . (purpose-display-reuse-window-buffer-other-frame
-			   purpose-display-reuse-window-purpose-other-frame
-			   purpose-display-maybe-other-frame
-			   purpose-display-maybe-pop-up-frame
-			   purpose-display-maybe-other-window
-			   purpose-display-maybe-pop-up-window
-			   purpose-display-reuse-window-buffer
-			   purpose-display-reuse-window-purpose
-			   purpose-display-maybe-same-window))))
+                           purpose-display-reuse-window-purpose-other-frame
+                           purpose-display-maybe-other-frame
+                           purpose-display-maybe-pop-up-frame
+                           purpose-display-maybe-other-window
+                           purpose-display-maybe-pop-up-window
+                           purpose-display-reuse-window-buffer
+                           purpose-display-reuse-window-purpose
+                           purpose-display-maybe-same-window))))
 
 (defvar purpose-default-action-order 'prefer-other-window)
 
@@ -131,7 +136,7 @@ of new windows will be that percentage out of the frame's total height.
 case, `purpose-display-at-top-height' is ignored."
   :group 'purpose
   :type '(choice number
-		 (const nil))
+                 (const nil))
   :package-version "1.3.50")
 
 (defcustom purpose-display-at-bottom-height 8
@@ -145,7 +150,7 @@ height.
 this case, `purpose-display-at-bottom-height' is ignored."
   :group 'purpose
   :type '(choice number
-		 (const nil))
+                 (const nil))
   :package-version "1.3.50")
 
 (defcustom purpose-display-at-left-width 32
@@ -158,7 +163,7 @@ of new windows will be that percentage out of the frame's total width.
 case, `purpose-display-at-left-width' is ignored."
   :group 'purpose
   :type '(choice number
-		 (const nil))
+                 (const nil))
   :package-version "1.3.50")
 
 (defcustom purpose-display-at-right-width 32
@@ -172,7 +177,7 @@ width.
 this case, `purpose-display-at-right-width' is ignored."
   :group 'purpose
   :type '(choice number
-		 (const nil))
+                 (const nil))
   :package-version "1.3.50")
 
 
@@ -222,26 +227,26 @@ frame if `pop-up-frames' is nil; search all frames on the current
 terminal if it's non-nil."
   (let-alist alist
     (let ((reusable-frames (cond ((assoc 'reusable-frames alist)
-				  .reusable-frames)
-				 (pop-up-frames 0)
-				 (t nil))))
+                                  .reusable-frames)
+                                 (pop-up-frames 0)
+                                 (t nil))))
       (cond ((null reusable-frames)
-	     (list (selected-frame)))
-	    ((framep reusable-frames)
-	     (list reusable-frames))
-	    ((eql reusable-frames 'visible)
-	     (visible-frame-list))
-	    ((eql reusable-frames 0)
-	     (cl-remove-if-not
-	      #'(lambda (frame)
-		  (eql (frame-terminal frame) (frame-terminal)))
-	      (frame-list)))
-	    ((eql reusable-frames t)
-	     (frame-list))
-	    (t
-	     (message "Bad value for reusable-frames in ALIST: %S"
-		      reusable-frames)
-	     nil)))))
+             (list (selected-frame)))
+            ((framep reusable-frames)
+             (list reusable-frames))
+            ((eql reusable-frames 'visible)
+             (visible-frame-list))
+            ((eql reusable-frames 0)
+             (cl-remove-if-not
+              #'(lambda (frame)
+                  (eql (frame-terminal frame) (frame-terminal)))
+              (frame-list)))
+            ((eql reusable-frames t)
+             (frame-list))
+            (t
+             (message "Bad value for reusable-frames in ALIST: %S"
+                      reusable-frames)
+             nil)))))
 
 (defun purpose-display-reuse-window-buffer (buffer alist)
   "Return a window that is already displaying BUFFER.
@@ -268,17 +273,17 @@ event that a window on another frame is chosen, avoid raising
 that frame."
   (let-alist alist
     (let* ((frames (purpose--reusable-frames alist))
-	   (windows (purpose-flatten (mapcar #'window-list frames)))
-	   window)
+           (windows (purpose-flatten (mapcar #'window-list frames)))
+           window)
       (setq windows (cl-delete-if-not
-		     #'(lambda (window)
-			 (purpose-window-buffer-reusable-p window buffer))
-		     windows))
+                     #'(lambda (window)
+                         (purpose-window-buffer-reusable-p window buffer))
+                     windows))
       (when .inhibit-same-window
-	(setq windows (delq (selected-window) windows)))
+        (setq windows (delq (selected-window) windows)))
       (setq window (car windows))
       (when window
-	(purpose-change-buffer buffer window 'reuse alist))
+        (purpose-change-buffer buffer window 'reuse alist))
       window)))
 
 (defun purpose-display-reuse-window-purpose (buffer alist &optional purpose)
@@ -307,18 +312,18 @@ If ALIST has a non-nil `inhibit-switch-frame' entry, then in the event
 that a window on another frame is chosen, avoid raising that frame."
   (let-alist alist
     (let* ((frames (purpose--reusable-frames alist))
-	   (windows (purpose-flatten (mapcar #'window-list frames)))
-	   (purpose (or purpose (purpose-buffer-purpose buffer)))
-	   window)
+           (windows (purpose-flatten (mapcar #'window-list frames)))
+           (purpose (or purpose (purpose-buffer-purpose buffer)))
+           window)
       (setq windows (cl-delete-if-not
-		     #'(lambda (window)
-			 (purpose-window-purpose-reusable-p window purpose))
-		     windows))
+                     #'(lambda (window)
+                         (purpose-window-purpose-reusable-p window purpose))
+                     windows))
       (when .inhibit-same-window
-	(setq windows (delq (selected-window) windows)))
+        (setq windows (delq (selected-window) windows)))
       (setq window (car windows))
       (when window
-	(purpose-change-buffer buffer window 'reuse alist))
+        (purpose-change-buffer buffer window 'reuse alist))
       window)))
 
 (defun purpose-display-reuse-window-buffer-other-frame (buffer alist)
@@ -344,13 +349,13 @@ If ALIST has a non-nil `inhibit-switch-frame' entry, then in the
 event that a window on another frame is chosen, avoid raising
 that frame."
   (let* ((frames (cl-delete (selected-frame)
-			    (purpose--reusable-frames alist)))
-	 (windows (purpose-flatten (mapcar #'window-list frames)))
-	 window)
+                            (purpose--reusable-frames alist)))
+         (windows (purpose-flatten (mapcar #'window-list frames)))
+         window)
     (setq windows (cl-delete-if-not
-		   #'(lambda (window)
-		       (purpose-window-buffer-reusable-p window buffer))
-		   windows))
+                   #'(lambda (window)
+                       (purpose-window-buffer-reusable-p window buffer))
+                   windows))
     (setq window (car windows))
     (when window
       (purpose-change-buffer buffer window 'reuse alist))
@@ -383,14 +388,14 @@ terminal if it's non-nil.
 If ALIST has a non-nil `inhibit-switch-frame' entry, then in the event
 that a window on another frame is chosen, avoid raising that frame."
   (let* ((frames (cl-delete (selected-frame)
-			    (purpose--reusable-frames alist)))
-	 (windows (purpose-flatten (mapcar #'window-list frames)))
-	 (purpose (or purpose (purpose-buffer-purpose buffer)))
-	 window)
+                            (purpose--reusable-frames alist)))
+         (windows (purpose-flatten (mapcar #'window-list frames)))
+         (purpose (or purpose (purpose-buffer-purpose buffer)))
+         window)
     (setq windows (cl-delete-if-not
-		   #'(lambda (window)
-		       (purpose-window-purpose-reusable-p window purpose))
-		   windows))
+                   #'(lambda (window)
+                       (purpose-window-purpose-reusable-p window purpose))
+                   windows))
     (setq window (car windows))
     (when window
       (purpose-change-buffer buffer window 'reuse alist))
@@ -414,10 +419,11 @@ following is true:
 - entry `inhibit-same-window' in ALIST is non-nil"
   (let-alist alist
     (unless (or (window-dedicated-p)
-		(and (purpose-window-purpose-dedicated-p)
-		     (not (eql (purpose-window-purpose)
-			       (purpose-buffer-purpose buffer))))
-		.inhibit-same-window)
+                (and (purpose-window-purpose-dedicated-p)
+                     (not (eql (purpose-window-purpose)
+                               (purpose-buffer-purpose buffer))))
+                .inhibit-same-window
+                (window-minibuffer-p))
       (purpose-display-same-window buffer alist))))
 
 (defun purpose-display--frame-usable-windows (frame buffer)
@@ -430,10 +436,10 @@ FRAME defaults to the selected frame."
   (cl-remove-if-not
    #'(lambda (window)
        (and (or (not (window-dedicated-p window))
-		(eql (window-buffer window) buffer))
-	    (or (not (purpose-window-purpose-dedicated-p window))
-		(eql (purpose-window-purpose window)
-		     (purpose-buffer-purpose buffer)))))
+                (eql (window-buffer window) buffer))
+            (or (not (purpose-window-purpose-dedicated-p window))
+                (eql (purpose-window-purpose window)
+                     (purpose-buffer-purpose buffer)))))
    (window-list frame)))
 
 (defun purpose-display-maybe-other-window (buffer alist)
@@ -444,14 +450,14 @@ Possible windows to use match these requirements:
 - window is not dedicated to its purpose, or BUFFER has the same purpose"
   (let-alist alist
     (let ((windows (purpose-display--frame-usable-windows nil buffer))
-	  window)
+          window)
       ;; (when .inhibit-same-window
       ;; 	(setq windows (delete (selected-window) windows)))
       (setq windows (delete (selected-window) windows))
       (setq window (car windows))
       (when window
-	(purpose-change-buffer buffer window 'reuse alist)
-	window))))
+        (purpose-change-buffer buffer window 'reuse alist)
+        window))))
 
 (defun purpose-display-maybe-other-frame (buffer alist)
   "Display BUFFER in another window in another frame, if possible.
@@ -463,14 +469,14 @@ Possible windows to use match these requirements:
 This function doesn't raise the new frame."
   (let-alist alist
     (let* ((windows (purpose-flatten
-		    (mapcar
-		     #'(lambda (frame)
-			 (purpose-display--frame-usable-windows frame buffer))
-		     (remove (selected-frame) (frame-list)))))
-	   (window (car windows)))
+                     (mapcar
+                      #'(lambda (frame)
+                          (purpose-display--frame-usable-windows frame buffer))
+                      (remove (selected-frame) (frame-list)))))
+           (window (car windows)))
       (when window
-	(purpose-change-buffer buffer window 'reuse alist)
-	window))))
+        (purpose-change-buffer buffer window 'reuse alist)
+        window))))
 
 (defun purpose-display-pop-up-window--internal (buffer alist force-split)
   "Display BUFFER in a new window.
@@ -480,11 +486,11 @@ The window that is split is either the largest window, or the least
 recently used window.  If couldn't get the largest or least recently
 used window, split the selected window."
   (let* ((old-window (or (get-largest-window nil t)
-			 (get-lru-window nil t)
-			 (selected-window)))
-	 (new-window (or (split-window-sensibly old-window)
-			 (and force-split
-			      (split-window old-window)))))
+                         (get-lru-window nil t)
+                         (selected-window)))
+         (new-window (or (split-window-sensibly old-window)
+                         (and force-split
+                              (split-window old-window)))))
     (purpose-change-buffer buffer new-window 'window alist)
     new-window))
 
@@ -519,13 +525,13 @@ values of `pop-up-frame-alist' and `pop-up-frame-parameters' are used
 both.  In case of conflict, `pop-up-frame-parameters' takes precedence."
   (let-alist alist
     (let* ((pop-up-frame-alist (purpose-alist-combine .pop-up-frame-parameters
-						      pop-up-frame-alist))
-	   (frame (when pop-up-frame-function
-		    (with-current-buffer buffer
-		      (funcall pop-up-frame-function))))
-	   (window (and frame (frame-selected-window frame))))
+                                                      pop-up-frame-alist))
+           (frame (when pop-up-frame-function
+                    (with-current-buffer buffer
+                      (funcall pop-up-frame-function))))
+           (window (and frame (frame-selected-window frame))))
       (when window
-	(purpose-change-buffer buffer window 'frame alist)))))
+        (purpose-change-buffer buffer window 'frame alist)))))
 
 (defun purpose-display-maybe-pop-up-frame (buffer alist)
   "Display BUFFER in a new frame, if possible.
@@ -535,8 +541,8 @@ The display is done with `display-buffer-pop-up-frame'."
   ;; if `pop-up-frames' is `graphic-only', check `display-graphic-p', otherwise
   ;; check that `pop-up-frames' is non-nil
   (when (if (eq pop-up-frames 'graphic-only)
-	    (display-graphic-p)
-	  pop-up-frames)
+            (display-graphic-p)
+          pop-up-frames)
     (purpose-display-pop-up-frame buffer alist)))
 
 (defun purpose--normalize-height (height &optional frame)
@@ -597,17 +603,19 @@ BUFFER is a buffer that should be displayed.
 ALIST has the same meaning as in `display-buffer'."
   (let ((window (funcall window-getter)))
     (if (and window
-	     (or (purpose-window-buffer-reusable-p window buffer)
-		 (purpose-window-purpose-reusable-p window (purpose-buffer-purpose buffer))))
-	;; reuse window
-	(progn
-	  (purpose-change-buffer buffer window 'reuse alist)
-	  window)
+             (or (purpose-window-buffer-reusable-p window buffer)
+                 (purpose-window-purpose-reusable-p window
+                                                    (purpose-buffer-purpose
+                                                     buffer))))
+        ;; reuse window
+        (progn
+          (purpose-change-buffer buffer window 'reuse alist)
+          window)
       ;; create window
       (let ((new-window (funcall window-creator)))
-	(when new-window
-	  (purpose-change-buffer buffer new-window 'window alist)
-	  new-window)))))
+        (when new-window
+          (purpose-change-buffer buffer new-window 'window alist)
+          new-window)))))
 
 (defun purpose-display-at-top (buffer alist &optional height)
   "Display BUFFER at the top window, create such window if necessary.
@@ -619,15 +627,17 @@ be created, and can take the same values as
 the new window is specified by `purpose-display-at-top-height'.  If
 `purpose-display-at-top-height' is also nil, then the new window will
 have the default height."
-  (purpose-display--at #'purpose-get-top-window
-		       #'(lambda ()
-			   (let* ((height (purpose--normalize-height (or height
-									 purpose-display-at-top-height)))
-				  (height (when height (- height))))
-			     (ignore-errors
-			       (split-window (frame-root-window) height 'above))))
-		       buffer
-		       alist))
+  (purpose-display--at
+   #'purpose-get-top-window
+   #'(lambda ()
+       (let* ((height (purpose--normalize-height
+                       (or height
+                           purpose-display-at-top-height)))
+              (height (when height (- height))))
+         (ignore-errors
+           (split-window (frame-root-window) height 'above))))
+   buffer
+   alist))
 
 (defun purpose-display-at-bottom (buffer alist &optional height)
   "Display BUFFER at the bottom window, create such window if necessary.
@@ -640,15 +650,17 @@ be created, and can take the same values as
 of the new window is specified by `purpose-display-at-bottom-height'.
 If `purpose-display-at-bottom-height' is also nil, then the new window
 will have the default height."
-  (purpose-display--at #'purpose-get-bottom-window
-		       #'(lambda ()
-			   (let* ((height (purpose--normalize-height (or height
-									 purpose-display-at-bottom-height)))
-				  (height (when height (- height))))
-			     (ignore-errors
-			       (split-window (frame-root-window) height 'below))))
-		       buffer
-		       alist))
+  (purpose-display--at
+   #'purpose-get-bottom-window
+   #'(lambda ()
+       (let* ((height (purpose--normalize-height
+                       (or height
+                           purpose-display-at-bottom-height)))
+              (height (when height (- height))))
+         (ignore-errors
+           (split-window (frame-root-window) height 'below))))
+   buffer
+   alist))
 
 (defun purpose-display-at-left (buffer alist &optional width)
   "Display BUFFER at the left window, create such window if necessary.
@@ -660,15 +672,17 @@ be created, and can take the same values as
 new window is specified by `purpose-display-at-left-width'.  If
 `purpose-display-at-left-width' is also nil, then the new window will
 have the default width."
-  (purpose-display--at #'purpose-get-left-window
-		       #'(lambda ()
-			   (let* ((width (purpose--normalize-width (or width
-								       purpose-display-at-left-width)))
-				  (width (when width (- width))))
-			     (ignore-errors
-			       (split-window (frame-root-window) width 'left))))
-		       buffer
-		       alist))
+  (purpose-display--at
+   #'purpose-get-left-window
+   #'(lambda ()
+       (let* ((width (purpose--normalize-width
+                      (or width
+                          purpose-display-at-left-width)))
+              (width (when width (- width))))
+         (ignore-errors
+           (split-window (frame-root-window) width 'left))))
+   buffer
+   alist))
 
 (defun purpose-display-at-right (buffer alist &optional width)
   "Display BUFFER at the right window, create such window if necessary.
@@ -680,15 +694,17 @@ created, and can take the same values as
 the new window is specified by `purpose-display-at-right-width'.  If
 `purpose-display-at-right-width' is also nil, then the new window will
 have the default width."
-  (purpose-display--at #'purpose-get-right-window
-		       #'(lambda ()
-			   (let* ((width (purpose--normalize-width (or width
-								       purpose-display-at-right-width)))
-				  (width (when width (- width))))
-			     (ignore-errors
-			       (split-window (frame-root-window) width 'right))))
-		       buffer
-		       alist))
+  (purpose-display--at
+   #'purpose-get-right-window
+   #'(lambda ()
+       (let* ((width (purpose--normalize-width
+                      (or width
+                          purpose-display-at-right-width)))
+              (width (when width (- width))))
+         (ignore-errors
+           (split-window (frame-root-window) width 'right))))
+   buffer
+   alist))
 
 
 
@@ -701,8 +717,8 @@ have the default width."
    (not (cdr (assoc 'inhibit-purpose alist)))
    (let ((buffer-name (buffer-name buffer)))
      (cl-loop for ignored-regexp
-   	      in purpose-action-function-ignore-buffer-names
-   	      never (string-match-p ignored-regexp buffer-name)))))
+              in purpose-action-function-ignore-buffer-names
+              never (string-match-p ignored-regexp buffer-name)))))
 
 (defun purpose--special-action-sequence (buffer alist)
   "Return special action sequences to use for display BUFFER.
@@ -721,8 +737,8 @@ sequence."
      (cl-loop
       for (condition . action-sequence) in purpose-special-action-sequences
       when (or (eql purpose condition)
-	       (and (functionp condition)
-		    (funcall condition purpose buffer alist)))
+               (and (functionp condition)
+                    (funcall condition purpose buffer alist)))
       collect action-sequence))))
 
 ;; Purpose action function (integration with `display-buffer')
@@ -737,48 +753,55 @@ If ALIST is nil, it is ignored and `purpose--alist' is used instead."
   (when (purpose--use-action-function-p buffer alist)
     (let-alist alist
       (let* ((old-frame (selected-frame))
-	     (special-action-sequence (purpose--special-action-sequence buffer
-									alist))
-	     (normal-action-sequence (purpose-alist-get
-				      (or .action-order
-					  purpose-default-action-order)
-				      purpose-action-sequences))
-	     (action-sequence (append special-action-sequence
-				      normal-action-sequence))
-	     (new-window
-	      ;; call all display actions in action-sequence until one of them
-	      ;; succeeds, and return the window used for display (action's
-	      ;; return value)
-	      (cl-do ((action-sequence action-sequence (cdr action-sequence))
-		      (window nil ;; (funcall (car action-sequence) buffer alist)
-			      (progn
-				(purpose-message "trying: %S" (car action-sequence))
-				(funcall (car action-sequence) buffer alist))))
-		  ((or (null action-sequence) window) window))))
-	(let ((window (if new-window
-			  new-window
-			(cond
-			 ((eql purpose-display-fallback 'pop-up-frame)
-			  (purpose-message
-			   "trying fallback: purpose-display-pop-up-frame")
-			  (purpose-display-pop-up-frame buffer alist))
+             (special-action-sequence (purpose--special-action-sequence buffer
+                                                                        alist))
+             (normal-action-sequence (purpose-alist-get
+                                      (or .action-order
+                                          purpose-default-action-order)
+                                      purpose-action-sequences))
+             (action-sequence (append special-action-sequence
+                                      normal-action-sequence))
+             (new-window
+              ;; call all display actions in action-sequence until one of them
+              ;; succeeds, and return the window used for display (action's
+              ;; return value)
+              (cl-do ((action-sequence action-sequence (cdr action-sequence))
+                      (window nil 
+                              (progn
+                                (purpose-message "trying: %S"
+                                                 (car action-sequence))
+                                (funcall (car action-sequence) buffer alist))))
+                  ((or (null action-sequence) window) window))))
+        (let ((window (if new-window
+                          new-window
+                        (cond
+                         ((eql purpose-display-fallback 'pop-up-frame)
+                          (purpose-message
+                           "trying fallback: purpose-display-pop-up-frame")
+                          (purpose-display-pop-up-frame buffer alist))
 
-			 ((eql purpose-display-fallback 'pop-up-window)
-			  (purpose-message
-			   "trying fallback: purpose-display-pop-up-window")
-			  (purpose-display-pop-up-window buffer alist))
+                         ((eql purpose-display-fallback 'pop-up-window)
+                          (purpose-message
+                           "trying fallback: purpose-display-pop-up-window")
+                          (purpose-display-pop-up-window buffer alist))
 
-			 ((or (eql purpose-display-fallback 'error)
-			      (eql .action-order 'force-same-window))
-			  (error "No window available"))
+                         ((or (eql purpose-display-fallback 'error)
+                              (eql .action-order 'force-same-window))
+                          (error "No window available"))
 
-			 (t
-			  (purpose-message
-			   "falling back to regular display-buffer")
-			  nil)))))
-	  (when window
-	    (prog1 window
-	      (run-hook-with-args 'purpose-display-buffer-functions window))))))))
+                         ((functionp purpose-display-fallback)
+                          (purpose-message
+                           "trying custom fallback %s" purpose-display-fallback)
+                          (funcall purpose-display-fallback buffer alist))
+
+                         (t
+                          (purpose-message
+                           "falling back to regular display-buffer")
+                          nil)))))
+          (when window
+            (prog1 window
+              (run-hook-with-args 'purpose-display-buffer-functions
+                                  window))))))))
 
 (defun purpose-select-buffer (buffer-or-name &optional action-order norecord)
   "Display buffer BUFFER-OR-NAME in window and then select that window.
@@ -805,7 +828,8 @@ This function runs hook `purpose-select-buffer-hook' when its done."
 
 ;;; Level3 actions
 
-(defun purpose-switch-buffer (buffer-or-name &optional norecord force-same-window)
+(defun purpose-switch-buffer (buffer-or-name
+                              &optional norecord force-same-window)
   "Select buffer BUFFER-OR-NAME, preferably in the selected window.
 If FORCE-SAME-WINDOW is non-nil, don't select a different window if the
 currently selected window is not available."
@@ -814,30 +838,30 @@ currently selected window is not available."
   ;; `purpose--action-function' should try to switch buffer in current window,
   ;; and if that's impossible - display buffer in another window.
   (purpose-select-buffer buffer-or-name
-			 (if force-same-window
-			     'force-same-window
-			   'switch-to-buffer)
-			 norecord))
+                         (if force-same-window
+                             'force-same-window
+                           'switch-to-buffer)
+                         norecord))
 
 (defun purpose-switch-buffer-other-window (buffer-or-name &optional norecord)
   "Select buffer BUFFER-OR-NAME in another window.
 Never selects the currently selected window."
   (interactive (list (read-buffer-to-switch "[PU] Switch to buffer: ")))
   (let ((pop-up-windows t)
-	(purpose--alist (purpose-alist-set 'inhibit-same-window
-					   t
-					   purpose--alist)))
+        (purpose--alist (purpose-alist-set 'inhibit-same-window
+                                           t
+                                           purpose--alist)))
     (purpose-select-buffer buffer-or-name
-			   'prefer-other-window
-			   norecord)))
+                           'prefer-other-window
+                           norecord)))
 
 (defun purpose-switch-buffer-other-frame (buffer-or-name &optional norecord)
   "Select buffer BUFFER-OR-NAME, preferably in another frame."
   (interactive (list (read-buffer-to-switch "[PU] Switch to buffer: ")))
   (let ((pop-up-frames t)
-	(purpose--alist (purpose-alist-set 'inhibit-same-window
-					   t
-					   purpose--alist)))
+        (purpose--alist (purpose-alist-set 'inhibit-same-window
+                                           t
+                                           purpose--alist)))
     (purpose-select-buffer buffer-or-name 'prefer-other-frame norecord)))
 
 (defun purpose-pop-buffer (buffer-or-name &optional norecord)
@@ -857,7 +881,7 @@ Never selects the currently selected window."
 ;; TODO: maybe recognize some more actions
 (defun purpose-display--action-to-order (action)
   "Return appropriate `action-order' value for ACTION."
-  (when (not (listp action))		; non-nil, non-list
+  (when (not (listp action))            ; non-nil, non-list
     'prefer-other-window))
 
 (define-purpose-compatible-advice 'display-buffer
@@ -866,20 +890,20 @@ Never selects the currently selected window."
   "Update `purpose--alist' when calling `display-buffer'."
   ;; new style advice
   ((let* ((action-order (purpose-display--action-to-order action))
-	  (purpose--alist (if action-order
-			      (purpose-alist-set 'action-order
-						 action-order
-						 purpose--alist)
-			    purpose--alist)))
+          (purpose--alist (if action-order
+                              (purpose-alist-set 'action-order
+                                                 action-order
+                                                 purpose--alist)
+                            purpose--alist)))
      (funcall oldfun buffer-or-name action frame)))
 
   ;; old style advice
   ((let* ((action-order (purpose-display--action-to-order action))
-	  (purpose--alist (if action-order
-			      (purpose-alist-set 'action-order
-						 action-order
-						 purpose--alist)
-			    purpose--alist)))
+          (purpose--alist (if action-order
+                              (purpose-alist-set 'action-order
+                                                 action-order
+                                                 purpose--alist)
+                            purpose--alist)))
      ad-do-it)))
 
 (define-purpose-compatible-advice 'switch-to-buffer
@@ -895,23 +919,25 @@ If Purpose is active (`purpose--active-p' is non-nil), call
    ;; `purpose-action-function-ignore-buffer-names'), then we want
    ;; to fallback to `switch-to-buffer', instead of
    ;; `display-buffer'
-   (if (purpose--use-action-function-p (window-normalize-buffer-to-switch-to buffer-or-name) nil)
+   (if (purpose--use-action-function-p (window-normalize-buffer-to-switch-to
+                                        buffer-or-name)
+                                       nil)
        (purpose-switch-buffer buffer-or-name
-			      norecord
-			      ;; when `switch-to-buffer' is called
-			      ;; interactively force-same-window is non-nil,
-			      ;; but want it to be nil, so we check
-			      ;; `called-interactively-p' as well
-			      (and force-same-window
-				   (not (called-interactively-p 'interactive))))
+                              norecord
+                              ;; when `switch-to-buffer' is called
+                              ;; interactively force-same-window is non-nil,
+                              ;; but want it to be nil, so we check
+                              ;; `called-interactively-p' as well
+                              (and force-same-window
+                                   (not (called-interactively-p 'interactive))))
      (funcall oldfun buffer-or-name norecord force-same-window)))
 
   ;; old style advice
   ((purpose-message "switch-to-buffer advice")
    (if (purpose--use-action-function-p
-	(window-normalize-buffer-to-switch-to buffer-or-name) nil)
+        (window-normalize-buffer-to-switch-to buffer-or-name) nil)
        (setq ad-return-value
-	     (purpose-switch-buffer buffer-or-name norecord force-same-window))
+             (purpose-switch-buffer buffer-or-name norecord force-same-window))
      ad-do-it)))
 
 (define-purpose-compatible-advice 'switch-to-buffer-other-window
@@ -931,7 +957,7 @@ If Purpose is active (`purpose--active-p' is non-nil), call
   ((purpose-message "switch-to-buffer-other-window advice")
    (if purpose--active-p
        (setq ad-return-value
-	     (purpose-switch-buffer-other-window buffer-or-name norecord))
+             (purpose-switch-buffer-other-window buffer-or-name norecord))
      ad-do-it)))
 
 (define-purpose-compatible-advice 'switch-to-buffer-other-frame
@@ -951,7 +977,7 @@ If Purpose is active (`purpose--active-p' is non-nil), call
   ((purpose-message "switch-to-buffer-other-frame advice")
    (if purpose--active-p
        (setq ad-return-value
-	     (purpose-switch-buffer-other-frame buffer-or-name norecord))
+             (purpose-switch-buffer-other-frame buffer-or-name norecord))
      ad-do-it)))
 
 (define-purpose-compatible-advice 'pop-to-buffer
@@ -963,14 +989,14 @@ call `purpose-pop-buffer', otherwise call `pop-to-buffer'."
   ;; new style advice
   ((purpose-message "pop-to-buffer advice")
    (if (and purpose--active-p
-	    (not action))
+            (not action))
        (purpose-pop-buffer buffer-or-name norecord)
      (funcall oldfun buffer-or-name action norecord)))
 
   ;; old style advice
   ((purpose-message "pop-to-buffer advice")
    (if (and purpose--active-p
-	    (not action))
+            (not action))
        (setq ad-return-value (purpose-pop-buffer buffer-or-name norecord))
      ad-do-it)))
 
@@ -991,7 +1017,7 @@ If Purpose is active (`purpose--active-p' is non-nil), call
   ((purpose-message "pop-to-buffer-same-window advice")
    (if purpose--active-p
        (setq ad-return-value
-	     (purpose-pop-buffer-same-window buffer-or-name norecord))
+             (purpose-pop-buffer-same-window buffer-or-name norecord))
      ad-do-it)))
 
 ;; anti-override:
@@ -1018,12 +1044,12 @@ This works internally by using `without-purpose' and
 (defun purpose-read-buffers-with-purpose (purpose)
   "Prompt the user for a buffer with purpose PURPOSE."
   (let ((reader (if ido-mode
-		    #'ido-completing-read
-		  #'completing-read)))
+                    #'ido-completing-read
+                  #'completing-read)))
     (funcall reader "[PU] Buffer: "
-	     (mapcar #'buffer-name
-		     (delq (current-buffer)
-			   (purpose-buffers-with-purpose purpose))))))
+             (mapcar #'buffer-name
+                     (delq (current-buffer)
+                           (purpose-buffers-with-purpose purpose))))))
 
 (defun purpose-switch-buffer-with-purpose (&optional purpose)
   "Prompt the user and switch to a buffer with purpose PURPOSE.
@@ -1053,6 +1079,33 @@ current buffer's purpose."
   (purpose-switch-buffer-other-frame
    (purpose-read-buffers-with-purpose
     (or purpose (purpose-buffer-purpose (current-buffer))))))
+
+
+(defmacro purpose-generate-display-and-dedicate (display-fn &rest extra-args)
+  "Generate lambda to display a buffer and purpose-dedicate its window.
+The generated lambda takes two arguments - BUFFER and ALIST.  It
+tries to display BUFFER, and if successful it purpose-dedicates the
+window used for display.
+
+DISPLAY-FN is the function used for displaying the buffer.  EXTRA-ARGS
+is additional arguments to pass to DISPLAY-FN, and should be a list.
+The display is done by calling DISPLAY-FN with arguments BUFFER, ALIST
+and EXTRA-ARGS, like so:
+  (apply display-fn buffer alist extra-args).
+
+Example of how this macro might be used:
+  (defalias display-at-bottom-and-dedicate
+            (purpose-generate-display-and-dedicate
+             'purpose-display-at-bottom))
+Another example:
+  (add-to-list purpose-special-action-sequences
+               `(terminal ,(purpose-generate-display-and-dedicate
+                            purpose-display-at-bottom 6)))"
+  `(lambda (buffer alist)
+     (let ((window (apply ,display-fn buffer alist (list,@extra-args))))
+       (when window
+         (purpose-set-window-purpose-dedicated-p window t))
+       window)))
 
 (provide 'window-purpose-switch)
 ;;; window-purpose-switch.el ends here
