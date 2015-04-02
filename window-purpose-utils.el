@@ -25,6 +25,8 @@
 
 ;;; Code:
 
+(require 'subr-x)
+
 (defcustom purpose-message-on-p nil
   "If non-nil, `purpose-message' will produce a message.
 Toggling this on will cause Purpose to produce some debug messages."
@@ -155,6 +157,15 @@ SYMBOL, WHERE and NAME have the same meaning as in
        (ad-disable-advice ,symbol ',(purpose-advice-convert-where-arg where) ,name)
        (ad-update ,symbol))))
 
+(defun purpose-get-all-purposes ()
+  (delete-dups
+    (append
+      (hash-table-values purpose--default-name-purposes)
+      (hash-table-values purpose--default-mode-purposes)
+      (hash-table-values purpose--default-regexp-purposes)
+      (mapcar 'cdr purpose-user-mode-purposes)
+      (mapcar 'cdr purpose-user-name-purposes)
+      (mapcar 'cdr purpose-user-regexp-purposes))))
 
 (provide 'window-purpose-utils)
 ;;; window-purpose-utils.el ends here
