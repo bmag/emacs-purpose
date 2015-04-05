@@ -156,6 +156,8 @@ SYMBOL, WHERE and NAME have the same meaning as in
        (ad-update ,symbol))))
 
 (defun purpose-get-all-purposes ()
+  ;; subr-x.el has a function to get all values from a hashtable, but subr-x.el
+  ;; is not included in Emacs < 24.4, making this defun necessary
   (cl-flet
     ((hash-table-values (hashtable)
        "Return all values in HASHTABLE."
