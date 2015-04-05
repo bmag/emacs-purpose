@@ -171,9 +171,7 @@ for each entry in hash-table TABLE."
     #'hash-table-values
     (lambda (hash-table)
       "Return all values in HASH-TABLE."
-      (let (allvals)
-        (maphash (lambda (kk vv) (setq allvals (cons vv allvals)))
-          hash-table) allvals))))
+        (purpose--iter-hash (lambda (kk vv) vv) hash-table))))
 
 (defun purpose-get-all-purposes ()
     (delete-dups
