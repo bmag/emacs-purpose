@@ -384,12 +384,12 @@ With prefix argument (DONT-DEDICATE is non-nil), don't dedicate the
 window.  Changing the window's purpose is done by displaying a buffer of
 the right purpose in it, or creating a dummy buffer."
   (interactive
-    (mapcar 'intern
-      (list (completing-read "Purpose: " (purpose-get-all-purposes) nil 'confirm))))
+    (list (intern (completing-read "Purpose: "
+                    (purpose-get-all-purposes) nil 'confirm))
+      (prefix-numeric-value current-prefix-arg)))
   (purpose--set-window-buffer purpose)
-  (let ((dont-dedicate current-prefix-arg))
-    (unless dont-dedicate
-      (purpose-set-window-purpose-dedicated-p nil t))))
+  (unless dont-dedicate
+    (purpose-set-window-purpose-dedicated-p nil t)))
 
 (defun purpose--delete-window-at (window-getter &optional frame)
   "Delete window returned by WINDOW-GETTER.
