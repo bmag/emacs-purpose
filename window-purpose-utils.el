@@ -176,12 +176,16 @@ for each entry in hash-table TABLE."
 (defun purpose-get-all-purposes ()
     (delete-dups
       (append
+        ;; FIXME: DRY
         (purpose-hash-table-values purpose--default-name-purposes)
         (purpose-hash-table-values purpose--default-mode-purposes)
         (purpose-hash-table-values purpose--default-regexp-purposes)
-        (mapcar 'cdr purpose-user-mode-purposes)
-        (mapcar 'cdr purpose-user-name-purposes)
-        (mapcar 'cdr purpose-user-regexp-purposes))))
+        (purpose-hash-table-values purpose--extended-name-purposes)
+        (purpose-hash-table-values purpose--extended-mode-purposes)
+        (purpose-hash-table-values purpose--extended-regexp-purposes)
+        (purpose-hash-table-values purpose--user-mode-purposes)
+        (purpose-hash-table-values purpose--user-name-purposes)
+        (purpose-hash-table-values purpose--user-regexp-purposes))))
 
 (provide 'window-purpose-utils)
 ;;; window-purpose-utils.el ends here
