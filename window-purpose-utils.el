@@ -155,23 +155,24 @@ SYMBOL, WHERE and NAME have the same meaning as in
        (ad-disable-advice ,symbol ',(purpose-advice-convert-where-arg where) ,name)
        (ad-update ,symbol))))
 
+(defalias 'purpose-hash-table-values
+  (if (fboundp 'hash-table-values)
+    #'hash-table-values
+    (lambda (hash-table)
+      "Return all values in HASH-TABLE."
+      (let (allvals)
+        (maphash (lambda (kk vv) (setq allvals (cons vv allvals)))
+          hash-table) allvals))))
+
 (defun purpose-get-all-purposes ()
-  ;; subr-x.el has a function to get all values from a hashtable, but subr-x.el
-  ;; is not included in Emacs < 24.4, making this defun necessary
-  (cl-flet
-    ((hash-table-values (hashtable)
-       "Return all values in HASHTABLE."
-       (let (allvals)
-         (maphash (lambda (kk vv) (setq allvals (cons vv allvals)))
-           hashtable) allvals)))
     (delete-dups
       (append
-        (hash-table-values purpose--default-name-purposes)
-        (hash-table-values purpose--default-mode-purposes)
-        (hash-table-values purpose--default-regexp-purposes)
+        (purpose-hash-table-values purpose--default-name-purposes)
+        (purpose-hash-table-values purpose--default-mode-purposes)
+        (purpose-hash-table-values purpose--default-regexp-purposes)
         (mapcar 'cdr purpose-user-mode-purposes)
         (mapcar 'cdr purpose-user-name-purposes)
-        (mapcar 'cdr purpose-user-regexp-purposes)))))
+        (mapcar 'cdr purpose-user-regexp-purposes))))
 
 (provide 'window-purpose-utils)
 ;;; window-purpose-utils.el ends here
