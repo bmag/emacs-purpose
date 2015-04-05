@@ -42,16 +42,6 @@
 
 
 ;;; utilities
-(defun purpose--iter-hash (function table)
-  "Like `maphash', but return a list the results of calling FUNCTION
-for each entry in hash-table TABLE."
-  (let (results)
-    (maphash #'(lambda (key value)
-		 (setq results
-		       (append results
-			       (list (funcall function key value)))))
-	     table)
-    results))
 
 (defun purpose--buffer-major-mode (buffer-or-name)
   "Return the major mode of BUFFER-OR-NAME."

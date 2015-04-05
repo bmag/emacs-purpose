@@ -155,6 +155,17 @@ SYMBOL, WHERE and NAME have the same meaning as in
        (ad-disable-advice ,symbol ',(purpose-advice-convert-where-arg where) ,name)
        (ad-update ,symbol))))
 
+(defun purpose--iter-hash (function table)
+  "Like `maphash', but return a list the results of calling FUNCTION
+for each entry in hash-table TABLE."
+  (let (results)
+    (maphash #'(lambda (key value)
+		 (setq results
+		       (append results
+			       (list (funcall function key value)))))
+	     table)
+    results))
+
 (defalias 'purpose-hash-table-values
   (if (fboundp 'hash-table-values)
     #'hash-table-values
