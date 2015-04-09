@@ -173,19 +173,5 @@ for each entry in hash-table TABLE."
       "Return all values in HASH-TABLE."
         (purpose--iter-hash (lambda (kk vv) vv) hash-table))))
 
-(defun purpose-get-all-purposes ()
-    (delete-dups
-      (append
-        ;; FIXME: DRY
-        (purpose-hash-table-values purpose--default-name-purposes)
-        (purpose-hash-table-values purpose--default-mode-purposes)
-        (purpose-hash-table-values purpose--default-regexp-purposes)
-        (purpose-hash-table-values purpose--extended-name-purposes)
-        (purpose-hash-table-values purpose--extended-mode-purposes)
-        (purpose-hash-table-values purpose--extended-regexp-purposes)
-        (purpose-hash-table-values purpose--user-mode-purposes)
-        (purpose-hash-table-values purpose--user-name-purposes)
-        (purpose-hash-table-values purpose--user-regexp-purposes))))
-
 (provide 'window-purpose-utils)
 ;;; window-purpose-utils.el ends here

@@ -177,6 +177,21 @@ WINDOW defaults to the selected window."
 			(eql purpose (purpose-window-purpose window)))
 		    (window-list)))
 
+(defun purpose-get-all-purposes ()
+  "Return a list of all known purposes."
+  (delete-dups
+   (purpose-flatten
+    (mapcar #'purpose-hash-table-values
+            (list purpose--default-name-purposes
+                  purpose--default-mode-purposes
+                  purpose--default-regexp-purposes
+                  purpose--extended-name-purposes
+                  purpose--extended-mode-purposes
+                  purpose--extended-regexp-purposes
+                  purpose--user-mode-purposes
+                  purpose--user-name-purposes
+                  purpose--user-regexp-purposes)))))
+
 
 
 ;;; purpose-aware buffer low-level functions
