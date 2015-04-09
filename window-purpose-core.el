@@ -42,16 +42,6 @@
 
 
 ;;; utilities
-(defun purpose--iter-hash (function table)
-  "Like `maphash', but return a list the results of calling FUNCTION
-for each entry in hash-table TABLE."
-  (let (results)
-    (maphash #'(lambda (key value)
-		 (setq results
-		       (append results
-			       (list (funcall function key value)))))
-	     table)
-    results))
 
 (defun purpose--buffer-major-mode (buffer-or-name)
   "Return the major mode of BUFFER-OR-NAME."
@@ -186,6 +176,21 @@ WINDOW defaults to the selected window."
   (cl-remove-if-not #'(lambda (window)
 			(eql purpose (purpose-window-purpose window)))
 		    (window-list)))
+
+(defun purpose-get-all-purposes ()
+  "Return a list of all known purposes."
+  (delete-dups
+   (purpose-flatten
+    (mapcar #'purpose-hash-table-values
+            (list purpose--default-name-purposes
+                  purpose--default-mode-purposes
+                  purpose--default-regexp-purposes
+                  purpose--extended-name-purposes
+                  purpose--extended-mode-purposes
+                  purpose--extended-regexp-purposes
+                  purpose--user-mode-purposes
+                  purpose--user-name-purposes
+                  purpose--user-regexp-purposes)))))
 
 
 
