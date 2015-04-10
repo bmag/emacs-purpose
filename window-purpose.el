@@ -239,12 +239,19 @@ This allows Purpose to work well with both `ido' and `helm'.")
 
 (defun purpose--modeline-string ()
   "Return the presentation of a window's purpose for display in the
-modeline.  The string returned has two forms.  For example, if window's
-purpose is 'edit: If (purpose-window-purpose-dedicated-p), return
-\"[edit!]\", otherwise return \"[edit]\"."
-  (format " [%s%s]"
-	  (purpose-window-purpose)
-	  (if (purpose-window-purpose-dedicated-p) "!" "")))
+modeline.  The basic form of the string is \"[<purpose>]\".  If the
+window is purpose-dedicated, add a \"!\" before \"]\".  If the window is
+buffer-dedicated, add a \"#\" before \"]\".
+Some examples:
+\"[edit]\": window's purpose is 'edit, and it is not dedicated.
+\"[edit!]\": window is dedicated to 'edit purpose.
+\"[edit#]\": window's purpose is 'edit, and it is dedicated to its
+           current buffer.
+\"[edit!#]\": window is dedicated to 'edit purpose and to its current buffer."
+  (format " [%s%s%s]"
+          (purpose-window-purpose)
+          (if (purpose-window-purpose-dedicated-p) "!" "")
+          (if (window-dedicated-p) "#" "")))
 
 (defun purpose--add-advices ()
   "Add all advices needed for Purpose to work.

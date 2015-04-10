@@ -229,16 +229,11 @@ WINDOW defaults to the selected window."
 WINDOW defaults to the selected window."
   (interactive)
   (let ((flag (not (purpose-window-purpose-dedicated-p window))))
-    ;; window's purpose is displayed in modeline, so no need to print message
-    ;; for the user
-    ;;      (msg (if flag
-    ;;      	  "Window purpose is now dedicated"
-    ;; 	         "Window purpose is not dedicated anymore")))
     (purpose-set-window-purpose-dedicated-p window flag)
+    (if flag
+        (message "Window purpose is now dedicated")
+      (message "Window purpose is not dedicated anymore"))
     (force-mode-line-update)
-    ;; window's purpose is displayed in modeline, so no need to print message
-    ;; for the user
-    ;;(message msg)
     flag))
 
 ;; not really purpose-related, but helpful for the user
@@ -246,12 +241,12 @@ WINDOW defaults to the selected window."
   "Toggle window WINDOW's dedication to its current buffer on or off.
 WINDOW defaults to the selected window."
   (interactive)
-  (let* ((flag (not (window-dedicated-p window)))
-	 (msg (if flag
-		  "Window buffer is now dedicated"
-		"Window buffer is not dedicated anymore")))
+  (let* ((flag (not (window-dedicated-p window))))
     (set-window-dedicated-p window flag)
-    (message msg)
+    (if flag
+        (message "Window buffer is now dedicated")
+      (message "Window buffer is not dedicated anymore"))
+    (force-mode-line-update)
     flag))
 
 
