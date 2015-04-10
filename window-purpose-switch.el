@@ -1094,7 +1094,7 @@ and EXTRA-ARGS, like so:
   (apply display-fn buffer alist extra-args).
 
 Example of how this macro might be used:
-  (defalias display-at-bottom-and-dedicate
+  (defalias 'display-at-bottom-and-dedicate
             (purpose-generate-display-and-dedicate
              'purpose-display-at-bottom))
 Another example:
@@ -1106,6 +1106,29 @@ Another example:
        (when window
          (purpose-set-window-purpose-dedicated-p window t))
        window)))
+
+(defmacro purpose-generate-display-and-do (display-fn do-fn)
+  "Generate a lambda to display a buffer and execute additional actions.
+The generated lambda receives two arguments - buffer and alist - and can
+be used as a display function.
+The buffer is displayed by calling DISPLAY-FN with arguments two
+arguments - buffer and alist.
+If the display is successful, DO-FN is called with one argument - the
+window that was used for displaying the buffer.
+The lambda returns the window used for display, or nil if display was
+unsuccessful.
+
+Possible usage:
+  (defalias 'display-at-left-and-do-stuff
+            (purpose-generate-display-and-do
+              'purpose-display-at-left
+              (lambda (window) (message \"Let's do stuff!!\"))))"
+  `(lambda (buffer alist)
+     (let ((window (funcall ,display-fn buffer alist)))
+       (when window
+         (funcall ,do-fn window))
+       window)))
+
 
 (provide 'window-purpose-switch)
 ;;; window-purpose-switch.el ends here
