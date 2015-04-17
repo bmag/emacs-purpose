@@ -287,14 +287,17 @@ This function is called when `purpose-mode' is deactivated."
 
 ;;;###autoload
 (define-minor-mode purpose-mode
-  nil :global t :lighter (:eval (purpose--modeline-string))
+  ;; can't do coverage in Emacs 24.3 and older if the docstring is nil :-(
+  ;; this is because of a bug in `edebug-defun'
+  "Toggle Purpose mode on or off according to the regular rules."
+  :global t :lighter (:eval (purpose--modeline-string))
   (if purpose-mode
       (progn
-	(purpose--add-advices)
-	(setq display-buffer-overriding-action
-	      '(purpose--action-function . nil))
-	(setq purpose--active-p t)
-	(purpose-fix-install))
+        (purpose--add-advices)
+        (setq display-buffer-overriding-action
+              '(purpose--action-function . nil))
+        (setq purpose--active-p t)
+        (purpose-fix-install))
     (purpose--remove-advices)
     (setq purpose--active-p nil)))
 
