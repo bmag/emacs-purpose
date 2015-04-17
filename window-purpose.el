@@ -214,23 +214,22 @@ This allows Purpose to work well with both `ido' and `helm'.")
     ;; We use "C-c ," for compatibility with key-binding conventions
     (define-key map (kbd "C-c ,") 'purpose-mode-prefix-map)
     (define-prefix-command 'purpose-mode-prefix-map)
-    (dolist (binding
-	     '(;; switch to any buffer
-	       ("o" . purpose-switch-buffer)
-	       ("[" . purpose-switch-buffer-other-frame)
-	       ("p" . purpose-switch-buffer-other-window)
-	       ;; switch to buffer with current buffer's purpose
-	       ("b" . purpose-switch-buffer-with-purpose)
-	       ("4 b" . purpose-switch-buffer-with-purpose-other-window)
-	       ("5 b" . purpose-switch-buffer-with-purpose-other-frame)
-	       ;; toggle window dedication (buffer, purpose)
-	       ("d" . purpose-toggle-window-purpose-dedicated)
-	       ("D" . purpose-toggle-window-buffer-dedicated)
-	       ;; delete windows
-	       ("w" . purpose-delete-window-at)
-	       ("1" . purpose-delete-non-dedicated-windows)))
-      (define-key purpose-mode-prefix-map (kbd (car binding)) (cdr binding)))
-
+    (cl-loop for (key . def)
+             in '(;; switch to any buffer
+                  ("o" . purpose-switch-buffer)
+                  ("[" . purpose-switch-buffer-other-frame)
+                  ("p" . purpose-switch-buffer-other-window)
+                  ;; switch to buffer with current buffer's purpose
+                  ("b" . purpose-switch-buffer-with-purpose)
+                  ("4 b" . purpose-switch-buffer-with-purpose-other-window)
+                  ("5 b" . purpose-switch-buffer-with-purpose-other-frame)
+                  ;; toggle window dedication (buffer, purpose)
+                  ("d" . purpose-toggle-window-purpose-dedicated)
+                  ("D" . purpose-toggle-window-buffer-dedicated)
+                  ;; delete windows
+                  ("w" . purpose-delete-window-at)
+                  ("1" . purpose-delete-non-dedicated-windows))
+             do (define-key purpose-mode-prefix-map key def))
     map)
   "Keymap for Purpose mode.")
 
