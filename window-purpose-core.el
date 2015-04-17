@@ -102,8 +102,8 @@ Return value depends on `purpose-preferred-prompt', `ido-mode' and
 | helm                       | any        | any         | helm    |
 | vanilla                    | any        | any         | vanilla |"
   (cl-case purpose-preferred-prompt
-    ('auto (cond (ido-mode ido-method)
-                 (helm-mode helm-method)
+    ('auto (cond ((bound-and-true-p ido-mode) ido-method)
+                 ((bound-and-true-p helm-mode) helm-method)
                  (t vanilla-method)))
     ('ido ido-method)
     ('helm helm-method)
