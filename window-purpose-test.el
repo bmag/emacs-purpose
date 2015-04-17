@@ -1,4 +1,4 @@
-;;; window-purpose-test.el --- Tests for Purpose
+;;; window-purpose-test.el --- Tests for Purpose -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2015 Bar Magal
 
@@ -40,6 +40,11 @@
 (require 'window-purpose-x)
 
 (message "defining tests")
+
+(defvar test-happened nil
+  "Variable for use in tests.
+Set the value of this variable at the beginning of each test that uses
+it.")
 
 (unless (fboundp 'hash-table-keys)
   (defun hash-table-keys (hash-table)
@@ -271,11 +276,11 @@ Each item in BUFFERS is either a buffer or a buffer's name."
    nil nil '(("xxx-test" . test))
    (unwind-protect
        (let (buffers)
-	 (add-to-list 'buffers (get-buffer-create "xxx-test-1"))
-	 (add-to-list 'buffers (get-buffer-create "xxx-test-2"))
-	 (get-buffer-create "another-buffer")
-	 (should (or (equal (purpose-buffers-with-purpose 'test) buffers)
-		     (equal (purpose-buffers-with-purpose 'test) (reverse buffers)))))
+         (push (get-buffer-create "xxx-test-1") buffers)
+         (push (get-buffer-create "xxx-test-2") buffers)
+         (get-buffer-create "another-buffer")
+         (should (or (equal (purpose-buffers-with-purpose 'test) buffers)
+                     (equal (purpose-buffers-with-purpose 'test) (reverse buffers)))))
      (purpose-kill-buffers-safely "xxx-test-1" "xxx-test-2" "another-buffer"))))
 
 (ert-deftest purpose-test-window-purpose ()
@@ -297,7 +302,7 @@ Each item in BUFFERS is either a buffer or a buffer's name."
 	      (split-height-threshold 1))
 	  (delete-other-windows)
 	  (set-window-buffer nil (get-buffer-create "xxx-test-1"))
-	  (add-to-list 'windows (selected-window))
+    (push (selected-window) windows)
 	  (select-window (split-window))
 	  (set-window-buffer nil (get-buffer-create "another-buffer"))
 	  (purpose-with-temp-config
@@ -836,25 +841,25 @@ new buffer should be displayed in one of the two existing windows."
   called for buffers that match <predicate>."
   (save-window-excursion
     (unwind-protect
-	(purpose-with-temp-config
-	 nil nil '(("^xxx-p0-" . p0) ("^xxx-p1-" . p1) ("^xxx-p2-" . p2))
-	 (purpose-create-buffers-for-test :p0 1 :p1 1 :p2 1)
-	 (purpose-mode 1)
-	 (let ((test-happened 0)
-	       (purpose-special-action-sequences
-		'((p1
-		   (lambda (buffer alist) (setq test-happened 1) (display-buffer-at-bottom buffer alist)))
-		  ((lambda (purpose buffer alist) (eql (purpose-buffer-purpose buffer) 'p2))
-		   (lambda (buffer alist) (setq test-happened 2) (display-buffer-at-bottom buffer alist))))))
-	   (delete-other-windows)
-	   (set-window-buffer nil "xxx-p0-0")
-	   (switch-to-buffer "xxx-p1-0")
-	   (message "Windows: %S" (window-list))
-	   (should (equal test-happened 1))
-	   (delete-other-windows)
-	   (set-window-buffer nil "xxx-p0-0")
-	   (switch-to-buffer "xxx-p2-0")
-	   (should (equal test-happened 2))))
+        (purpose-with-temp-config
+         nil nil '(("^xxx-p0-" . p0) ("^xxx-p1-" . p1) ("^xxx-p2-" . p2))
+         (purpose-create-buffers-for-test :p0 1 :p1 1 :p2 1)
+         (purpose-mode 1)
+         (setq test-happend 0)
+         (let ((purpose-special-action-sequences
+                '((p1
+                   (lambda (buffer alist) (setq test-happened 1) (display-buffer-at-bottom buffer alist)))
+                  ((lambda (purpose buffer alist) (eql (purpose-buffer-purpose buffer) 'p2))
+                   (lambda (buffer alist) (setq test-happened 2) (display-buffer-at-bottom buffer alist))))))
+           (delete-other-windows)
+           (set-window-buffer nil "xxx-p0-0")
+           (switch-to-buffer "xxx-p1-0")
+           (message "Windows: %S" (window-list))
+           (should (equal test-happened 1))
+           (delete-other-windows)
+           (set-window-buffer nil "xxx-p0-0")
+           (switch-to-buffer "xxx-p2-0")
+           (should (equal test-happened 2))))
       (purpose-mode -1)
       (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p1-0" "xxx-p2-0"))))
 
