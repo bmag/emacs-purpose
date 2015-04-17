@@ -27,11 +27,11 @@
 
 (message "setting undercover")
 (require 'undercover)
-(undercover "purpose.el" "purpose-configuration.el"
-            "purpose-core.el" "purpose-layout.el"
-            "purpose-prefix-overload.el" "purpose-switch.el"
-            "purpose-utils.el"
-            ;; "purpose-fixes.el" "purpose-x.el"
+(undercover "window-purpose.el" "window-purpose-configuration.el"
+            "window-purpose-core.el" "window-purpose-layout.el"
+            "window-purpose-prefix-overload.el" "window-purpose-switch.el"
+            "window-purpose-utils.el"
+            ;; "window-purpose-fixes.el" "window-purpose-x.el"
             )
 
 (message "loading purpose")
