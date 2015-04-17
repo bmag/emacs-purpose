@@ -25,6 +25,8 @@
 
 ;;; Code:
 
+(require 'cl-lib)
+
 (defcustom purpose-message-on-p nil
   "If non-nil, `purpose-message' will produce a message.
 Toggling this on will cause Purpose to produce some debug messages."
