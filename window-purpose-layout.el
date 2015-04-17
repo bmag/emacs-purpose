@@ -266,10 +266,11 @@ This function doesn't change the selected frame (uses
   "Save window layout of current frame to file FILENAME.
 If FILENAME is nil, use `purpose-default-layout-file' instead."
   (interactive
-   (list (read-file-name "[PU] Save window layout to file: "
-			 (file-name-directory purpose-default-layout-file)
-			 nil nil
-			 (file-name-nondirectory purpose-default-layout-file))))
+   (list (funcall (purpose-get-read-file-name-function)
+                  "[PU] Save window layout to file: "
+                  (file-name-directory purpose-default-layout-file)
+                  nil nil
+                  (file-name-nondirectory purpose-default-layout-file))))
   (with-temp-file (or filename purpose-default-layout-file)
     ;; "%S" - print as S-expression - this allows us to read the value with
     ;; `read' later in `purpose-load-window-layout'
@@ -279,10 +280,11 @@ If FILENAME is nil, use `purpose-default-layout-file' instead."
   "Load window layout from file FILENAME.
 If FILENAME is nil, use `purpose-default-layout-file' instead."
   (interactive
-   (list (read-file-name "[PU] Load window layout from file: "
-			 (file-name-directory purpose-default-layout-file)
-			 nil nil
-			 (file-name-nondirectory purpose-default-layout-file))))
+   (list (funcall (purpose-get-read-file-name-function)
+                  "[PU] Load window layout from file: "
+                  (file-name-directory purpose-default-layout-file)
+                  nil nil
+                  (file-name-nondirectory purpose-default-layout-file))))
   (purpose-set-window-layout
    (with-temp-buffer
      (insert-file-contents (or filename purpose-default-layout-file))
@@ -329,10 +331,11 @@ specified by LAYOUT."
   "Save frame layout of Emacs to file FILENAME.
 If FILENAME is nil, use `purpose-default-layout-file' instead."
   (interactive
-   (list (read-file-name "[PU] Save frame layout to file: "
-			 (file-name-directory purpose-default-layout-file)
-			 nil nil
-			 (file-name-nondirectory purpose-default-layout-file))))
+   (list (funcall (purpose-get-read-file-name-function)
+                  "[PU] Save frame layout to file: "
+                  (file-name-directory purpose-default-layout-file)
+                  nil nil
+                  (file-name-nondirectory purpose-default-layout-file))))
   (with-temp-file (or filename purpose-default-layout-file)
     ;; "%S" - print as S-expression - this allows us to read the value with
     ;; `read' later in `purpose-load-window-layout'
@@ -342,10 +345,11 @@ If FILENAME is nil, use `purpose-default-layout-file' instead."
   "Load frame layout from file FILENAME.
 If FILENAME is nil, use `purpose-default-layout-file' instead."
   (interactive
-   (list (read-file-name "[PU] Load frame layout from file: "
-			 (file-name-directory purpose-default-layout-file)
-			 nil nil
-			 (file-name-nondirectory purpose-default-layout-file))))
+   (list (funcall (purpose-get-read-file-name-function)
+                  "[PU] Load frame layout from file: "
+                  (file-name-directory purpose-default-layout-file)
+                  nil nil
+                  (file-name-nondirectory purpose-default-layout-file))))
   (purpose-set-frame-layout
    (with-temp-buffer
      (insert-file-contents (or filename purpose-default-layout-file))
@@ -384,11 +388,7 @@ With prefix argument (DONT-DEDICATE is non-nil), don't dedicate the
 window.  Changing the window's purpose is done by displaying a buffer of
 the right purpose in it, or creating a dummy buffer."
   (interactive
-   (list (intern (completing-read "Purpose: "
-                                  (mapcar #'symbol-name
-                                          (purpose-get-all-purposes))
-                                  nil
-                                  'confirm))
+   (list (purpose-read-purpose "Purpose: " nil 'confirm)
          current-prefix-arg))
   (purpose--set-window-buffer purpose)
   (unless dont-dedicate

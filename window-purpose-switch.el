@@ -1043,13 +1043,11 @@ This works internally by using `without-purpose' and
 
 (defun purpose-read-buffers-with-purpose (purpose)
   "Prompt the user for a buffer with purpose PURPOSE."
-  (let ((reader (if ido-mode
-                    #'ido-completing-read
-                  #'completing-read)))
-    (funcall reader "[PU] Buffer: "
-             (mapcar #'buffer-name
-                     (delq (current-buffer)
-                           (purpose-buffers-with-purpose purpose))))))
+  (funcall (purpose-get-completing-read-function)
+           "[PU] Buffer: "
+           (mapcar #'buffer-name
+                   (delq (current-buffer)
+                         (purpose-buffers-with-purpose purpose)))))
 
 (defun purpose-switch-buffer-with-purpose (&optional purpose)
   "Prompt the user and switch to a buffer with purpose PURPOSE.
@@ -1059,6 +1057,14 @@ current buffer's purpose."
   (purpose-switch-buffer
    (purpose-read-buffers-with-purpose
     (or purpose (purpose-buffer-purpose (current-buffer))))))
+
+(defun purpose-switch-buffer-with-some-purpose (purpose)
+  (interactive
+   (list (purpose-read-purpose "Purpose: "
+                               (cl-delete-if-not #'purpose-buffers-with-purpose
+                                                 (purpose-get-all-purposes))
+                               t)))
+  (purpose-switch-buffer-with-purpose purpose))
 
 (defun purpose-switch-buffer-with-purpose-other-window (&optional purpose)
   "Prompt the user and switch to a buffer with purpose PURPOSE.
