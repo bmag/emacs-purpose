@@ -1,3 +1,30 @@
+;;; test-helper.el --- Test helpers -*- lexical-binding: t -*-
+
+;; Copyright (C) 2015 Bar Magal
+
+;; Author: Bar Magal (2015)
+;; Package: purpose
+
+;; This file is not part of GNU Emacs.
+
+;; This program is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Commentary:
+;; This file contains test helpers.
+
+;;; Code:
+
 (set-frame-width nil 80)
 (set-frame-height nil 24)
 
@@ -11,10 +38,111 @@
             "window-purpose-switch.el"
             "window-purpose-utils.el"
             "window-purpose-fixes.el"
-            "window-purpose-x.el"
-            )
+            "window-purpose-x.el")
 
 (message "loading purpose")
 
 (require 'window-purpose)
 (require 'window-purpose-x)
+
+(message "defining helper functions and variables")
+
+(defvar test-happened nil
+  "Variable for use in tests.
+Set the value of this variable at the beginning of each test that uses
+it.")
+
+(unless (fboundp 'hash-table-keys)
+  (defun hash-table-keys (hash-table)
+    "Return a list of keys in HASH-TABLE."
+    (let (result)
+      (maphash #'(lambda (key value)
+                   (setq result (append (list key) result)))
+               hash-table)
+      result))
+
+  (defun hash-table-values (hash-table)
+    "Return a list of values in HASH-TABLE."
+    (let (result)
+      (maphash #'(lambda (key value)
+                   (setq result (append (list value) result)))
+               hash-table)
+      result)))
+
+(defmacro purpose-with-empty-config (&rest body)
+  `(let ((purpose--user-mode-purposes (make-hash-table))
+         (purpose--user-name-purposes (make-hash-table :test #'equal))
+         (purpose--user-regexp-purposes (make-hash-table :test #'equal))
+         (purpose--extended-mode-purposes (make-hash-table))
+         (purpose--extended-name-purposes (make-hash-table :test #'equal))
+         (purpose--extended-regexp-purposes (make-hash-table :test #'equal))
+         (purpose--default-mode-purposes (make-hash-table))
+         (purpose--default-name-purposes (make-hash-table :test #'equal))
+         (purpose--default-regexp-purposes (make-hash-table :test #'equal))
+         (purpose-use-default-configuration t)
+         purpose-user-mode-purposes
+         purpose-user-name-purposes
+         purpose-user-regexp-purposes
+         purpose-extended-configuration)
+     ,@body))
+
+(defmacro purpose-with-temp-config (modes names regexps &rest body)
+  `(purpose-with-empty-config
+    (let ((purpose-user-mode-purposes ,modes)
+          (purpose-user-name-purposes ,names)
+          (purpose-user-regexp-purposes ,regexps))
+      (purpose-compile-user-configuration)
+      ,@body)))
+
+(defun purpose-kill-buffers-safely (&rest buffers)
+  "Safely kill BUFFERS.
+Each item in BUFFERS is either a buffer or a buffer's name."
+  (let ((kill-buffer-query-functions nil)
+        (kill-buffer-hook nil))
+    (mapc #'(lambda (buf) (ignore-errors (kill-buffer buf))) buffers)))
+
+(defmacro purpose-call-with-prefix-arg (arg command)
+  `(let ((current-prefix-arg ,arg))
+     (call-interactively ,command)))
+
+(defun purpose-create-buffers (&rest buffer-names)
+  "Create buffers according to BUFFER-NAMES."
+  (mapcar #'get-buffer-create buffer-names))
+
+(cl-defun purpose-create-buffers-for-test (&key (p0 0) &key (p1 0) &key (p2 0))
+  "Create buffers for purposes 'p0, 'p1 and 'p2.
+P0, P1 and P2 should be integers denoting how many buffers should be
+created for each purpose.
+The buffers created have the names \"xxx-p0-0\", \"xxx-p0-1\",
+\"xxx-p1-0\", \"xxx-p1-1\", \"xxx-p2-0\", etc."
+  (cl-loop for times in (list p0 p1 p2)
+           for purpose in '("p0" "p1" "p2")
+           do (dotimes (index times)
+                (purpose-create-buffers (format "xxx-%s-%s" purpose index)))))
+
+(defun purpose-displayed-buffers (&optional frame)
+  "Return a list of buffers displayed in FRAME."
+  (mapcar #'window-buffer (window-list frame)))
+
+(defun purpose-displayed-buffer-names (&optional frame)
+  (mapcar #'buffer-name (purpose-displayed-buffers frame)))
+
+(defmacro purpose-check-displayed-buffers (buffer-names)
+  `(should (equal (sort (purpose-displayed-buffer-names) #'string-lessp)
+                  (sort ,buffer-names #'string-lessp))))
+
+(defun purpose-test-delete-window-at (display-fn delete-fn)
+  (save-window-excursion
+    (unwind-protect
+        (progn
+          (delete-other-windows)
+          (let ((window (selected-window)))
+            (should (funcall display-fn (get-buffer-create "xxx-test") nil))
+            (funcall delete-fn)
+            (should (equal (window-list) (list window)))
+            (should-error (funcall delete-fn))))
+      (purpose-kill-buffers-safely "xxx-test"))))
+
+(message "done defining helpers")
+
+;;; test-helper.el ends here
