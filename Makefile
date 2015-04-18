@@ -8,10 +8,9 @@ deps:
 	${CASK} install
 
 test: clean deps
-	${CASK} exec ${EMACS} -Q --batch -L . -l window-purpose-test.el --eval '(progn (set-frame-width nil 80) (set-frame-height nil 24))' -f ert-run-tests-batch-and-exit
+	${CASK} exec ert-runner
 
 compile: clean-elc deps
-	echo ${EMACS}
 	${CASK} exec ${EMACS} -Q --batch -L . -f batch-byte-compile ${SOURCES}
 
 clean: clean-elc clean-deps

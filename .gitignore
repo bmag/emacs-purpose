@@ -1,2 +1,4 @@
 # ignore temporary files
 *~
+# ignore Cask's hidden directory
+.cask
