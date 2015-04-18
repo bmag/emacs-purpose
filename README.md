@@ -3,6 +3,7 @@
 [![MELPA](http://melpa.org/packages/window-purpose-badge.svg)](http://melpa.org/#/window-purpose)
 [![MELPA Stable](http://stable.melpa.org/packages/window-purpose-badge.svg)](http://stable.melpa.org/#/window-purpose)
 [![Build Status](https://travis-ci.org/bmag/emacs-purpose.svg?branch=master)](https://travis-ci.org/bmag/emacs-purpose)
+[![Coverage Status](https://coveralls.io/repos/bmag/emacs-purpose/badge.svg?branch=master)](https://coveralls.io/r/bmag/emacs-purpose?branch=master)
 
 ## Notices
 **A full explanation can be found in the [GitHub wiki](https://github.com/bmag/emacs-purpose/wiki).**
@@ -38,6 +39,9 @@ customized via the variables `purpose-user-mode-purposes`,
 `purpose-user-name-purposes`, `purpose-user-regexp-purposes` and
 `purpose-use-default-configuration` (see the
 [wiki](https://github.com/bmag/emacs-purpose/wiki/Purpose-Configuration)).
+
+### Supported Emacs Versions
+Purpose is tested with Emacs versions 24.3, 24.4 and 24.5. Backward-compatibility for earlier versions might be added in the future - if you want such support, contact me.
 
 ## Quickstart
 
