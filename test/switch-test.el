@@ -470,6 +470,47 @@ new buffer should be displayed in one of the two existing windows."
       (purpose-mode -1)
       (purpose-kill-buffers-safely "xxx-test"))))
 
+(ert-deftest purpose-test-interactive-switch-buffer ()
+  "Test `purpose-switch-buffer' when called interactively."
+  (save-window-excursion
+    (unwind-protect
+        (let ((purpose-message-on-p t))
+          (purpose-with-temp-config
+           nil nil '(("^xxx-p0-" . p0) ("^xxx-p1-" . p1))
+           (purpose-create-buffers-for-test :p0 1 :p1 1)
+           (purpose-mode 1)
+           (delete-other-windows)
+           (set-window-buffer nil "xxx-p0-0")
+           (purpose-set-window-purpose-dedicated-p nil t)
+           (purpose-insert-user-input "xxx-p1-0")
+           (call-interactively 'purpose-switch-buffer)
+           (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p1-0"))))
+      (purpose-mode -1)
+      (delete-other-windows)
+      (purpose-set-window-purpose-dedicated-p nil nil)
+      (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p1-0"))))
+
+(ert-deftest purpose-test-interactive-switch-buffer-with-some-purpose ()
+  "Test `purpose-switch-buffer-with-some-purpose' when called interactively."
+  (save-window-excursion
+    (unwind-protect
+        (let ((purpose-message-on-p t))
+          (purpose-with-temp-config
+           nil nil '(("^xxx-p0-" . p0) ("^xxx-p1-" . p1))
+           (purpose-create-buffers-for-test :p0 1 :p1 1)
+           (purpose-mode 1)
+           (delete-other-windows)
+           (set-window-buffer nil "xxx-p0-0")
+           (purpose-set-window-purpose-dedicated-p nil t)
+           (purpose-insert-user-input "p1")
+           (purpose-insert-user-input "xxx-p1-0")
+           (call-interactively 'purpose-switch-buffer-with-some-purpose)
+           (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p1-0"))))
+      (purpose-mode -1)
+      (delete-other-windows)
+      (purpose-set-window-purpose-dedicated-p nil nil)
+      (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p1-0"))))
+
 (provide 'switch-test)
 
 ;;; switch-test.el ends here

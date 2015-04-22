@@ -97,7 +97,7 @@
           (purpose-load-frame-layout filename))
       (ignore-errors (delete-file filename)))))
 
-(ert-deftest purpose-test-interactive-save-layout ()
+(ert-deftest purpose-test-interactive-save-window-layout ()
   "Test interactive saving and loading of window layout."
   (let ((filename "just-another-file")
         (stored-layout nil))
@@ -114,6 +114,26 @@
           (purpose-insert-user-input filename)
           (call-interactively 'purpose-load-window-layout)
           (should (equal stored-layout (purpose-get-window-layout))))
+      (ignore-errors (delete-file filename)))))
+
+(ert-deftest purpose-test-interactive-save-frame-layout ()
+  "Test interactive saving and loading of window layout."
+  (let ((filename "just-another-file")
+        (stored-layout nil))
+    (unwind-protect
+        (progn
+          (delete-other-frames)
+          (delete-other-windows)
+          (split-window)
+          (setq stored-layout (purpose-get-frame-layout))
+          (should stored-layout)
+          (purpose-insert-user-input filename)
+          (call-interactively 'purpose-save-frame-layout)
+          (should (file-exists-p filename))
+          (delete-other-windows)
+          (purpose-insert-user-input filename)
+          (call-interactively 'purpose-load-frame-layout)
+          (should (equal stored-layout (purpose-get-frame-layout))))
       (ignore-errors (delete-file filename)))))
 
 (ert-deftest purpose-cover-reset-layout ()
