@@ -24,7 +24,7 @@
 ;; This file contains tests for window-purpose-switch.el
 
 ;;; TODO:
-;; - alist entry `reuasble-frames'
+;; - alist entry `reusable-frames'
 ;; - `purpose-display-reuse-window-buffer-other-frame'
 ;; - `purpose-display-reuse-window-purpose-other-frame'
 ;; - `purpose-display-maybe-pop-up-frame'

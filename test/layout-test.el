@@ -76,7 +76,7 @@
           (purpose-save-window-layout filename)
           (delete-file filename)
           (purpose-save-frame-layout filename))
-      (delete-file filename))))
+      (ignore-errors (delete-file filename)))))
 
 (ert-deftest purpose-cover-load-layout ()
   "Test that `purpose-load-window-layout' and `purpose-load-frame-layout' don't cause errors."
@@ -95,7 +95,26 @@
           (purpose-save-frame-layout filename)
           (message "loading frame layout")
           (purpose-load-frame-layout filename))
-      (delete-file filename))))
+      (ignore-errors (delete-file filename)))))
+
+(ert-deftest purpose-test-interactive-save-layout ()
+  "Test interactive saving and loading of window layout."
+  (let ((filename "just-another-file")
+        (stored-layout nil))
+    (unwind-protect
+        (progn
+          (delete-other-windows)
+          (split-window)
+          (setq stored-layout (purpose-get-window-layout))
+          (should stored-layout)
+          (purpose-insert-user-input filename)
+          (call-interactively 'purpose-save-window-layout)
+          (should (file-exists-p filename))
+          (delete-other-windows)
+          (purpose-insert-user-input filename)
+          (call-interactively 'purpose-load-window-layout)
+          (should (equal stored-layout (purpose-get-window-layout))))
+      (ignore-errors (delete-file filename)))))
 
 (ert-deftest purpose-cover-reset-layout ()
   "Test that `purpose-reset-window-layout' and `purpose-reset-frame-layout' don't cause errors."
@@ -110,6 +129,30 @@
   (purpose-set-frame-layout (purpose-get-frame-layout))
   (message "resetting frame layout ...")
   (purpose-reset-frame-layout))
+
+(ert-deftest purpose-test-set-window-purpose ()
+  "Test that `purpose-set-window-purpose' does set the purpose."
+  (unwind-protect
+      (purpose-with-temp-config
+       '((foo-mode . purp1) (bar-mode . purp2))
+       nil
+       nil
+       (purpose-insert-user-input "purp1")
+       (purpose-call-with-prefix-arg t 'purpose-set-window-purpose)
+       (should (equal (purpose-window-purpose) 'purp1))
+       (should-not (purpose-window-purpose-dedicated-p))
+       (purpose-insert-user-input "purp2")
+       (call-interactively 'purpose-set-window-purpose)
+       (should (equal (purpose-window-purpose) 'purp2))
+       (should (purpose-window-purpose-dedicated-p))
+       (purpose-insert-user-input "purp1")
+       (purpose-call-with-prefix-arg t 'purpose-set-window-purpose)
+       (should (equal (purpose-window-purpose) 'purp1))
+       (should-not (purpose-window-purpose-dedicated-p)))
+    (delete-other-windows)
+    (set-window-dedicated-p nil nil)
+    (purpose-set-window-purpose-dedicated-p nil nil)
+    (purpose-kill-buffers-safely "*pu-dummy-purp1*" "*pu-dummy-purp2*")))
 
 (provide 'layout-test)
 

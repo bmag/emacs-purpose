@@ -385,14 +385,15 @@ Use INDEX=0 for most recent."
 (defun purpose-set-window-purpose (purpose &optional dont-dedicate)
   "Set window's purpose to PURPOSE, and dedicate it.
 With prefix argument (DONT-DEDICATE is non-nil), don't dedicate the
-window.  Changing the window's purpose is done by displaying a buffer of
+window.  If DONT-DEDICATE is non-nil, and the current window is
+dedicated, un-dedicate the window.
+Changing the window's purpose is done by displaying a buffer of
 the right purpose in it, or creating a dummy buffer."
   (interactive
    (list (purpose-read-purpose "Purpose: " nil 'confirm)
          current-prefix-arg))
   (purpose--set-window-buffer purpose)
-  (unless dont-dedicate
-    (purpose-set-window-purpose-dedicated-p nil t)))
+  (purpose-set-window-purpose-dedicated-p nil (not dont-dedicate)))
 
 (defun purpose--delete-window-at (window-getter &optional frame)
   "Delete window returned by WINDOW-GETTER.
