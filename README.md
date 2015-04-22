@@ -16,7 +16,7 @@ Plans for the near future:
 
 - Update Wiki
 
-- Update tests and test framework
+- Maybe add some more tests
 
 Recent changes:
 
@@ -24,6 +24,8 @@ Recent changes:
 
 - Command `purpose-switch-buffer-with-some-purpose`: open a buffer with a
   specific purpose
+
+- Update tests and test framework
 
 ## Introduction
 
