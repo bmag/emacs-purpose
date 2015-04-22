@@ -71,7 +71,7 @@
     (error "LINE shouldn't contain any newlines."))
   (unless (< purpose-input-lines-inserted purpose-max-allowed-input-lines)
     (error "Wrote too many input lines already."))
-  (incf purpose-input-lines-inserted))
+  (setq purpose-input-lines-inserted (1+ purpose-input-lines-inserted)))
 (defun purpose-insert-user-input (line)
   (purpose-validate-user-input line)            ; throws error if invalid input
   (message "inserting user input: %s" line)
