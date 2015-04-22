@@ -202,6 +202,64 @@ Functions tested are:
       (should-not (purpose-get-top-window))
       (should-not (purpose-get-bottom-window)))))
 
+(defmacro purpose-test-preferred-prompt-checker (expected)
+  (cl-case expected
+    ('ido '(equal (purpose-get-read-function 'ido-meth 'helm-meth 'vanilla-meth) 'ido-meth))
+    ('helm '(equal (purpose-get-read-function 'ido-meth 'helm-meth 'vanilla-meth) 'helm-meth))
+    ('vanilla '(equal (purpose-get-read-function 'ido-meth 'helm-meth 'vanilla-meth) 'vanilla-meth))
+    (t (error "Invalid expectation: %S" expected))))
+
+;; helm-mode needs to be bound for proper emulation to work in the next tests
+(unless (boundp 'helm-mode)
+  (defvar helm-mode))
+
+(ert-deftest purpose-test-preferred-prmopt ()
+  "Test user gets his preferred prompt method.
+The prompt is chosen according to `purpose-preferred-prompt'."
+  (let ((purpose-preferred-prompt 'ido))
+    (should (purpose-test-preferred-prompt-checker ido)))
+  (let ((purpose-preferred-prompt 'helm))
+    (should (purpose-test-preferred-prompt-checker helm)))
+  (let ((purpose-preferred-prompt 'vanilla))
+    (should (purpose-test-preferred-prompt-checker vanilla)))
+  (let ((purpose-preferred-prompt 'auto))
+    (let ((ido-mode nil)
+          (helm-mode nil))
+      (should (purpose-test-preferred-prompt-checker vanilla)))
+    (let ((ido-mode nil)
+          (helm-mode t))
+      (should (purpose-test-preferred-prompt-checker helm)))
+    (let ((ido-mode t)
+          (helm-mode nil))
+      (should (purpose-test-preferred-prompt-checker ido)))
+    (let ((ido-mode t)
+          (helm-mode t))
+      (should (purpose-test-preferred-prompt-checker ido)))))
+
+(ert-deftest purpose-test-preferred-completing-read ()
+  "Test `purpose-get-completing-read-function' sanity."
+  (let ((purpose-preferred-prompt 'ido))
+    (should (equal (purpose-get-completing-read-function) 'ido-completing-read))))
+
+(ert-deftest purpose-test-preferred-read-file-name ()
+  "Test `purpose-get-read-file-name-function' sanity."
+  (let ((purpose-preferred-prompt 'ido))
+    (should (equal (purpose-get-read-file-name-function) 'ido-read-file-name))))
+
+(ert-deftest purpose-test-get-all-purposes ()
+  "Test `purpose-get-all-purposes'."
+  (purpose-with-temp-config
+   '((mode1 . foo) (mode2 . bar))
+   '(("name1" . baz) ("name2" . foo))
+   nil
+   (should (equal (sort (mapcar #'symbol-name (purpose-get-all-purposes)) #'string-lessp)
+                  (sort (mapcar #'symbol-name '(foo bar baz general)) #'string-lessp)))))
+
+(ert-deftest purpose-test-read-purpose ()
+  "Test that `purpose-read-purpose' return correct purpose."
+  (purpose-insert-user-input "foo")
+  (should (equal (purpose-read-purpose "Purpose: " '(foo bar baz)) 'foo)))
+
 (provide 'core-test)
 
 ;;; core-test.el ends here

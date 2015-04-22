@@ -45,7 +45,38 @@
 (require 'window-purpose)
 (require 'window-purpose-x)
 
+(message "loading other packages")
+
+(require 'lv)
+(require 'helm)
+(require 'neotree)
+(require 'popwin)
+(require 'guide-key)
+
 (message "defining helper functions and variables")
+
+;;; `purpose-user-input-filename' and `purpose-insert-user-input' allow emulation of user input
+;;; for tests. The emulation is done by setting a file as stdin for the Emacs
+;;; process, and inserting the wanted input to the end of file just before
+;;; reading from file.
+;;; For the emulation to work, Emacs (ert-runner) needs to be run like this:
+;;; rm test/user-input.txt && touch test/user-input.txt && cask exec ert-runner < test/user-input.txt
+;;; `purpose-input-lines-inserted' keeps track of how many lines were inserted, so we
+;;; can prevent ourselves from accidently writing huge amount of input.
+(defconst purpose-user-input-filename "test/user-input.txt")
+(defvar purpose-input-lines-inserted 0)
+(defvar purpose-max-allowed-input-lines 100)
+(defun purpose-validate-user-input (line)
+  (when (string-match-p "\n" line)
+    (error "LINE shouldn't contain any newlines."))
+  (unless (< purpose-input-lines-inserted purpose-max-allowed-input-lines)
+    (error "Wrote too many input lines already."))
+  (incf purpose-input-lines-inserted))
+(defun purpose-insert-user-input (line)
+  (purpose-validate-user-input line)            ; throws error if invalid input
+  (message "inserting user input: %s" line)
+  (shell-command (format "echo %s >> %s" line purpose-user-input-filename)))
+
 
 (defvar test-happened nil
   "Variable for use in tests.
