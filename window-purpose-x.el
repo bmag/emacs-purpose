@@ -274,5 +274,158 @@ Add `golden-ratio' at the end of `purpose-select-buffer-hook' if
 ;;; --- purpose-x-popup-switcher ends here ---
 
 
+
+;;; --- purpose-x-popwin ---
+;;; An extension for displaying buffers in a temporary popup-window, similar
+;;; to the `popwin' package.
+
+(defcustom purpose-x-popwin-position 'bottom
+  "Position for the popup window.
+Legal values for this variable are 'top, 'bottom, 'left and 'right.  It
+is also possible to set this variable to a function.  That function will
+be used to create new popup windows and should be a display function
+compatible with `display-buffer'."
+  :group 'purpose
+  :type '(choice (const top)
+                 (const bottom)
+                 (const left)
+                 (const right)
+                 function)
+  :package-version "1.3.50")
+
+(defcustom purpose-x-popwin-width 0.5
+  "Width of popup window when displayed at left or right.
+Can have the same values as `purpose-display-at-left-width' and
+`purpose-display-at-right-width'"
+  :group 'purpose
+  :type '(choice number
+                 (const nil))
+  :package-version "1.3.50")
+
+(defcustom purpose-x-popwin-height 0.5
+  "Height of popup window when displayed at top or bottom.
+Can have the same values as `purpose-display-at-top-height' and
+`purpose-display-at-bottom-height'"
+  :group 'purpose
+  :type '(choice number
+                 (const nil))
+  :package-version "1.3.50")
+
+(defcustom purpose-x-popwin-major-modes '(help-mode
+                                          compilation-mode
+                                          occur-mode)
+  "List of major modes that should be opened as popup windows.
+When changing the value of this variable in elisp code, you should call
+`purpose-x-popwin-update-conf' for the change to take effect."
+  :group 'purpose
+  :type 'list
+  :set #'(lambda (symbol value)
+           (prog1 (set-default symbol value)
+             (purpose-x-popwin-update-conf)))
+  :initialize 'custom-initialize-default
+  :package-version "1.3.50")
+
+(defcustom purpose-x-popwin-buffer-names '("*Shell Command Output*")
+  "List of buffer names that should be opened as popup windows.
+Buffers whose name is contained in this list will be opened as popup
+windows.
+When changing the value of this variable in elisp code, you should call
+`purpose-x-popwin-update-conf' for the change to take effect."
+  :group 'purpose
+  :type 'list
+  :set #'(lambda (symbol value)
+           (prog1 (set-default symbol value)
+             (purpose-x-popwin-update-conf)))
+  :initialize 'custom-initialize-default
+  :package-version "1.3.50")
+
+(defcustom purpose-x-popwin-buffer-name-regexps nil
+  "List of regexp that should be opened as popup windows.
+Buffers whose name matches a regexp in this list will be opened as popup
+windows.
+When changing the value of this variable in elisp code, you should call
+`purpose-x-popwin-update-conf' for the change to take effect."
+  :group 'purpose
+  :type 'list
+  :set #'(lambda (symbol value)
+           (prog1 (set-default symbol value)
+             (purpose-x-popwin-update-conf)))
+  :initialize 'custom-initialize-default
+  :package-version "1.3.50")
+
+(defun purpose-x-popwin-update-conf ()
+  "Update purpose-x-popwin's purpose configuration.
+The configuration is updated according to
+`purpose-x-popwin-major-modes', `purpose-x-popwin-buffer-names' and
+`purpose-x-popwin-buffer-name-regexps'."
+  (interactive)
+  (cl-flet ((joiner (x) (cons x 'popup)))
+    (let ((conf (purpose-conf
+                 "popwin"
+                 :mode-purposes (mapcar #'joiner purpose-x-popwin-major-modes)
+                 :name-purposes (mapcar #'joiner purpose-x-popwin-buffer-names)
+                 :regexp-purposes (mapcar #'joiner
+                                          purpose-x-popwin-buffer-name-regexps))))
+      (purpose-set-extension-configuration :popwin conf))))
+
+(defun purpose-x-popwin-get-display-function ()
+  "Return function for creating new popup windows.
+The function is determined by the value of `purpose-x-popwin-position'."
+  (or (cl-case purpose-x-popwin-position
+        ('top 'purpose-display-at-top)
+        ('bottom 'purpose-display-at-bottom)
+        ('left 'purpose-display-at-left)
+        ('right 'purpose-display-at-right))
+      (and (functionp purpose-x-popwin-position)
+           purpose-x-popwin-position)
+      (user-error "purpose-x-popwin-position has an invalid value: %S"
+                  purpose-x-popwin-position)))
+
+(defun purpose-x-popwin-display-buffer (buffer alist)
+  "Display BUFFER in a popup window."
+  (let ((purpose-display-at-top-height purpose-x-popwin-height)
+        (purpose-display-at-bottom-height purpose-x-popwin-height)
+        (purpose-display-at-left-width purpose-x-popwin-width)
+        (purpose-display-at-right-width purpose-x-popwin-width))
+    (funcall (purpose-x-popwin-get-display-function) buffer alist)))
+
+(defun purpose-x-popwin-close-windows ()
+  "Delete all popup windows.
+Internally, this function works be deleting all windows that have the
+'popup purpose."
+  (interactive)
+  (mapc #'delete-window (purpose-windows-with-purpose 'popup)))
+
+(defun purpose-x-popwin-setup ()
+  "Activate `popwin' emulation.
+This extension treats certain buffers as \"popup\" buffers and displays
+them in a special popup window.
+Currently, the popup window is not closed automatically.  To close it,
+use the command `purpose-x-popwin-close-windows' - you probably want to
+bind it to some key.
+By default, only help buffers are treated as popup buffers.  You can
+control which buffers are treated as popup buffers by changing the
+variables `purpose-x-popwin-major-modes',
+`purpose-x-popwin-buffer-names' and
+`purpose-x-popwin-buffer-name-regexps'.
+Look at `purpose-x-popwin-*' variables and functions to learn more."
+  (interactive)
+  (purpose-x-popwin-update-conf)
+  (setq purpose-special-action-sequences
+        (cl-delete 'popup purpose-special-action-sequences :key 'car))
+  (push '(popup purpose-display-reuse-window-buffer
+                purpose-display-reuse-window-purpose
+                purpose-x-popwin-display-buffer)
+        purpose-special-action-sequences))
+
+(defun purpose-x-popwin-unset ()
+  "Deactivate `popwin' emulation."
+  (interactive)
+  (purpose-del-extension-configuration :popwin)
+  (setq purpose-special-action-sequences
+        (cl-delete 'popup purpose-special-action-sequences :key 'car)))
+
+;;; --- purpose-x-popup ends here ---
+
 (provide 'window-purpose-x)
 ;;; window-purpose-x.el ends here

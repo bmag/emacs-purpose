@@ -123,8 +123,57 @@ valid regexp.")
 
 
 ;;; Variables
-;; Custom variables are at the end of the file, because they need some
-;; functions to be defined earlier for the `defcustom' to work
+
+(defcustom purpose-use-default-configuration t
+  "Determine if the default configuration should be used.
+If this is nil, the default configuration is ignored when getting the
+purpose of a buffer.  The user configuration and extended configuration
+are used anyway."
+  :group 'purpose
+  :type 'boolean
+  :package-version "1.2")
+
+(defcustom purpose-user-mode-purposes nil
+  "User configured alist mapping of modes to purposes.
+The alist should match `purpose-mode-alist-p'.
+If you set this variable in elisp-code, you should call the function
+`purpose-compile-user-configuration' immediately afterwards."
+  :group 'purpose
+  :type '(alist :key-type (symbol :tag "major mode")
+                :value-type (symbol :tag "purpose"))
+  :set #'(lambda (symbol value)
+           (prog1 (set-default symbol value)
+             (purpose-compile-user-configuration)))
+  :initialize 'custom-initialize-default
+  :package-version "1.2")
+
+(defcustom purpose-user-name-purposes nil
+  "User configured alist mapping of names to purposes.
+The alist should match `purpose-name-alist-p'.
+If you set this variable in elisp-code, you should call the function
+`purpose-compile-user-configuration' immediately afterwards."
+  :group 'purpose
+  :type '(alist :key-type (string :tag "name")
+                :value-type (symbol :tag "purpose"))
+  :set #'(lambda (symbol value)
+           (prog1 (set-default symbol value)
+             (purpose-compile-user-configuration)))
+  :initialize 'custom-initialize-default
+  :package-version "1.2")
+
+(defcustom purpose-user-regexp-purposes nil
+  "User configured alist mapping of regexps to purposes.
+The alist should match `purpose-regexp-alist-p'.
+If you set this variable in elisp-code, you should call the function
+`purpose-compile-user-configuration' immediately afterwards."
+  :group 'purpose
+  :type '(alist :key-type (string :tag "regexp")
+                :value-type (symbol :tag "purpose"))
+  :set #'(lambda (symbol value)
+           (prog1 (set-default symbol value)
+             (purpose-compile-user-configuration)))
+  :initialize 'custom-initialize-default
+  :package-version "1.2")
 
 (defvar purpose-extended-configuration nil
   "A plist containing `purpose-conf' objects.
@@ -297,63 +346,6 @@ Deletion is actually done by setting the extension's entry to nil.
 This function calls `purpose-compile-extended-configuration' when its
 done."
   (purpose-set-extension-configuration keyword nil))
-
-
-
-;;; Custom variables
-;; custom variables are here because they need some functions to be defined
-;; earlier for the `defcustom' to work
-
-(defcustom purpose-use-default-configuration t
-  "Determine if the default configuration should be used.
-If this is nil, the default configuration is ignored when getting the
-purpose of a buffer.  The user configuration and extended configuration
-are used anyway."
-  :group 'purpose
-  :type 'boolean
-  :package-version "1.2")
-
-(defcustom purpose-user-mode-purposes nil
-  "User configured alist mapping of modes to purposes.
-The alist should match `purpose-mode-alist-p'.
-If you set this variable in elisp-code, you should call the function
-`purpose-compile-user-configuration' immediately afterwards."
-  :group 'purpose
-  :type '(alist :key-type (symbol :tag "major mode")
-                :value-type (symbol :tag "purpose"))
-  :set #'(lambda (symbol value)
-           (prog1 (set-default symbol value)
-             (purpose--fill-hash purpose--user-mode-purposes
-                                 purpose-user-mode-purposes)))
-  :package-version "1.2")
-
-(defcustom purpose-user-name-purposes nil
-  "User configured alist mapping of names to purposes.
-The alist should match `purpose-name-alist-p'.
-If you set this variable in elisp-code, you should call the function
-`purpose-compile-user-configuration' immediately afterwards."
-  :group 'purpose
-  :type '(alist :key-type (string :tag "name")
-                :value-type (symbol :tag "purpose"))
-  :set #'(lambda (symbol value)
-           (prog1 (set-default symbol value)
-             (purpose--fill-hash purpose--user-name-purposes
-                                 purpose-user-name-purposes)))
-  :package-version "1.2")
-
-(defcustom purpose-user-regexp-purposes nil
-  "User configured alist mapping of regexps to purposes.
-The alist should match `purpose-regexp-alist-p'.
-If you set this variable in elisp-code, you should call the function
-`purpose-compile-user-configuration' immediately afterwards."
-  :group 'purpose
-  :type '(alist :key-type (string :tag "regexp")
-                :value-type (symbol :tag "purpose"))
-  :set #'(lambda (symbol value)
-           (prog1 (set-default symbol value)
-             (purpose--fill-hash purpose--user-regexp-purposes
-                                 purpose-user-regexp-purposes)))
-  :package-version "1.2")
 
 
 

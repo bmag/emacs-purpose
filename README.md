@@ -10,7 +10,7 @@
 
 Plans for the near future:
 
-- Add extension for pop-up windows
+- Improve popup-windows extension to automatically close popup window
 
 - Add extension for combining Purpose and [perspective](https://github.com/nex3/perspective-el)
 
@@ -26,6 +26,9 @@ Recent changes:
   specific purpose
 
 - Update tests and test framework
+
+- New extension for popup-windows (popwin emulation): enable with
+  command `purpose-x-popwin-setup`
 
 ## Introduction
 
