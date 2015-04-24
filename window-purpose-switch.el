@@ -1135,6 +1135,5 @@ Possible usage:
          (funcall ,do-fn window))
        window)))
 
-
 (provide 'window-purpose-switch)
 ;;; window-purpose-switch.el ends here

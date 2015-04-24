@@ -353,6 +353,25 @@ When changing the value of this variable in elisp code, you should call
   :initialize 'custom-initialize-default
   :package-version "1.3.50")
 
+(defun purpose-x-popupify-purpose (purpose &optional display-fn)
+  "Set up a popup-like behavior for buffers with purpose PURPOSE.
+DISPLAY-FN is the display function to use for creating the popup window
+for purpose PURPOSE, and defaults to `purpose-display-at-bottom'."
+  (setq purpose-special-action-sequences
+        (cl-delete purpose purpose-special-action-sequences :key #'car))
+  (push (list purpose
+              #'purpose-display-reuse-window-buffer
+              #'purpose-display-reuse-window-purpose
+              (or display-fn #'purpose-display-at-bottom))
+        purpose-special-action-sequences))
+
+(defun purpose-x-unpopupify-purpose (purpose)
+  "Remove popup-like behavior for buffers purpose PURPOSE.
+This actually removes any special treatment for PURPOSE in
+`purpose-special-action-sequences', not only popup-like behavior."
+  (setq purpose-special-action-sequences
+        (cl-delete purpose purpose-special-action-sequences :key #'car)))
+
 (defun purpose-x-popwin-update-conf ()
   "Update purpose-x-popwin's purpose configuration.
 The configuration is updated according to
@@ -403,27 +422,22 @@ them in a special popup window.
 Currently, the popup window is not closed automatically.  To close it,
 use the command `purpose-x-popwin-close-windows' - you probably want to
 bind it to some key.
-By default, only help buffers are treated as popup buffers.  You can
-control which buffers are treated as popup buffers by changing the
-variables `purpose-x-popwin-major-modes',
+You can control which buffers are treated as popup buffers by changing
+the variables `purpose-x-popwin-major-modes',
 `purpose-x-popwin-buffer-names' and
 `purpose-x-popwin-buffer-name-regexps'.
 Look at `purpose-x-popwin-*' variables and functions to learn more."
   (interactive)
   (purpose-x-popwin-update-conf)
   (setq purpose-special-action-sequences
-        (cl-delete 'popup purpose-special-action-sequences :key 'car))
-  (push '(popup purpose-display-reuse-window-buffer
-                purpose-display-reuse-window-purpose
-                purpose-x-popwin-display-buffer)
-        purpose-special-action-sequences))
+        (cl-delete 'popup purpose-special-action-sequences :key #'car))
+  (purpose-x-popupify-purpose 'popup #'purpose-x-popwin-display-buffer))
 
 (defun purpose-x-popwin-unset ()
   "Deactivate `popwin' emulation."
   (interactive)
   (purpose-del-extension-configuration :popwin)
-  (setq purpose-special-action-sequences
-        (cl-delete 'popup purpose-special-action-sequences :key 'car)))
+  (purpose-x-unpopupify-purpose 'popup))
 
 ;;; --- purpose-x-popup ends here ---
 
