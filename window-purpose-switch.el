@@ -937,7 +937,14 @@ If Purpose is active (`purpose--active-p' is non-nil), call
    (if (purpose--use-action-function-p
         (window-normalize-buffer-to-switch-to buffer-or-name) nil)
        (setq ad-return-value
-             (purpose-switch-buffer buffer-or-name norecord force-same-window))
+             (purpose-switch-buffer buffer-or-name
+                                    norecord
+                                    ;; when `switch-to-buffer' is called
+                                    ;; interactively force-same-window is non-nil,
+                                    ;; but want it to be nil, so we check
+                                    ;; `called-interactively-p' as well
+                                    (and force-same-window
+                                         (not (called-interactively-p 'interactive)))))
      ad-do-it)))
 
 (define-purpose-compatible-advice 'switch-to-buffer-other-window
