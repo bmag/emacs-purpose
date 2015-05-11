@@ -81,14 +81,6 @@ dummy buffer with the purpose 'edit."
       ;; 10 = (length "*pu-dummy-")
       (intern (substring name 10 -1)))))
 
-(defun purpose-get-completing-read-function ()
-  "Get function to read completions from the user.
-If `purpose-preferred-prompt' is 'ido, return `ido-completing-read'.
-Otherwise, return `completing-read'."
-  (if (eql purpose-preferred-prompt 'ido)
-      #'ido-completing-read
-    #'completing-read))
-
 (defun purpose-get-read-function (ido-method helm-method vanilla-method)
   "Get function to read something from the user.
 Return value depends on `purpose-preferred-prompt', `ido-mode' and
