@@ -188,7 +188,7 @@ imenu."
 (defvar purpose-x-magit-single-conf
   (purpose-conf "magit-single"
 		:regexp-purposes '(("^\\*magit" . magit)))
-  "Configuration that gives each magit major-mode the same purpose.")
+  "Configuration that gives each magit major mode the same purpose.")
 
 (defvar purpose-x-magit-multi-conf
   (purpose-conf
@@ -202,7 +202,7 @@ imenu."
 		    (magit-process-mode . magit-process)
 		    (magit-reflog-mode . magit-reflog)
 		    (magit-wazzup-mode . magit-wazzup)))
-  "Configuration that gives each magit major-mode its own purpose.")
+  "Configuration that gives each magit major mode its own purpose.")
 
 ;;;###autoload
 (defun purpose-x-magit-single-on ()
@@ -293,7 +293,7 @@ compatible with `display-buffer'."
                  function)
   :package-version "1.3.50")
 
-(defcustom purpose-x-popwin-width 0.5
+(defcustom purpose-x-popwin-width 0.4
   "Width of popup window when displayed at left or right.
 Can have the same values as `purpose-display-at-left-width' and
 `purpose-display-at-right-width'"
@@ -302,7 +302,7 @@ Can have the same values as `purpose-display-at-left-width' and
                  (const nil))
   :package-version "1.3.50")
 
-(defcustom purpose-x-popwin-height 0.5
+(defcustom purpose-x-popwin-height 0.35
   "Height of popup window when displayed at top or bottom.
 Can have the same values as `purpose-display-at-top-height' and
 `purpose-display-at-bottom-height'"
@@ -401,27 +401,66 @@ The function is determined by the value of `purpose-x-popwin-position'."
                   purpose-x-popwin-position)))
 
 (defun purpose-x-popwin-display-buffer (buffer alist)
-  "Display BUFFER in a popup window."
+  "Display BUFFER in a popup window.
+See `display-buffer' for the meaning of ALIST."
   (let ((purpose-display-at-top-height purpose-x-popwin-height)
         (purpose-display-at-bottom-height purpose-x-popwin-height)
         (purpose-display-at-left-width purpose-x-popwin-width)
         (purpose-display-at-right-width purpose-x-popwin-width))
-    (funcall (purpose-x-popwin-get-display-function) buffer alist)))
+    (prog1
+        (funcall (purpose-x-popwin-get-display-function) buffer alist)
+      (purpose-x-popwin-add-hooks))))
 
 (defun purpose-x-popwin-close-windows ()
   "Delete all popup windows.
 Internally, this function works be deleting all windows that have the
 'popup purpose."
   (interactive)
-  (mapc #'delete-window (purpose-windows-with-purpose 'popup)))
+  (mapc (lambda (window) (quit-window nil window)) (purpose-windows-with-purpose 'popup)))
 
+;; additional hooks we might want to use: `post-command-hook',
+;; `post-self-insert-hook', `window-configuration-change-hook',
+;; `buffer-list-update-hook'
+(defun purpose-x-popwin-add-hooks ()
+  "Set hooks for closing popup window automatically."
+  (global-set-key [remap keyboard-quit]
+                  ;; using anonymous command so it's hidden from the user
+                  (lambda ()
+                    (interactive)
+                    (purpose-x-popwin-closer-1 t)))
+  (add-hook 'purpose-select-buffer-hook #'purpose-x-popwin-closer-1))
+
+;; TODO: create command to "stick" popup window. The command should simply
+;; call `purpose-x-popwin-remove-hooks'. Maybe also create command to "unstick"
+;; popup window (call `purpose-x-popwin-add-hooks')
+(defun purpose-x-popwin-remove-hooks ()
+  "Remove hooks for closing popup window automatically.
+This basically is an undo for `purpose-x-popwin-add-hooks'."
+  (global-set-key [remap keyboard-quit] nil)
+  (remove-hook 'purpose-select-buffer-hook #'purpose-x-popwin-closer-1))
+
+(defun purpose-x-popwin-closer-1 (&optional force)
+  "Close popup window if appropriate, and remove hooks.
+Closes the popup window if the selected window is not a popup window, a
+helm window, or a minibuffer window.
+If FORCE is non-nil, close popup window regardless to other conditions.
+After closing the popup window, the relevant hooks are removed with
+`purpose-x-popwin-remove-hooks'.  Note that the hooks are not removed if
+the popup window doesn't need to close."
+  (unless (and (not force)
+               (or (member (purpose-window-purpose) '(helm popup))
+                   (window-minibuffer-p)))
+    (unwind-protect
+        (purpose-x-popwin-close-windows)
+      (purpose-x-popwin-remove-hooks))))
+
+;;;###autoload
 (defun purpose-x-popwin-setup ()
   "Activate `popwin' emulation.
 This extension treats certain buffers as \"popup\" buffers and displays
 them in a special popup window.
-Currently, the popup window is not closed automatically.  To close it,
-use the command `purpose-x-popwin-close-windows' - you probably want to
-bind it to some key.
+The window is closed automatically when selecting another buffer (via
+`switch-to-buffer' and the like), or by pressing \\[keyboard-quit].
 You can control which buffers are treated as popup buffers by changing
 the variables `purpose-x-popwin-major-modes',
 `purpose-x-popwin-buffer-names' and
@@ -437,7 +476,8 @@ Look at `purpose-x-popwin-*' variables and functions to learn more."
   "Deactivate `popwin' emulation."
   (interactive)
   (purpose-del-extension-configuration :popwin)
-  (purpose-x-unpopupify-purpose 'popup))
+  (purpose-x-unpopupify-purpose 'popup)
+  (purpose-x-popwin-remove-hooks))
 
 ;;; --- purpose-x-popup ends here ---
 
