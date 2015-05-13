@@ -1,4 +1,6 @@
-# ignore temporary files
+# temporary files
 *~
-# ignore Cask's hidden directory
+# Cask's hidden directory
 .cask
+# compiled files
+*.elc

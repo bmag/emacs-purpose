@@ -27,6 +27,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'ring)
 (require 'window-purpose-core)
 
 (defcustom purpose-default-layout-file
@@ -169,9 +170,9 @@ This function is mainly intended to be used by
 	  ;; Starting from 2nd sub-tree, since N sub-trees require N-1 splits.
 	  ;; Reversing, because the selected window doesn't change, so the
 	  ;; first split window is actually the farthest away, and so matches
-	  ;; the last sub-treeb.
+	  ;; the last sub-tree.
 	  (nreverse
-	   (cl-loop for sub-tree in (cl-cdddr tree)
+	   (cl-loop for _sub-tree in (cl-cdddr tree)
 		    with direction = (not (car tree))
 		    collect (split-window window -5 direction)))))
 

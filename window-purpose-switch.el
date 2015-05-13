@@ -753,8 +753,7 @@ If ALIST is nil, it is ignored and `purpose--alist' is used instead."
   (purpose-message "Purpose display: Buffer: %S; Alist: %S" buffer alist)
   (when (purpose--use-action-function-p buffer alist)
     (let-alist alist
-      (let* ((old-frame (selected-frame))
-             (special-action-sequence (purpose--special-action-sequence buffer
+      (let* ((special-action-sequence (purpose--special-action-sequence buffer
                                                                         alist))
              (normal-action-sequence (purpose-alist-get
                                       (or .action-order
@@ -810,18 +809,17 @@ ACTION-ORDER is used as the `action-order' entry in
 `purpose--action-function''s alist.
 This function runs hook `purpose-select-buffer-hook' when its done."
   (let* ((buffer (window-normalize-buffer-to-switch-to buffer-or-name))
-	 (purpose--alist (purpose-alist-set 'action-order
-					    action-order
-					    purpose--alist))
-	 (old-window (selected-window))
-	 (old-frame (selected-frame))
-	 (new-window (display-buffer buffer-or-name))
-	 (new-frame (window-frame new-window)))
+         (purpose--alist (purpose-alist-set 'action-order
+                                            action-order
+                                            purpose--alist))
+         (old-frame (selected-frame))
+         (new-window (display-buffer buffer-or-name))
+         (new-frame (window-frame new-window)))
     (when new-window
       ;; If we chose another frame, make sure it gets input focus. - taken from
       ;; `pop-to-buffer''s code
       (unless (eq new-frame old-frame)
-	(select-frame-set-input-focus new-frame norecord))
+        (select-frame-set-input-focus new-frame norecord))
       (select-window new-window norecord))
     (run-hooks 'purpose-select-buffer-hook)
     buffer))
