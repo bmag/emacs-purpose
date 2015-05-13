@@ -44,7 +44,7 @@ return the formatted string. FORMAT-STRING and ARGS are passed to
     (apply #'format format-string args)))
 
 ;; define our (limited) version of alist-get
-(defun purpose-alist-get (key alist &optional default remove)
+(defun purpose-alist-get (key alist &optional default _remove)
   "Get KEY's value in ALIST.
 If no such key, return DEFAULT.
 When setting KEY's value, if the new value is equal to DEFAULT and
@@ -173,7 +173,7 @@ for each entry in hash-table TABLE."
     #'hash-table-values
     (lambda (hash-table)
       "Return all values in HASH-TABLE."
-        (purpose--iter-hash (lambda (kk vv) vv) hash-table))))
+        (purpose--iter-hash (lambda (_kk vv) vv) hash-table))))
 
 (provide 'window-purpose-utils)
 ;;; window-purpose-utils.el ends here

@@ -439,7 +439,8 @@ FRAME defaults to the selected frame."
                 (eql (window-buffer window) buffer))
             (or (not (purpose-window-purpose-dedicated-p window))
                 (eql (purpose-window-purpose window)
-                     (purpose-buffer-purpose buffer)))))
+                     (purpose-buffer-purpose buffer)))
+            (not (window-minibuffer-p window))))
    (window-list frame)))
 
 (defun purpose-display-maybe-other-window (buffer alist)

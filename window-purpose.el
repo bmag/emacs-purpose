@@ -88,7 +88,7 @@ The lambda calls IDO-FN interactively when `ido-mode' is on, otherwise
 it calls OTHER-FN interactively.
 Example:
   (purpose-ido-caller #'ido-find-file #'find-file)"
-  `(lambda (&rest args)
+  `(lambda (&rest _args)
      (interactive)
      (call-interactively (if ido-mode ,ido-fn ,other-fn))))
 
