@@ -10,8 +10,6 @@
 
 Plans for the near future:
 
-- Improve popup-windows extension to automatically close popup window
-
 - Add extension for combining Purpose and [perspective](https://github.com/nex3/perspective-el)
 
 - Update Wiki
@@ -20,15 +18,11 @@ Plans for the near future:
 
 Recent changes:
 
-- Option `purpose-preferred-prompt`: choose IDO or Helm
+- Imrpoved popup-windows extension (popwin emulation): popup window closes
+automatically, commands to stick and un-stick the popup window.
 
-- Command `purpose-switch-buffer-with-some-purpose`: open a buffer with a
-  specific purpose
-
-- Update tests and test framework
-
-- New extension for popup-windows (popwin emulation): enable with
-  command `purpose-x-popwin-setup`
+- Improved code1 extension: better detection of buffer changes, dired window if
+burried (moved to the end of the buffer-list).
 
 ## Introduction
 

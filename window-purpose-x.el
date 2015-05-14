@@ -54,23 +54,24 @@
     (t
      (0 0 29 35)
      (:purpose dired :purpose-dedicated t :width 0.16 :height 0.5 :edges
-	       (0.0 0.0 0.19333333333333333 0.5))
+               (0.0 0.0 0.19333333333333333 0.5))
      (:purpose buffers :purpose-dedicated t :width 0.16 :height 0.4722222222222222 :edges
-	       (0.0 0.5 0.19333333333333333 0.9722222222222222)))
+               (0.0 0.5 0.19333333333333333 0.9722222222222222)))
     (:purpose edit :purpose-dedicated t :width 0.6 :height 0.9722222222222222 :edges
-	      (0.19333333333333333 0.0 0.8266666666666667 0.9722222222222222))
+              (0.19333333333333333 0.0 0.8266666666666667 0.9722222222222222))
     (:purpose ilist :purpose-dedicated t :width 0.15333333333333332 :height 0.9722222222222222 :edges
-	      (0.8266666666666667 0.0 1.0133333333333334 0.9722222222222222)))
+              (0.8266666666666667 0.0 1.0133333333333334 0.9722222222222222)))
   "Window layout for purpose-x-code1-dired-ibuffer.
 Has a main 'edit window, and two side windows - 'dired and 'buffers.
 All windows are purpose-dedicated.")
 
 ;; the name arg ("purpose-x-code1") is necessary for Emacs 24.3 and older
-(defvar purpose-x-code1-purpose-config (purpose-conf "purpose-x-code1"
-					    :mode-purposes
-					    '((ibuffer-mode . buffers)
-					      (dired-mode . dired)
-					      (imenu-list-major-mode . ilist))))
+(defvar purpose-x-code1-purpose-config
+  (purpose-conf "purpose-x-code1"
+                :mode-purposes
+                '((ibuffer-mode . buffers)
+                  (dired-mode . dired)
+                  (imenu-list-major-mode . ilist))))
 
 (define-ibuffer-filter purpose-x-code1-ibuffer-files-only
     "Display only buffers that are bound to files."
@@ -80,8 +81,8 @@ All windows are purpose-dedicated.")
 (defun purpose-x-code1--setup-ibuffer ()
   "Set up ibuffer settings."
   (add-hook 'ibuffer-mode-hook
-  	    #'(lambda ()
-  		(ibuffer-filter-by-purpose-x-code1-ibuffer-files-only nil)))
+            #'(lambda ()
+                (ibuffer-filter-by-purpose-x-code1-ibuffer-files-only nil)))
   (add-hook 'ibuffer-mode-hook #'ibuffer-auto-mode)
   (setq ibuffer-formats '((mark " " name)))
   (setq ibuffer-display-summary nil)
@@ -95,19 +96,19 @@ All windows are purpose-dedicated.")
 (defun purpose-x-code1--unset-ibuffer ()
   "Unset ibuffer settings."
   (remove-hook 'ibuffer-mode-hook
-	       #'(lambda ()
-		   (ibuffer-filter-by-purpose-x-code1-ibuffer-files-only nil)))
+               #'(lambda ()
+                   (ibuffer-filter-by-purpose-x-code1-ibuffer-files-only nil)))
   (remove-hook 'ibuffer-mode-hook #'ibuffer-auto-mode)
   (setq ibuffer-formats '((mark modified read-only " "
-				(name 18 18 :left :elide)
-				" "
-				(size 9 -1 :right)
-				" "
-				(mode 16 16 :left :elide)
-				" " filename-and-process)
-			  (mark " "
-				(name 16 -1)
-				" " filename)))
+                                (name 18 18 :left :elide)
+                                " "
+                                (size 9 -1 :right)
+                                " "
+                                (mode 16 16 :left :elide)
+                                " " filename-and-process)
+                          (mark " "
+                                (name 16 -1)
+                                " " filename)))
   (setq ibuffer-display-summary t)
   (setq ibuffer-use-header-line t))
 
@@ -118,28 +119,30 @@ the directory of the current buffer in that window, using `dired'.
 If there is no window available, do nothing.
 If current buffer doesn't have a filename, do nothing."
   (when (and (buffer-file-name)
-	     (cl-delete-if #'window-dedicated-p (purpose-windows-with-purpose 'dired)))
+             (cl-delete-if #'window-dedicated-p
+                           (purpose-windows-with-purpose 'dired)))
     (save-selected-window
       (dired (file-name-directory (buffer-file-name)))
       (when (fboundp 'dired-hide-details-mode)
-	(dired-hide-details-mode)))))
+        (dired-hide-details-mode))
+      (bury-buffer (current-buffer)))))
 
 (defun purpose-x-code1--setup-dired ()
   "Setup dired settings."
-  (add-hook 'purpose-select-buffer-hook #'purpose-x-code1-update-dired))
+  (add-hook 'window-configuration-change-hook #'purpose-x-code1-update-dired))
 
 (defun purpose-x-code1--unset-dired ()
   "Unset dired settings."
-  (remove-hook 'purpose-select-buffer-hook #'purpose-x-code1-update-dired))
+  (remove-hook 'window-configuration-change-hook #'purpose-x-code1-update-dired))
 
 (defun purpose-x-code1--setup-imenu-list ()
   "Setup imenu-list settings."
-  (add-hook 'purpose-select-buffer-hook #'imenu-list-update-safe)
+  (add-hook 'window-configuration-change-hook #'imenu-list-update-safe)
   (imenu-list-minor-mode 1))
 
 (defun purpose-x-code1--unset-imenu-list ()
   "Unset imenu-list settings."
-  (remove-hook 'purpose-select-buffer-hook #'imenu-list-update-safe)
+  (remove-hook 'window-configuration-change-hook #'imenu-list-update-safe)
   (imenu-list-minor-mode -1))
 
 ;;;###autoload
@@ -187,21 +190,21 @@ imenu."
 
 (defvar purpose-x-magit-single-conf
   (purpose-conf "magit-single"
-		:regexp-purposes '(("^\\*magit" . magit)))
+                :regexp-purposes '(("^\\*magit" . magit)))
   "Configuration that gives each magit major mode the same purpose.")
 
 (defvar purpose-x-magit-multi-conf
   (purpose-conf
    "magit-multi"
    :mode-purposes '((magit-diff-mode . magit-diff)
-		    (magit-status-mode . magit-status)
-		    (magit-log-mode . magit-log)
-		    (magit-commit-mode . magit-commit)
-		    (magit-cherry-mode . magit-cherry)
-		    (magit-branch-manager-mode . magit-branch-manager)
-		    (magit-process-mode . magit-process)
-		    (magit-reflog-mode . magit-reflog)
-		    (magit-wazzup-mode . magit-wazzup)))
+                    (magit-status-mode . magit-status)
+                    (magit-log-mode . magit-log)
+                    (magit-commit-mode . magit-commit)
+                    (magit-cherry-mode . magit-cherry)
+                    (magit-branch-manager-mode . magit-branch-manager)
+                    (magit-process-mode . magit-process)
+                    (magit-reflog-mode . magit-reflog)
+                    (magit-wazzup-mode . magit-wazzup)))
   "Configuration that gives each magit major mode its own purpose.")
 
 ;;;###autoload
@@ -267,9 +270,9 @@ Add `golden-ratio' at the end of `purpose-select-buffer-hook' if
     "Use `psw-switcher' to open another buffer with the current purpose."
     (interactive)
     (psw-switcher :items-list (purpose-buffers-with-purpose
-			       (purpose-buffer-purpose (current-buffer)))
-		  :item-name-getter #'buffer-name
-		  :switcher #'purpose-switch-buffer)))
+                               (purpose-buffer-purpose (current-buffer)))
+                  :item-name-getter #'buffer-name
+                  :switcher #'purpose-switch-buffer)))
 
 ;;; --- purpose-x-popup-switcher ends here ---
 
@@ -407,16 +410,22 @@ See `display-buffer' for the meaning of ALIST."
         (purpose-display-at-bottom-height purpose-x-popwin-height)
         (purpose-display-at-left-width purpose-x-popwin-width)
         (purpose-display-at-right-width purpose-x-popwin-width))
-    (prog1
-        (funcall (purpose-x-popwin-get-display-function) buffer alist)
-      (purpose-x-popwin-add-hooks))))
+    (let ((window
+           (funcall (purpose-x-popwin-get-display-function) buffer alist)))
+      (purpose-set-window-purpose-dedicated-p window t)
+      (purpose-x-popwin-add-hooks)
+      window)))
 
 (defun purpose-x-popwin-close-windows ()
   "Delete all popup windows.
 Internally, this function works be deleting all windows that have the
-'popup purpose."
+'popup purpose.  It also buried all popup buffers so they don't bother
+the user when switching buffers."
   (interactive)
-  (mapc (lambda (window) (quit-window nil window)) (purpose-windows-with-purpose 'popup)))
+  (mapc #'delete-window (purpose-windows-with-purpose 'popup))
+  ;; we bury all popup buffers, in case the user poped several popup buffers
+  ;; (e.g. help and then occur), so all used popup buffers are buried
+  (mapc #'bury-buffer (purpose-buffers-with-purpose 'popup)))
 
 ;; additional hooks we might want to use: `post-command-hook',
 ;; `post-self-insert-hook', `window-configuration-change-hook',
@@ -430,14 +439,27 @@ Internally, this function works be deleting all windows that have the
                     (purpose-x-popwin-closer-1 t)))
   (add-hook 'purpose-select-buffer-hook #'purpose-x-popwin-closer-1))
 
-;; TODO: create command to "stick" popup window. The command should simply
-;; call `purpose-x-popwin-remove-hooks'. Maybe also create command to "unstick"
-;; popup window (call `purpose-x-popwin-add-hooks')
 (defun purpose-x-popwin-remove-hooks ()
   "Remove hooks for closing popup window automatically.
 This basically is an undo for `purpose-x-popwin-add-hooks'."
   (global-set-key [remap keyboard-quit] nil)
   (remove-hook 'purpose-select-buffer-hook #'purpose-x-popwin-closer-1))
+
+(defun purpose-x-popwin-stick ()
+  "Prevent current popup window from being automatically closed.
+To cancel, use `purpose-x-popwin-unstick'."
+  (interactive)
+  (if (purpose-windows-with-purpose 'popup)
+      (purpose-x-popwin-remove-hooks)
+    (user-error "There is no popup window")))
+
+(defun purpose-x-popwin-unstick ()
+  "Allow current popup window to close automatically.
+This is the opposite of `purpose-x-popwin-stick'."
+  (interactive)
+  (if (purpose-windows-with-purpose 'popup)
+      (purpose-x-popwin-add-hooks)
+    (user-error "There is no popup window")))
 
 (defun purpose-x-popwin-closer-1 (&optional force)
   "Close popup window if appropriate, and remove hooks.
