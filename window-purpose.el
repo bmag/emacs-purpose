@@ -123,7 +123,7 @@ This allows Purpose to work well with both `ido' and `helm'.")
 
 (defalias 'purpose-friendly-switch-buffer-other-window
   (purpose-ido-caller #'ido-switch-buffer-other-window
-		      #'switch-to-buffer-other-window)
+                      #'switch-to-buffer-other-window)
   "Call `switch-to-buffer-other-window' or
 `ido-switch-buffer-other-window' intelligently.
 If `ido-mode' is on, call `ido-switch-buffer-other-window'.  Otherwise,
@@ -132,7 +132,7 @@ This allows Purpose to work well with both `ido' and `helm'.")
 
 (defalias 'purpose-friendly-switch-buffer-other-frame
   (purpose-ido-caller #'ido-switch-buffer-other-frame
-		      #'switch-to-buffer-other-frame)
+                      #'switch-to-buffer-other-frame)
   "Call `switch-to-buffer-other-frame' or
 `ido-switch-buffer-other-frame' intelligently.
 If `ido-mode' is on, call `ido-switch-buffer-other-frame'.  Otherwise,
@@ -256,33 +256,33 @@ Some examples:
   "Add all advices needed for Purpose to work.
 This function is called when `purpose-mode' is activated."
   (purpose-advice-add 'switch-to-buffer :around
-		      #'purpose-switch-to-buffer-advice)
+                      #'purpose-switch-to-buffer-advice)
   (purpose-advice-add 'switch-to-buffer-other-window :around
-		      #'purpose-switch-to-buffer-other-window-advice)
+                      #'purpose-switch-to-buffer-other-window-advice)
   (purpose-advice-add 'switch-to-buffer-other-frame :around
-		      #'purpose-switch-to-buffer-other-frame-advice)
+                      #'purpose-switch-to-buffer-other-frame-advice)
   (purpose-advice-add 'pop-to-buffer :around
-		      #'purpose-pop-to-buffer-advice)
+                      #'purpose-pop-to-buffer-advice)
   (purpose-advice-add 'pop-to-buffer-same-window :around
-		      #'purpose-pop-to-buffer-same-window-advice)
+                      #'purpose-pop-to-buffer-same-window-advice)
   (purpose-advice-add 'display-buffer :around
-		      #'purpose-display-buffer-advice))
+                      #'purpose-display-buffer-advice))
 
 (defun purpose--remove-advices ()
   "Remove all advices needed for Purpose to work.
 This function is called when `purpose-mode' is deactivated."
   (purpose-advice-remove 'switch-to-buffer :around
-			 #'purpose-switch-to-buffer-advice)
+                         #'purpose-switch-to-buffer-advice)
   (purpose-advice-remove 'switch-to-buffer-other-window :around
-			 #'purpose-switch-to-buffer-other-window-advice)
+                         #'purpose-switch-to-buffer-other-window-advice)
   (purpose-advice-remove 'switch-to-buffer-other-frame :around
-			 #'purpose-switch-to-buffer-other-frame-advice)
+                         #'purpose-switch-to-buffer-other-frame-advice)
   (purpose-advice-remove 'pop-to-buffer :around
-			 #'purpose-pop-to-buffer-advice)
+                         #'purpose-pop-to-buffer-advice)
   (purpose-advice-remove 'pop-to-buffer-same-window :around
-			 #'purpose-pop-to-buffer-same-window-advice)
+                         #'purpose-pop-to-buffer-same-window-advice)
   (purpose-advice-remove 'display-buffer :around
-			 #'purpose-display-buffer-advice))
+                         #'purpose-display-buffer-advice))
 
 ;;;###autoload
 (define-minor-mode purpose-mode

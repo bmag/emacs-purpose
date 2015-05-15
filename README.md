@@ -31,7 +31,7 @@ Emacs, which gives you a better control over where Emacs displays buffers.
 
 With Purpose, each buffer has a configurable "purpose" and each window
 can interactivaly be dedicated to a certain "purpose". When you dedicate
-a window (`C-c , d`), Purpose makes sure that this window will be used
+a window (<kbd>C-c , d</kbd>), Purpose makes sure that this window will be used
 only for buffers which have the same purpose as the buffer that is
 currently displayed in that window. The purpose of a buffer can be
 customized via the variables `purpose-user-mode-purposes`,
@@ -45,7 +45,7 @@ Purpose is tested with Emacs versions 24.3, 24.4 and 24.5. Backward-compatibilit
 ## Quickstart
 
 ### Activate Purpose
-Manually: `M-x purpose-mode`
+Manually: <kbd>M-x purpose-mode</kbd>
 
 In your init file:
 ```elisp
@@ -54,7 +54,7 @@ In your init file:
 ```
 
 ### Configure Purpose
-Manually: `M-x customize-group purpose`. Look at:
+Manually: <kbd>M-x customize-group purpose</kbd>. Look at:
 - "Purpose User Mode Purposes": recognize purpose according to major mode
 - "Purpose User Name Purposes": recognize purpose according to buffer
   name (for exact names)
@@ -75,11 +75,11 @@ In init file:
 ### Useful Commands
 | Key         | Command                                                                                                                   |
 | :---------- | :------------------------------------------------------------------------------------------------------------------------ |
-| `C-c , b`   | `purpose-switch-buffer-with-purpose`: switch to a buffer with the same purpose as the current one                         |
-| `C-u C-x b` | `switch-buffer-without-purpose`: switch to a buffer, but don't use Purpose for it. Handy for changing the current layout. |
-| `C-c , d`   | `purpose-toggle-window-purpose-dedicated`                                                                                 |
-| `C-c , D`   | `purpose-toggle-window-buffer-dedicated`                                                                                  |
-| `C-c , 1`   | `purpose-delete-non-dedicated-windows`                                                                                    |
+| <kbd>C-c , b</kbd>   | `purpose-switch-buffer-with-purpose`: switch to a buffer with the same purpose as the current one                         |
+| <kbd>C-u C-x b</kbd> | `switch-buffer-without-purpose`: switch to a buffer, but don't use Purpose for it. Handy for changing the current layout. |
+| <kbd>C-c , d</kbd>   | `purpose-toggle-window-purpose-dedicated`                                                                                 |
+| <kbd>C-c , D</kbd>   | `purpose-toggle-window-buffer-dedicated`                                                                                  |
+| <kbd>C-c , 1</kbd>   | `purpose-delete-non-dedicated-windows`                                                                                    |
 |             | `purpose-save-window-layout`: save current layout to file                                                                 |
 |             | `purpose-load-window-layout`: load layout from file                                                                       |
 |             | `purpose-reset-window-layout`: reload previously loaded layout                                                            |
@@ -102,17 +102,17 @@ If you have a previously saved layout, you can load it with
 `purpose-load-window-layout` and skip step 2 and step 3.
 
 1. open a Python file
-2. `C-c , d` (`purpose-toggle-window-purpose-dedicated`) so window is
+2. <kbd>C-c , d</kbd> (`purpose-toggle-window-purpose-dedicated`) so window is
    dedicated ("[py]" in the status bar will change to "[py!]")
-3. `C-x 1` (`delete-other-windows`)
-4. `C-x 2` (`split-window-below`)
-5. `C-c C-z` (`python-shell-switch-to-shell`)
-6. `C-c , d` so window is dedicated
-7. `C-x o` (`other-window`) to select the python file's window
-8. `C-x ^` (`enlarge-window`) until you like the sizes of the windows
+3. <kbd>C-x 1</kbd> (`delete-other-windows`)
+4. <kbd>C-x 2</kbd> (`split-window-below`)
+5. <kbd>C-c C-z</kbd> (`python-shell-switch-to-shell`)
+6. <kbd>C-c , d</kbd> so window is dedicated
+7. <kbd>C-x o</kbd> (`other-window`) to select the python file's window
+8. <kbd>C-x ^</kbd> (`enlarge-window`) until you like the sizes of the windows
 
 #### step 3: save window layout
-`M-x purpose-save-window-layout`
+<kbd>M-x purpose-save-window-layout</kbd>
 
 ## Using Purpose
 

@@ -453,7 +453,7 @@ Possible windows to use match these requirements:
     (let ((windows (purpose-display--frame-usable-windows nil buffer))
           window)
       ;; (when .inhibit-same-window
-      ;; 	(setq windows (delete (selected-window) windows)))
+      ;;   (setq windows (delete (selected-window) windows)))
       (setq windows (delete (selected-window) windows))
       (setq window (car windows))
       (when window

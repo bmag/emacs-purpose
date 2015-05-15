@@ -75,11 +75,11 @@ The percentages represent the WINDOW's edges relative to its frame's
 size."
   (cl-multiple-value-bind (left top right bottom) (window-edges window)
     (let ((frame-width (frame-width (window-frame window)))
-	  (frame-height (frame-height (window-frame window))))
+          (frame-height (frame-height (window-frame window))))
       (list (/ left frame-width 1.0)
-	    (/ top frame-height 1.0)
-	    (/ right frame-width 1.0)
-	    (/ bottom frame-height 1.0)))))
+            (/ top frame-height 1.0)
+            (/ right frame-width 1.0)
+            (/ bottom frame-height 1.0)))))
 
 (defun purpose--window-width-to-percentage (&optional window)
   "Return a percentage of WINDOW's width to its frame's width.
@@ -151,10 +151,11 @@ property list PROPERTIES.
 This function runs `purpose-set-window-properties-functions' when it
 finishes."
   (purpose--set-window-buffer (plist-get properties :purpose) window)
-  (purpose-set-window-purpose-dedicated-p window (plist-get properties
-							    :purpose-dedicated))
+  (purpose-set-window-purpose-dedicated-p window
+                                          (plist-get properties
+                                                     :purpose-dedicated))
   (run-hook-with-args 'purpose-set-window-properties-functions
-		      properties window))
+                      properties window))
 
 
 
@@ -167,31 +168,31 @@ WINDOW should be a live window, and defaults to the selected one.
 This function is mainly intended to be used by
 `purpose-restore-windows-1'."
   (append (list window)
-	  ;; Starting from 2nd sub-tree, since N sub-trees require N-1 splits.
-	  ;; Reversing, because the selected window doesn't change, so the
-	  ;; first split window is actually the farthest away, and so matches
-	  ;; the last sub-tree.
-	  (nreverse
-	   (cl-loop for _sub-tree in (cl-cdddr tree)
-		    with direction = (not (car tree))
-		    collect (split-window window -5 direction)))))
+          ;; Starting from 2nd sub-tree, since N sub-trees require N-1 splits.
+          ;; Reversing, because the selected window doesn't change, so the
+          ;; first split window is actually the farthest away, and so matches
+          ;; the last sub-tree.
+          (nreverse
+           (cl-loop for _sub-tree in (cl-cdddr tree)
+                    with direction = (not (car tree))
+                    collect (split-window window -5 direction)))))
 
 (defun purpose--set-size (width height &optional window)
   "Set the size of window WINDOW to width WIDTH and height HEIGHT.
 WINDOW must be a live window and defaults to the selected one."
   (unless (one-window-p)
     (let ((width-delta (- width (window-total-width window)))
-	  (height-delta (- height (window-total-height window))))
+          (height-delta (- height (window-total-height window))))
       (window-resize window
-		     (window-resizable window width-delta t nil)
-		     t nil)
+                     (window-resizable window width-delta t nil)
+                     t nil)
       (window-resize window
-		     (window-resizable window height-delta nil nil)
-		     nil nil))))
+                     (window-resizable window height-delta nil nil)
+                     nil nil))))
 
 (defun purpose--set-size-percentage (width-percentage
-				     height-percentage
-				     &optional window)
+                                     height-percentage
+                                     &optional window)
   (purpose--set-size
    (purpose--window-percentage-to-width width-percentage window)
    (purpose--window-percentage-to-height height-percentage window)
@@ -205,28 +206,28 @@ WINDOW must be a live window and defaults to the selected one."
   (if (windowp window-tree)
       (purpose-window-params window-tree)
     (append (list (cl-first window-tree)
-		  (cl-second window-tree))
-	    (mapcar #'purpose--get-window-layout-1 (cddr window-tree)))))
+                  (cl-second window-tree))
+            (mapcar #'purpose--get-window-layout-1 (cddr window-tree)))))
 
 (defun purpose--set-window-layout-1 (tree window)
   "Helper function for `purpose-set-window-layout'."
   (if (purpose-window-params-p tree)
       (progn
-	(purpose--set-size-percentage (plist-get tree :width)
-				      (plist-get tree :height)
-				      window)
-	(purpose-set-window-properties tree window))
+        (purpose--set-size-percentage (plist-get tree :width)
+                                      (plist-get tree :height)
+                                      window)
+        (purpose-set-window-properties tree window))
 
     ;; this section is commented out, because it doesn't really matter
     ;; (let ((edges (second tree)))
     ;;   (purpose--set-size-percentage (- (third edges) (first edges))
-    ;; 			   (- (fourth edges) (second edges))
-    ;; 			   window))
+    ;;             (- (fourth edges) (second edges))
+    ;;             window))
 
     (let ((windows (purpose--split-window tree window)))
       (cl-loop for sub-tree in (cddr tree)
-	       for window in windows
-	       do (purpose--set-window-layout-1 sub-tree window)))))
+               for window in windows
+               do (purpose--set-window-layout-1 sub-tree window)))))
 
 
 
@@ -258,7 +259,7 @@ This function doesn't change the selected frame (uses
     ;; 1. if windowp, set size+buffer
     ;; 2. split window, recurse for each window
     (if (purpose-window-params-p layout)
-	(purpose-set-window-properties layout)
+        (purpose-set-window-properties layout)
       (purpose--set-window-layout-1 layout (selected-window)))
     (unless norecord
       (ring-insert purpose-recent-window-layouts layout))))
@@ -377,11 +378,11 @@ Use INDEX=0 for most recent."
   "Delete all windows that aren't dedicated to their purpose or buffer."
   (interactive)
   (mapc #'(lambda (window)
-	    (when (and (window-deletable-p window)
-		       (not (window-dedicated-p window))
-		       (not (purpose-window-purpose-dedicated-p window)))
-	      (delete-window window)))
-	(window-list)))
+            (when (and (window-deletable-p window)
+                       (not (window-dedicated-p window))
+                       (not (purpose-window-purpose-dedicated-p window)))
+              (delete-window window)))
+        (window-list)))
 
 (defun purpose-set-window-purpose (purpose &optional dont-dedicate)
   "Set window's purpose to PURPOSE, and dedicate it.
@@ -401,7 +402,7 @@ the right purpose in it, or creating a dummy buffer."
 WINDOW-GETTER should be a function that takes one argument - FRAME."
   (let ((window (funcall window-getter frame)))
     (if window
-	(delete-window window)
+        (delete-window window)
       (user-error "Couldn't find window."))))
 
 (defun purpose-delete-window-at-top (&optional frame)

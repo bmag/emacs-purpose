@@ -51,14 +51,14 @@ When setting KEY's value, if the new value is equal to DEFAULT and
 REMOVE is non-nil, then delete the KEY instead."
   (let ((entry (assq key alist)))
     (if entry
-	(cdr entry)
+        (cdr entry)
       default)))
 
 (defun purpose-alist-set (key value alist)
   "Set VALUE to be the value associated to KEY in ALIST.
 This doesn't change the original alist, but returns a modified copy."
   (cons (cons key value)
-	(purpose-alist-del key alist)))
+        (purpose-alist-del key alist)))
 
 (defun purpose-alist-del (key alist)
   "Delete KEY from ALIST.
@@ -66,8 +66,8 @@ This doesn't change the original alist, but returns a modified copy."
   ;; we could use any value instead of 0, as long as we used it instead
   ;; of 0 in both places
   (cl-remove-if #'(lambda (entry)
-		    (eq key (car entry)))
-		alist))
+                    (eq key (car entry)))
+                alist))
 
 (defun purpose-flatten (seq)
   "Turn a list of lists (SEQ) to one concatenated list."
@@ -83,10 +83,10 @@ that key is used.  Example:
   (let ((result nil))
     (dolist (alist alists)
       (dolist (element alist)
-	(unless (assoc (car element) result)
-	  (setq result (purpose-alist-set (car element)
-					  (cdr element)
-					  result)))))
+        (unless (assoc (car element) result)
+          (setq result (purpose-alist-set (car element)
+                                          (cdr element)
+                                          result)))))
     result))
 
 (defun purpose-plist-values (plist)
@@ -95,8 +95,8 @@ PLIST is a property list.
 Example:
  (plist-values '(:foo 1 :bar 2)) -> (1 2)"
   (cl-loop for i from 0
-	   for item in plist
-	   when (cl-oddp i) collect item))
+           for item in plist
+           when (cl-oddp i) collect item))
 
 
 
@@ -129,8 +129,8 @@ new advice style is unavailable.
 `define-purpose-compatible-advice' properly supports only :around, :before and :after advices."
   (if (fboundp 'advice-add)
       `(defun ,name (,@(purpose-advice-new-style-arglist arglist where))
-	 ,docstring
-	 ,@new-body)
+     ,docstring
+     ,@new-body)
     ;; ,(cadr symbol) turns <'foo> into <foo>
     `(defadvice ,(cadr symbol) (,(purpose-advice-convert-where-arg where) ,name ,arglist)
        ,docstring
@@ -162,10 +162,10 @@ SYMBOL, WHERE and NAME have the same meaning as in
 for each entry in hash-table TABLE."
   (let (results)
     (maphash #'(lambda (key value)
-		 (setq results
-		       (append results
-			       (list (funcall function key value)))))
-	     table)
+                 (setq results
+                       (append results
+                               (list (funcall function key value)))))
+             table)
     results))
 
 (defalias 'purpose-hash-table-values
