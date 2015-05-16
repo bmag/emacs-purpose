@@ -30,6 +30,9 @@
 ;; - popup-switcher: command `purpose-x-psw-switch-buffer-with-purpose'
 ;;   uses `popup-switcher' to switch to another buffer with the same
 ;;   purpose as the current buffer
+;; - popwin: extension that emulates popwin's behavior.
+;; - persp: extension to attach purpose configurations to perspectives.
+;;   also provides commands such as `purpose-x-persp-switch-buffer'.
 
 ;;; Code:
 
@@ -498,6 +501,121 @@ Look at `purpose-x-popwin-*' variables and functions to learn more."
   (purpose-x-popwin-remove-hooks))
 
 ;;; --- purpose-x-popup ends here ---
+
+
+
+;;; --- purpose-x-persp ---
+;;; An extension for associating purpose configurations with perspectives.
+;;; It activates and deactivates a :perspective purpose-conf extension
+;;; automatically when switching perspectives or toggling `persp-mode'. It also
+;;; provides switch-buffer commands for switching to a buffer with the same
+;;; purpose and perspective as the current buffer
+;;; (`purpose-x-persp-switch-buffer', `*-other-windw', `*-other-frame').
+
+(defvar purpose-x-persp-confs (make-hash-table :test 'equal)
+  "Hash table holding perspectives' purpose configurations.
+The table maps a perspective's name to its purpose configuration.  A
+perspective's name is a string (obviously), and its purpose
+configuration is a `purpose-conf' object.
+To add/remove entries, use:
+  (puthash <name> <conf> purpose-x-persp-confs)
+  (remhash <name> purpose-x-persp-confs)")
+
+(defun purpose-x-persp-activate ()
+  "Activate current perspective's purpose configuration."
+  (let ((conf (gethash (persp-name persp-curr) purpose-x-persp-confs)))
+    (if conf
+        (purpose-set-extension-configuration :perspective conf)
+      (purpose-x-persp-remove))))
+
+(defun purpose-x-persp-remove ()
+  "Remove current perspective's purpose configuration."
+  (purpose-del-extension-configuration :perspective))
+
+(defun purpose-x-persp-activate-or-remove ()
+  "Activate/remove current perspective's purpose configuration.
+Should be hooked to `persp-mode-hook'."
+  (if persp-mode
+      (purpose-x-persp-activate)
+    (purpose-x-persp-remove)))
+
+;;;###autoload
+(defun purpose-x-persp-setup ()
+  "Activate purpose-x-persp extension.
+This extension automatically activates a purpose configuration for the
+current perspective.  The configuration changes automatically when
+switching perspectives or when toggling `persp-mode'.
+The variable `purpose-x-persp-confs' matches between perspectives and
+purpose configurations."
+  (interactive)
+  (unless (fboundp 'persp-mode)
+    (user-error "Can't load purpose-x-persp: perspective not available"))
+  (add-hook 'persp-switch-hook #'purpose-x-persp-activate)
+  (add-hook 'persp-mode-hook #'purpose-x-persp-activate-or-remove)
+  (when persp-mode
+    (purpose-x-persp-activate)))
+
+(defun purpose-x-persp-unset ()
+  "Deactivate purpose-x-persp extension."
+  (interactive)
+  (remove-hook 'persp-switch-hook #'purpose-x-persp-activate)
+  (remove-hook 'persp-mode-hook #'purpose-x-persp-activate-or-remove)
+  (purpose-x-persp-remove))
+
+(defun purpose-x-persp-get-buffer-names ()
+  "Get names of all buffers with same purpose and perspective as current buffer.
+The returned list doesn't contain the current buffer."
+  (let ((persp-buffers (persp-buffers persp-curr)))
+    (mapcar #'buffer-name
+            (cl-delete-if-not (lambda (buffer) (member buffer persp-buffers))
+                              (delete (current-buffer)
+                                      (purpose-buffers-with-purpose
+                                       (purpose-buffer-purpose
+                                        (current-buffer))))))))
+
+;;;###autoload
+(defun purpose-x-persp-switch-buffer (buffer &optional norecord force-same-window)
+  "Switch to BUFFER, limited by purpose and perspective.
+BUFFER is chosen from buffers with the same purpose as the current
+buffer that are also part of the current perspective.
+NORECORD and FORCE-SAME-WINDOW have the same meaning as in
+`switch-to-buffer'."
+  (interactive
+   (list (completing-read "Switch to buffer: "
+                          (purpose-x-persp-get-buffer-names)
+                          nil
+                          'confirm)))
+  (switch-to-buffer buffer norecord force-same-window))
+
+;;;###autoload
+(defun purpose-x-persp-switch-buffer-other-window (buffer &optional norecord)
+  "Switch to BUFFER in other window, limited by purpose and perspective.
+NORECORD has the same meaning as in `switch-to-buffer-other-window'.
+The relation between `purpose-x-persp-switch-buffer-other-window' and
+`switch-to-buffer-other-window' is the same as the relation between
+`purpose-x-persp-switch-buffer' and `switch-to-buffer'."
+  (interactive
+   (list (completing-read "Switch to buffer in other window: "
+                          (purpose-x-persp-get-buffer-names)
+                          nil
+                          'confirm)))
+  (switch-to-buffer-other-window buffer norecord))
+
+;;;###autoload
+(defun purpose-x-persp-switch-buffer-other-frame (buffer &optional norecord)
+  "Switch to BUFFER in other frame, limited by purpose and perspective.
+NORECORD has the same meaning as in `switch-to-buffer-other-frame'.
+The relation between `purpose-x-persp-switch-buffer-other-frame' and
+`switch-to-buffer-other-frame' is the same as the relation between
+`purpose-x-persp-switch-buffer' and `switch-to-buffer'."
+  (interactive
+   (list (completing-read "Switch to buffer in other frame: "
+                          (purpose-x-persp-get-buffer-names)
+                          nil
+                          'confirm)))
+  (switch-to-buffer-other-frame buffer norecord))
+
+;;; --- purpose-x-persp ends here ---
 
 (provide 'window-purpose-x)
 ;;; window-purpose-x.el ends here

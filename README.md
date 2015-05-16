@@ -10,8 +10,6 @@
 
 Plans for the near future:
 
-- Add extension for combining Purpose and [perspective](https://github.com/nex3/perspective-el)
-
 - Update Wiki
 
 - Maybe add some more tests
@@ -21,8 +19,10 @@ Recent changes:
 - Imrpoved popup-windows extension (popwin emulation): popup window closes
 automatically, commands to stick and un-stick the popup window.
 
-- Improved code1 extension: better detection of buffer changes, dired window if
+- Improved code1 extension: better detection of buffer changes, dired window is
 burried (moved to the end of the buffer-list).
+
+- Created extension for combining Purpose and [perspective](https://github.com/nex3/perspective-el)
 
 ## Introduction
 
