@@ -73,6 +73,9 @@ All windows are purpose-dedicated.")
                   (dired-mode . dired)
                   (imenu-list-major-mode . ilist))))
 
+(defvar purpose-x-code1-buffers-changed nil
+  "Internal variable for use with `frame-or-buffer-changed-p'.")
+
 (define-ibuffer-filter purpose-x-code1-ibuffer-files-only
     "Display only buffers that are bound to files."
   ()
@@ -91,7 +94,8 @@ All windows are purpose-dedicated.")
   ;; (setq ibuffer-default-shrink-to-minimum-size t)
   (when (get-buffer "*Ibuffer*")
     (kill-buffer "*Ibuffer*"))
-  (ibuffer-list-buffers))
+  (save-selected-window
+    (ibuffer-list-buffers)))
 
 (defun purpose-x-code1--unset-ibuffer ()
   "Unset ibuffer settings."
@@ -127,23 +131,13 @@ If current buffer doesn't have a filename, do nothing."
         (dired-hide-details-mode))
       (bury-buffer (current-buffer)))))
 
-(defun purpose-x-code1--setup-dired ()
-  "Setup dired settings."
-  (add-hook 'window-configuration-change-hook #'purpose-x-code1-update-dired))
-
-(defun purpose-x-code1--unset-dired ()
-  "Unset dired settings."
-  (remove-hook 'window-configuration-change-hook #'purpose-x-code1-update-dired))
-
-(defun purpose-x-code1--setup-imenu-list ()
-  "Setup imenu-list settings."
-  (add-hook 'window-configuration-change-hook #'imenu-list-update-safe)
-  (imenu-list-minor-mode 1))
-
-(defun purpose-x-code1--unset-imenu-list ()
-  "Unset imenu-list settings."
-  (remove-hook 'window-configuration-change-hook #'imenu-list-update-safe)
-  (imenu-list-minor-mode -1))
+(defun purpose-x-code1-update-changed ()
+  "Update auxiliary buffers if frame/buffer had changed.
+Uses `frame-or-buffer-changed-p' to determine whether the frame or
+buffer had changed."
+  (when (frame-or-buffer-changed-p 'purpose-x-code1-buffers-changed)
+    (purpose-x-code1-update-dired)
+    (imenu-list-update-safe)))
 
 ;;;###autoload
 (defun purpose-x-code1-setup ()
@@ -160,8 +154,10 @@ imenu."
   (interactive)
   (purpose-set-extension-configuration :purpose-x-code1 purpose-x-code1-purpose-config)
   (purpose-x-code1--setup-ibuffer)
-  (purpose-x-code1--setup-dired)
-  (purpose-x-code1--setup-imenu-list)
+  (purpose-x-code1-update-dired)
+  (imenu-list-minor-mode)
+  (frame-or-buffer-changed-p 'purpose-x-code1-buffers-changed)
+  (add-hook 'post-command-hook #'purpose-x-code1-update-changed)
   (purpose-set-window-layout purpose-x-code1--window-layout))
 
 (defun purpose-x-code1-unset ()
@@ -169,8 +165,8 @@ imenu."
   (interactive)
   (purpose-del-extension-configuration :purpose-x-code1)
   (purpose-x-code1--unset-ibuffer)
-  (purpose-x-code1--unset-dired)
-  (purpose-x-code1--unset-imenu-list))
+  (imenu-list-minor-mode -1)
+  (remove-hook 'post-command-hook #'purpose-x-code1-update-changed))
 
 ;;; --- purpose-x-code1 ends here ---
 
