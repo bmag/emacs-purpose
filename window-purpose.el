@@ -300,5 +300,6 @@ This function is called when `purpose-mode' is deactivated."
     (purpose--remove-advices)
     (setq purpose--active-p nil)))
 
+(push '(purpose-dedicated . writable) window-persistent-parameters)
 (provide 'window-purpose)
 ;;; window-purpose.el ends here
