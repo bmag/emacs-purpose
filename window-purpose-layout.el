@@ -43,7 +43,7 @@ This variable is used by `purpose-window-params'.  See
 `purpose-window-params' for more details."
   :group 'purpose
   :type 'hook
-  :package-version "1.3.50")
+  :package-version "1.4")
 
 (defcustom purpose-set-window-properties-functions nil
   "Hook to run after calling `purpose-set-window-properties'.

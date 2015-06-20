@@ -5,24 +5,7 @@
 [![Build Status](https://travis-ci.org/bmag/emacs-purpose.svg?branch=master)](https://travis-ci.org/bmag/emacs-purpose)
 [![Coverage Status](https://coveralls.io/repos/bmag/emacs-purpose/badge.svg?branch=master)](https://coveralls.io/r/bmag/emacs-purpose?branch=master)
 
-## Notices
-**A full explanation can be found in the [GitHub wiki](https://github.com/bmag/emacs-purpose/wiki).**
-
-Plans for the near future:
-
-- Update Wiki
-
-- Maybe add some more tests
-
-Recent changes:
-
-- Imrpoved popup-windows extension (popwin emulation): popup window closes
-automatically, commands to stick and un-stick the popup window.
-
-- Improved code1 extension: better detection of buffer changes, dired window is
-burried (moved to the end of the buffer-list).
-
-- Created extension for combining Purpose and [perspective](https://github.com/nex3/perspective-el)
+**Note: a full explanation can be found in the [GitHub wiki](https://github.com/bmag/emacs-purpose/wiki).**
 
 ## Introduction
 

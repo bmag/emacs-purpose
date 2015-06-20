@@ -51,7 +51,7 @@ prompts."
                  (const ido)
                  (const helm)
                  (const vanilla))
-  :package-version "1.3.50")
+  :package-version "1.4")
 
 
 

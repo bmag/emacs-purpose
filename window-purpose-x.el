@@ -293,7 +293,7 @@ compatible with `display-buffer'."
                  (const left)
                  (const right)
                  function)
-  :package-version "1.3.50")
+  :package-version "1.4")
 
 (defcustom purpose-x-popwin-width 0.4
   "Width of popup window when displayed at left or right.
@@ -302,7 +302,7 @@ Can have the same values as `purpose-display-at-left-width' and
   :group 'purpose
   :type '(choice number
                  (const nil))
-  :package-version "1.3.50")
+  :package-version "1.4")
 
 (defcustom purpose-x-popwin-height 0.35
   "Height of popup window when displayed at top or bottom.
@@ -311,7 +311,7 @@ Can have the same values as `purpose-display-at-top-height' and
   :group 'purpose
   :type '(choice number
                  (const nil))
-  :package-version "1.3.50")
+  :package-version "1.4")
 
 (defcustom purpose-x-popwin-major-modes '(help-mode
                                           compilation-mode
@@ -325,7 +325,7 @@ When changing the value of this variable in elisp code, you should call
            (prog1 (set-default symbol value)
              (purpose-x-popwin-update-conf)))
   :initialize 'custom-initialize-default
-  :package-version "1.3.50")
+  :package-version "1.4")
 
 (defcustom purpose-x-popwin-buffer-names '("*Shell Command Output*")
   "List of buffer names that should be opened as popup windows.
@@ -339,7 +339,7 @@ When changing the value of this variable in elisp code, you should call
            (prog1 (set-default symbol value)
              (purpose-x-popwin-update-conf)))
   :initialize 'custom-initialize-default
-  :package-version "1.3.50")
+  :package-version "1.4")
 
 (defcustom purpose-x-popwin-buffer-name-regexps nil
   "List of regexp that should be opened as popup windows.
@@ -353,7 +353,7 @@ When changing the value of this variable in elisp code, you should call
            (prog1 (set-default symbol value)
              (purpose-x-popwin-update-conf)))
   :initialize 'custom-initialize-default
-  :package-version "1.3.50")
+  :package-version "1.4")
 
 (defun purpose-x-popupify-purpose (purpose &optional display-fn)
   "Set up a popup-like behavior for buffers with purpose PURPOSE.
