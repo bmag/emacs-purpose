@@ -349,6 +349,66 @@ done."
 
 
 
+;;; change purposes temporarily
+
+(defmacro purpose-save-purpose-config (&rest body)
+  "Save the purpose configuration, execute BODY, restore the configuration."
+  `(let ((purpose--user-mode-purposes (copy-hash-table purpose--user-mode-purposes))
+         (purpose--user-name-purposes (copy-hash-table purpose--user-name-purposes))
+         (purpose--user-regexp-purposes (copy-hash-table purpose--user-regexp-purposes))
+         (purpose--extended-mode-purposes (copy-hash-table purpose--extended-mode-purposes))
+         (purpose--extended-name-purposes (copy-hash-table purpose--extended-name-purposes))
+         (purpose--extended-regexp-purposes (copy-hash-table purpose--extended-regexp-purposes))
+         (purpose--default-mode-purposes (copy-hash-table purpose--default-mode-purposes))
+         (purpose--default-name-purposes (copy-hash-table purpose--default-name-purposes))
+         (purpose--default-regexp-purposes (copy-hash-table purpose--default-regexp-purposes))
+         (purpose-use-default-configuration purpose-use-default-configuration)
+         (purpose-user-mode-purposes purpose-user-mode-purposes)
+         (purpose-user-name-purposes purpose-user-name-purposes)
+         (purpose-user-regexp-purposes purpose-user-regexp-purposes)
+         (purpose-extended-configuration purpose-extended-configuration))
+     ,@body))
+
+(defmacro purpose-with-temp-purposes (names regexps modes &rest body)
+  "Execute BODY with a temporary purpose configuration.
+NAMES, REGEXPS and MODES should be alists as described in
+`purpose-user-name-purposes', `purpose-user-regexp-purposes' and
+`purpose-user-mode-purposes'.
+NAMES, REGEXPS and MODES are used instead of the current purpose configuration
+while BODY is executed. The purpose configuration is restored after BODY
+is executed."
+  `(purpose-save-purpose-config
+    (let ((purpose-use-default-configuration nil)
+          (purpose-extended-configuration nil)
+          (purpose-user-name-purposes ,names)
+          (purpose-user-regexp-purposes ,regexps)
+          (purpose-user-mode-purposes ,modes))
+      (purpose-compile-user-configuration)
+      (purpose-compile-extended-configuration)
+      ,@body)))
+
+(defmacro purpose-with-empty-purposes (&rest body)
+  "Execute BODY with an empty purpose configuration.
+The purpose configuration is restored after BODY is executed."
+  `(purpose-with-temp-purposes nil nil nil ,@body))
+
+(defmacro purpose-with-additional-purposes (names regexps modes &rest body)
+  "Execute BODY with an additional purpose configuration.
+NAMES, REGEXPS and MODES should be alists as described in
+`purpose-user-name-purposes', `purpose-user-regexp-purposes' and
+`purpose-user-mode-purposes'.
+NAMES, REGEXPS and MODES are used to add purposes to the current purpose
+configuration while BODY is executed. The purpose configuration is restored
+after BODY is executed."
+  `(purpose-save-purpose-config
+    (let ((purpose-user-name-purposes (append ,names purpose-user-name-purposes))
+          (purpose-user-regexp-purposes (append ,regexps purpose-user-regexp-purposes))
+          (purpose-user-mode-purposes (append ,modes purpose-user-mode-purposes)))
+      (purpose-compile-user-configuration)
+      ,@body)))
+
+
+
 ;;; Initial compilation
 
 (purpose-compile-user-configuration)

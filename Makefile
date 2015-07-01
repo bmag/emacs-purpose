@@ -8,7 +8,9 @@ all: test
 deps:
 	${CASK} install
 
-test: clean deps
+test: clean deps test-fast
+
+test-fast:
 	rm -f ${INPUT_FILE}
 	touch ${INPUT_FILE}
 	${CASK} exec ert-runner < ${INPUT_FILE}

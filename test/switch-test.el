@@ -511,6 +511,40 @@ new buffer should be displayed in one of the two existing windows."
       (purpose-set-window-purpose-dedicated-p nil nil)
       (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p1-0"))))
 
+(ert-deftest purpose-test-temp-actions-1 ()
+  "Test macros for changing `purpose-special-action-sequences' temporarily.
+This one tests `purpose-with-temp-display-actions' and
+`purpose-with-temp-display-action'."
+  (let ((original-actions purpose-special-action-sequences)
+        (new-actions '((py purpose-display-reuse-window-buffer)
+                       (c purpose-display-reuse-window-purpose))))
+    (purpose-with-temp-display-actions
+     new-actions
+     (should (equal purpose-special-action-sequences new-actions)))
+    (should (equal purpose-special-action-sequences original-actions))
+    (purpose-with-temp-display-action
+     (car new-actions)
+     (should (equal purpose-special-action-sequences (list (car new-actions)))))
+    (should (equal purpose-special-action-sequences original-actions))))
+
+(ert-deftest purpose-test-temp-actions-1 ()
+  "Test macros for changing `purpose-special-action-sequences' temporarily.
+This one tests `purpose-with-additional-display-actions' and
+`purpose-with-additional-display-action'."
+  (let ((original-actions purpose-special-action-sequences)
+        (new-actions '((py purpose-display-reuse-window-buffer)
+                       (c purpose-display-reuse-window-purpose))))
+    (purpose-with-additional-display-actions
+     new-actions
+     (should (equal purpose-special-action-sequences
+                    (append new-actions original-actions))))
+    (should (equal purpose-special-action-sequences original-actions))
+    (purpose-with-additional-display-action
+     (car new-actions)
+     (should (equal purpose-special-action-sequences
+                    (append (list (car new-actions)) original-actions))))
+    (should (equal purpose-special-action-sequences original-actions))))
+
 (provide 'switch-test)
 
 ;;; switch-test.el ends here
