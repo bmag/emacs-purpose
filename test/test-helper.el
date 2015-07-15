@@ -174,6 +174,11 @@ The buffers created have the names \"xxx-p0-0\", \"xxx-p0-1\",
             (should-error (funcall delete-fn))))
       (purpose-kill-buffers-safely "xxx-test"))))
 
+(defun purpose-test-sort-symbols (symbols)
+  "Sorts list of symbols alphabetically according to their names.
+This is a destructive function; it reuses SYMBOLS' storage if possible."
+  (cl-sort symbols #'string< :key #'symbol-name))
+
 (message "done defining helpers")
 
 ;;; test-helper.el ends here

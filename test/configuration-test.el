@@ -128,6 +128,39 @@ See `purpose-set-extension-configuration' and
    (should-error (purpose-del-extension-configuration 'foo))
    (purpose-del-extension-configuration :foo)))
 
+(ert-deftest purpose-test-temp-config-1 ()
+  "Test macros for changing the purpose configuration temporarily.
+This one tests `purpose-with-temp-purposes'."
+  (let ((original-purposes (purpose-test-sort-symbols (purpose-get-all-purposes))))
+    (purpose-with-temp-purposes
+     '(("foo" . foo)) '((".*\\.c" . c)) '((python-mode . py))
+     (should (equal (purpose-test-sort-symbols (purpose-get-all-purposes))
+                    '(c foo general py))))
+    (should (equal (purpose-test-sort-symbols (purpose-get-all-purposes))
+                   original-purposes))))
+
+(ert-deftest purpose-test-temp-config-2 ()
+  "Test macros for changing the purpose configuration temporarily.
+This one tests `purpose-with-empty-purposes'."
+  (let ((original-purposes (purpose-test-sort-symbols (purpose-get-all-purposes))))
+    (purpose-with-empty-purposes
+     (should (equal (purpose-test-sort-symbols (purpose-get-all-purposes))
+                    '(general))))
+    (should (equal (purpose-test-sort-symbols (purpose-get-all-purposes))
+                   original-purposes))))
+
+(ert-deftest purpose-test-temp-config-3 ()
+  "Test macros for changing the purpose configuration temporarily.
+This one tests `purpose-with-additional-purposes'."
+  (let ((original-purposes (purpose-test-sort-symbols (purpose-get-all-purposes))))
+    (purpose-with-additional-purposes
+     '(("foo" . foo)) '((".*\\.c" . c)) '((python-mode . py))
+     (should (equal (purpose-test-sort-symbols (purpose-get-all-purposes))
+                    (purpose-test-sort-symbols
+                     (delete-dups (append original-purposes '(c foo py)))))))
+    (should (equal (purpose-test-sort-symbols (purpose-get-all-purposes))
+                   original-purposes))))
+
 (provide 'configuration-test)
 
 ;;; configuration-test.el ends here

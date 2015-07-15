@@ -197,6 +197,21 @@ Don't call this function before `popwin' is loaded."
 
 
 
+;;; Use a seperate purpose for which-key window (not 'general), don't interfere
+;;; with how which-key opens a window/frame
+(defun purpose--fix-which-key ()
+  "Don't interfere with which-key, and use a seperate which-key purpose."
+  (eval-after-load 'which-key
+    '(progn
+       (add-to-list 'purpose-action-function-ignore-buffer-names (regexp-quote which-key-buffer-name))
+       (purpose-set-extension-configuration
+        :which-key
+        (purpose-conf
+         "which-key"
+         :name-purposes `((,which-key-buffer-name . which-key)))))))
+
+
+
 ;;; install fixes
 
 (defun purpose-fix-install (&rest exclude)
@@ -209,7 +224,8 @@ are:
 - 'helm : don't integrate with helm
 - 'neotree : don't integrate with neotree
 - 'popwin : don't integrate with popwin
-- 'guide-key : don't integrate with guide-key"
+- 'guide-key : don't integrate with guide-key
+- 'which-key : don't integrate with which-key"
   (interactive)
   (unless (member 'compilation-next-error-function exclude)
     (purpose-advice-add 'compilation-next-error-function
@@ -223,7 +239,9 @@ are:
   (unless (member 'popwin exclude)
     (purpose--fix-popwin))
   (unless (member 'guide-key exclude)
-    (purpose--fix-guide-key)))
+    (purpose--fix-guide-key))
+  (unless (member 'which-key exclude)
+    (purpose--fix-which-key)))
 
 (provide 'window-purpose-fixes)
 ;;; window-purpose-fixes.el ends here

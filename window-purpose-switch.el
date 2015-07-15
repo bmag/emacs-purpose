@@ -1141,5 +1141,42 @@ Possible usage:
          (funcall ,do-fn window))
        window)))
 
+
+
+;;; change `purpose-special-action-sequences' temporarily
+
+(defmacro purpose-with-temp-display-actions (actions &rest body)
+  "Override `purpose-special-action-sequences' temporarily.
+Set ACTIONS as `purpose-special-action-sequences' while BODY is executed.
+`purpose-special-action-sequences' is restored after BODY is executed."
+  `(let ((purpose-special-action-sequences ,actions))
+     ,@body))
+
+(defmacro purpose-with-temp-display-action (action &rest body)
+  "Override `purpose-special-action-sequences' temporarily.
+Shortcut for using `purpose-with-temp-display-actions' with only one action.
+ACTION should be an entry suitable for `purpose-special-action-sequences'.
+BODY has the same meaning as in `purpose-with-temp-display-actions'."
+  `(purpose-with-temp-display-actions (list ,action) ,@body))
+
+(defmacro purpose-with-additional-display-actions (actions &rest body)
+  "Add to `purpose-special-action-sequences' temporarily.
+ACTIONS is a list of actions that are added to
+`purpose-special-action-sequences' while BODY is executed.
+`purpose-special-action-sequences' is restored after BODY is executed."
+  `(let ((purpose-special-action-sequences
+          (append ,actions purpose-special-action-sequences)))
+     ,@body))
+
+(defmacro purpose-with-additional-display-action (action &rest body)
+  "Add to `purpose-special-action-sequences' temporarily.
+Shortcut for using `purpose-with-additional-display-actions' with only one
+action.
+ACTION should be an entry suitable for `purpose-special-action-sequences'.
+BODY has the same meaning as in `purpose-with-additional-display-actions'."
+  `(purpose-with-additional-display-actions (list ,action) ,@body))
+
+
+
 (provide 'window-purpose-switch)
 ;;; window-purpose-switch.el ends here
