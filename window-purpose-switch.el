@@ -884,9 +884,9 @@ Never selects the currently selected window."
     'prefer-other-window))
 
 (define-purpose-compatible-advice 'display-buffer
-  :around purpose-display-buffer-advice
-  (buffer-or-name &optional action frame)
-  "Update `purpose--alist' when calling `display-buffer'."
+    :around purpose-display-buffer-advice
+    (buffer-or-name &optional action frame)
+    "Update `purpose--alist' when calling `display-buffer'."
   ;; new style advice
   ((let* ((action-order (purpose-display--action-to-order action))
           (purpose--alist (if action-order
@@ -906,9 +906,9 @@ Never selects the currently selected window."
      ad-do-it)))
 
 (define-purpose-compatible-advice 'switch-to-buffer
-  :around purpose-switch-to-buffer-advice
-  (buffer-or-name &optional norecord force-same-window)
-  "Advice for overriding `switch-to-buffer' conditionally.
+    :around purpose-switch-to-buffer-advice
+    (buffer-or-name &optional norecord force-same-window)
+    "Advice for overriding `switch-to-buffer' conditionally.
 If Purpose is active (`purpose--active-p' is non-nil), call
 `purpose-switch-buffer', otherwise call `switch-to-buffer'."
   ;; new style advice
@@ -947,9 +947,9 @@ If Purpose is active (`purpose--active-p' is non-nil), call
      ad-do-it)))
 
 (define-purpose-compatible-advice 'switch-to-buffer-other-window
-  :around purpose-switch-to-buffer-other-window-advice
-  (buffer-or-name &optional norecord)
-  "Advice for overriding `switch-to-buffer-other-window' conditionally.
+    :around purpose-switch-to-buffer-other-window-advice
+    (buffer-or-name &optional norecord)
+    "Advice for overriding `switch-to-buffer-other-window' conditionally.
 If Purpose is active (`purpose--active-p' is non-nil), call
 `purpose-switch-buffer-other-window', otherwise call
 `switch-to-buffer-other-window'."
@@ -967,9 +967,9 @@ If Purpose is active (`purpose--active-p' is non-nil), call
      ad-do-it)))
 
 (define-purpose-compatible-advice 'switch-to-buffer-other-frame
-  :around purpose-switch-to-buffer-other-frame-advice
-  (buffer-or-name &optional norecord)
-  "Advice for overriding `switch-to-buffer-other-frame' conditionally.
+    :around purpose-switch-to-buffer-other-frame-advice
+    (buffer-or-name &optional norecord)
+    "Advice for overriding `switch-to-buffer-other-frame' conditionally.
 If Purpose is active (`purpose--active-p' is non-nil), call
 `purpose-switch-buffer-other-frame', otherwise call
 `switch-to-buffer-other-frame'."
@@ -987,9 +987,9 @@ If Purpose is active (`purpose--active-p' is non-nil), call
      ad-do-it)))
 
 (define-purpose-compatible-advice 'pop-to-buffer
-  :around purpose-pop-to-buffer-advice
-  (buffer-or-name &optional action norecord)
-  "Advice for overriding `pop-to-buffer' conditionally.
+    :around purpose-pop-to-buffer-advice
+    (buffer-or-name &optional action norecord)
+    "Advice for overriding `pop-to-buffer' conditionally.
 If Purpose is active (`purpose--active-p' is non-nil) and ACTION is nil,
 call `purpose-pop-buffer', otherwise call `pop-to-buffer'."
   ;; new style advice
@@ -1007,9 +1007,9 @@ call `purpose-pop-buffer', otherwise call `pop-to-buffer'."
      ad-do-it)))
 
 (define-purpose-compatible-advice 'pop-to-buffer-same-window
-  :around purpose-pop-to-buffer-same-window-advice
-  (buffer-or-name &optional norecord)
-  "Advice for overriding `pop-to-buffer-same-window' conditionally.
+    :around purpose-pop-to-buffer-same-window-advice
+    (buffer-or-name &optional norecord)
+    "Advice for overriding `pop-to-buffer-same-window' conditionally.
 If Purpose is active (`purpose--active-p' is non-nil), call
 `purpose-pop-buffer-same-window', otherwise call
 `pop-to-buffer-same-window'."
@@ -1031,6 +1031,7 @@ If Purpose is active (`purpose--active-p' is non-nil), call
 (defmacro without-purpose (&rest body)
   "Make Purpose inactive while executing BODY.
 This works internally by temporarily setting `purpose--active-p'."
+  (declare (indent defun) (debug t))
   `(let ((purpose--active-p nil))
      ,@body))
 
@@ -1038,10 +1039,11 @@ This works internally by temporarily setting `purpose--active-p'."
   "Create a command that runs COMMAND with purpose inactive.
 This works internally by using `without-purpose' and
 `call-interactively'."
+  (declare (indent defun) (debug t))
   `(lambda ()
      (interactive)
      (without-purpose
-      (call-interactively ,command))))
+       (call-interactively ,command))))
 
 
 
@@ -1065,6 +1067,7 @@ current buffer's purpose."
     (or purpose (purpose-buffer-purpose (current-buffer))))))
 
 (defun purpose-switch-buffer-with-some-purpose (purpose)
+  "Like `purpose-switch-buffer-with-purpose', but first choose a PURPOSE."
   (interactive
    (list (purpose-read-purpose "Purpose: "
                                (cl-delete-if-not #'purpose-buffers-with-purpose
@@ -1113,6 +1116,7 @@ Another example:
   (add-to-list purpose-special-action-sequences
                `(terminal ,(purpose-generate-display-and-dedicate
                             purpose-display-at-bottom 6)))"
+  (declare (indent defun) (debug t))
   `(lambda (buffer alist)
      (let ((window (apply ,display-fn buffer alist (list,@extra-args))))
        (when window
@@ -1135,6 +1139,7 @@ Possible usage:
             (purpose-generate-display-and-do
               'purpose-display-at-left
               (lambda (window) (message \"Let's do stuff!!\"))))"
+  (declare (indent defun) (debug t))
   `(lambda (buffer alist)
      (let ((window (funcall ,display-fn buffer alist)))
        (when window
@@ -1149,6 +1154,7 @@ Possible usage:
   "Override `purpose-special-action-sequences' temporarily.
 Set ACTIONS as `purpose-special-action-sequences' while BODY is executed.
 `purpose-special-action-sequences' is restored after BODY is executed."
+  (declare (indent 1) (debug t))
   `(let ((purpose-special-action-sequences ,actions))
      ,@body))
 
@@ -1157,6 +1163,7 @@ Set ACTIONS as `purpose-special-action-sequences' while BODY is executed.
 Shortcut for using `purpose-with-temp-display-actions' with only one action.
 ACTION should be an entry suitable for `purpose-special-action-sequences'.
 BODY has the same meaning as in `purpose-with-temp-display-actions'."
+  (declare (indent 1) (debug t))
   `(purpose-with-temp-display-actions (list ,action) ,@body))
 
 (defmacro purpose-with-additional-display-actions (actions &rest body)
@@ -1164,6 +1171,7 @@ BODY has the same meaning as in `purpose-with-temp-display-actions'."
 ACTIONS is a list of actions that are added to
 `purpose-special-action-sequences' while BODY is executed.
 `purpose-special-action-sequences' is restored after BODY is executed."
+  (declare (indent 1) (debug t))
   `(let ((purpose-special-action-sequences
           (append ,actions purpose-special-action-sequences)))
      ,@body))
@@ -1174,6 +1182,7 @@ Shortcut for using `purpose-with-additional-display-actions' with only one
 action.
 ACTION should be an entry suitable for `purpose-special-action-sequences'.
 BODY has the same meaning as in `purpose-with-additional-display-actions'."
+  (declare (indent 1) (debug t))
   `(purpose-with-additional-display-actions (list ,action) ,@body))
 
 

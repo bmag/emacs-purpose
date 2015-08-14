@@ -127,6 +127,7 @@ advice style is available.  OLD-BODY is the advice's body if the
 new advice style is unavailable.
 
 `define-purpose-compatible-advice' properly supports only :around, :before and :after advices."
+  (declare (indent 5) (debug t))
   (if (fboundp 'advice-add)
       `(defun ,name (,@(purpose-advice-new-style-arglist arglist where))
      ,docstring
@@ -140,6 +141,7 @@ new advice style is unavailable.
   "Enable advice, using new or old advice style as appropriate.
 SYMBOL, WHERE and NAME have the same meaning as in
 `define-purpose-advice'."
+  (declare (indent nil) (debug t))
   (if (fboundp 'advice-add)
       `(advice-add ,symbol ,where ,name)
     `(progn
@@ -151,6 +153,7 @@ SYMBOL, WHERE and NAME have the same meaning as in
   "Disable advice, using new or old advice style as appropriate.
 SYMBOL, WHERE and NAME have the same meaning as in
 `define-purpose-advice'."
+  (declare (indent nil) (debug t))
   (if (fboundp 'advice-remove)
       `(advice-remove ,symbol ,name)
     `(progn
