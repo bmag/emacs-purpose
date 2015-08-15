@@ -1,4 +1,4 @@
-;;; test-helper.el --- Test helpers -*- lexical-binding: t -*-
+;;; test-helper --- Test helper for window-purpose -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2015 Bar Magal
 
@@ -21,24 +21,57 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
-;; This file contains test helpers.
+;; This file contains test helpers for window-purpose.
+;; The sandbox part is inspired from https://github.com/tonini/overseer.el/blob/master/test/test-helper.el
 
 ;;; Code:
+
+(require 'f)
+
+(defvar cpt-path
+  (f-parent (f-this-file)))
+
+(defvar window-purpose-test-path
+  (f-dirname (f-this-file)))
+
+(defvar window-purpose-root-path
+  (f-parent window-purpose-test-path))
+
+(defvar window-purpose-sandbox-path
+  (f-expand "sandbox" window-purpose-test-path))
+
+(when (f-exists? window-purpose-sandbox-path)
+  (error "Something is already in %s. Check and destroy it yourself" window-purpose-sandbox-path))
+
+(defmacro within-sandbox (&rest body)
+  "Evaluate BODY in an empty sandbox directory."
+  `(let ((default-directory window-purpose-sandbox-path))
+     (when (f-exists? window-purpose-sandbox-path)
+       (f-delete default-directory :force))
+     (f-mkdir window-purpose-sandbox-path)
+     ,@body
+     (f-delete default-directory :force)))
+
+(require 'ert)
 
 (set-frame-width nil 80)
 (set-frame-height nil 24)
 
-(message "setting undercover")
-(require 'undercover)
-(undercover "window-purpose.el"
-            "window-purpose-configuration.el"
-            "window-purpose-core.el"
-            "window-purpose-layout.el"
-            "window-purpose-prefix-overload.el"
-            "window-purpose-switch.el"
-            "window-purpose-utils.el"
-            "window-purpose-fixes.el"
-            "window-purpose-x.el")
+(condition-case err
+    (progn
+      (message "setting undercover")
+      (require 'undercover)
+      (undercover "window-purpose.el"
+                  "window-purpose-configuration.el"
+                  "window-purpose-core.el"
+                  "window-purpose-layout.el"
+                  "window-purpose-prefix-overload.el"
+                  "window-purpose-switch.el"
+                  "window-purpose-utils.el"
+                  "window-purpose-fixes.el"
+                  "window-purpose-x.el"))
+  (error
+   (message "Error setting undercover: %S" err)))
 
 (message "loading purpose")
 
@@ -47,11 +80,12 @@
 
 (message "loading other packages")
 
-(require 'lv)
-(require 'helm)
-(require 'neotree)
-(require 'popwin)
-(require 'guide-key)
+;; (require 'lv)
+;; (require 'helm)
+;; (require 'neotree)
+;; (require 'popwin)
+;; (require 'guide-key)
+;; (require 'which-key)
 
 (message "defining helper functions and variables")
 
@@ -184,5 +218,5 @@ This is a destructive function; it reuses SYMBOLS' storage if possible."
   (cl-sort symbols #'string< :key #'symbol-name))
 
 (message "done defining helpers")
-
+(provide 'test-helper)
 ;;; test-helper.el ends here
