@@ -57,39 +57,16 @@
 (set-frame-width nil 80)
 (set-frame-height nil 24)
 
-;; (condition-case err
-;;     (progn
-;;       (message "setting undercover")
-;;       (require 'undercover)
-;;       (undercover "window-purpose.el"
-;;                   "window-purpose-configuration.el"
-;;                   "window-purpose-core.el"
-;;                   "window-purpose-layout.el"
-;;                   "window-purpose-prefix-overload.el"
-;;                   "window-purpose-switch.el"
-;;                   "window-purpose-utils.el"
-;;                   "window-purpose-fixes.el"
-;;                   "window-purpose-x.el"))
-;;   (error
-;;    (message "Error setting undercover: %S" err)))
+(message "setting undercover")
+(if (require 'undercover nil t)
+    (undercover "*.el")
+  (message "error loading undercover"))
 
-(condition-case err
-    (progn
-      (message "loading purpose")
-      (require 'window-purpose))
-  (error
-   (message "Error loading purpose: %S" err)
-   (signal (car err) (cdr err))))
+(message "loading purpose")
+(require 'window-purpose))
+(require 'window-purpose-x))
 
-(condition-case err
-    (progn
-      (message "loading purpose extensions")
-      (require 'window-purpose-x))
-  (error
-   (message "Error loading purpose extensions: %S" err)
-   (signal (car err) (cdr err))))
-
-(message "loading other packages")
+;; (message "loading other packages")
 
 ;; (require 'lv)
 ;; (require 'helm)

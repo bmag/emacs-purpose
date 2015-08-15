@@ -18,5 +18,7 @@ ecukes:
 install:
 	${CASK} install
 
+# make ARGS='--eval "(message \"run me like this\")"' run
+# make ARGS='--batch --eval "(message \"or like this\")"' run
 run:
-	${CASK} exec ${EMACS} -Q -L .
+	${CASK} exec ${EMACS} -Q -L . ${ARGS}
