@@ -18,6 +18,10 @@ matrix:
   #   - env: EVM_EMACS=emacs-git-snapshot
 
 before_install:
+  # can't use a different directory, beacuse evm uses pre-compiled binaries
+  - mkdir /usr/local/evm
+  # would have used chown, but don't know user name
+  - chmod 777 /usr/local/evm
   - curl -fsSkL https://gist.github.com/rejeep/7736123/raw > travis.sh && source ./travis.sh
   - evm install $EVM_EMACS --use --skip
   - cask
