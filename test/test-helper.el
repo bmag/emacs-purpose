@@ -57,21 +57,21 @@
 (set-frame-width nil 80)
 (set-frame-height nil 24)
 
-(condition-case err
-    (progn
-      (message "setting undercover")
-      (require 'undercover)
-      (undercover "window-purpose.el"
-                  "window-purpose-configuration.el"
-                  "window-purpose-core.el"
-                  "window-purpose-layout.el"
-                  "window-purpose-prefix-overload.el"
-                  "window-purpose-switch.el"
-                  "window-purpose-utils.el"
-                  "window-purpose-fixes.el"
-                  "window-purpose-x.el"))
-  (error
-   (message "Error setting undercover: %S" err)))
+;; (condition-case err
+;;     (progn
+;;       (message "setting undercover")
+;;       (require 'undercover)
+;;       (undercover "window-purpose.el"
+;;                   "window-purpose-configuration.el"
+;;                   "window-purpose-core.el"
+;;                   "window-purpose-layout.el"
+;;                   "window-purpose-prefix-overload.el"
+;;                   "window-purpose-switch.el"
+;;                   "window-purpose-utils.el"
+;;                   "window-purpose-fixes.el"
+;;                   "window-purpose-x.el"))
+;;   (error
+;;    (message "Error setting undercover: %S" err)))
 
 (condition-case err
     (progn

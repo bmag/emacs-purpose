@@ -4,7 +4,7 @@
 (development
  (depends-on "cask-package-toolset")
  (depends-on "ert-runner")
- (depends-on "undercover")
+ ;; (depends-on "undercover")
  (depends-on "cl-lib")
  (depends-on "let-alist")
  (depends-on "imenu-list")
