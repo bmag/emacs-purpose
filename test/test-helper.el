@@ -57,12 +57,12 @@
 (set-frame-width nil 80)
 (set-frame-height nil 24)
 
-(message "setting undercover")
-(condition-case err
-    (progn
-      (require 'undercover)
-      (undercover "*.el"))
-  (error (message "error setting undercover: %s" err)))
+;; (message "setting undercover")
+;; (condition-case err
+;;     (progn
+;;       (require 'undercover)
+;;       (undercover "*.el"))
+;;   (error (message "error setting undercover: %s" err)))
 
 (message "loading purpose")
 (require 'window-purpose)
