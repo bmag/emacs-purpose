@@ -8,6 +8,8 @@ all: test
 test: unit
 
 unit:
+	rm -f ${INPUT_FILE}
+	touch ${INPUT_FILE}
 	${CASK} exec ert-runner < ${INPUT_FILE}
 
 ecukes:
