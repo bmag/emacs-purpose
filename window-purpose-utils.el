@@ -107,7 +107,9 @@ Example:
 New style is :before, :after, etc.  Old style is 'before, 'after, etc."
   (unless (keywordp where)
     (signal 'wrong-type-argument `(keywordp ,where)))
-  (intern (mapconcat #'identity (cdr (split-string (symbol-name where) ":")) ":")))
+  (if (eq where :override)
+      'around
+    (intern (mapconcat #'identity (cdr (split-string (symbol-name where) ":")) ":"))))
 
 (defun purpose-advice-new-style-arglist (arglist where)
   "Convert ARGLIST to new style, according to WHERE.
