@@ -17,3 +17,6 @@ ecukes:
 
 install:
 	${CASK} install
+
+run:
+	${CASK} exec ${EMACS} -Q -L .

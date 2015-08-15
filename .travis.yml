@@ -11,11 +11,11 @@ env:
     - EVM_EMACS=emacs-24.3-bin
     # - EVM_EMACS=emacs-24.2-bin
     # - EVM_EMACS=emacs-24.1-bin
-    - EVM_EMACS=emacs-git-snapshot
+    # - EVM_EMACS=emacs-git-snapshot
 matrix:
   fast_finish: true
-  allow_failures:
-    - env: EVM_EMACS=emacs-git-snapshot
+  # allow_failures:
+  #   - env: EVM_EMACS=emacs-git-snapshot
 
 sudo: required
 before_install:

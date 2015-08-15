@@ -73,10 +73,21 @@
   (error
    (message "Error setting undercover: %S" err)))
 
-(message "loading purpose")
+(condition-case err
+    (progn
+      (message "loading purpose")
+      (require 'window-purpose))
+  (error
+   (message "Error loading purpose: %S" err)
+   (signal (car err) (cdr err))))
 
-(require 'window-purpose)
-(require 'window-purpose-x)
+(condition-case err
+    (progn
+      (message "loading purpose extensions")
+      (require 'window-purpose-x))
+  (error
+   (message "Error loading purpose extensions: %S" err)
+   (signal (car err) (cdr err))))
 
 (message "loading other packages")
 
