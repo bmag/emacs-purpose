@@ -63,8 +63,8 @@
   (message "error loading undercover"))
 
 (message "loading purpose")
-(require 'window-purpose))
-(require 'window-purpose-x))
+(require 'window-purpose)
+(require 'window-purpose-x)
 
 ;; (message "loading other packages")
 
