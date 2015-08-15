@@ -57,12 +57,14 @@
 (set-frame-width nil 80)
 (set-frame-height nil 24)
 
-;; (message "setting undercover")
-;; (condition-case err
-;;     (progn
-;;       (require 'undercover)
-;;       (undercover "*.el"))
-;;   (error (message "error setting undercover: %s" err)))
+;; In 24.4 and 24.5, setting `undercover' causes an error when requiring `window-purpose'
+(when (version< emacs-version "24.4")
+  (message "setting undercover")
+  (condition-case err
+      (progn
+        (require 'undercover)
+        (undercover "*.el"))
+    (error (message "error setting undercover: %s" err))))
 
 (message "loading purpose")
 (require 'window-purpose)
