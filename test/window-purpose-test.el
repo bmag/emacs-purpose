@@ -30,12 +30,12 @@
   (save-window-excursion
     (unwind-protect
 	(purpose-with-temp-config
-	 nil '(("xxx-test" . test)) nil
-	 (set-window-buffer nil (get-buffer-create "xxx-test"))
-	 (purpose-set-window-purpose-dedicated-p nil t)
-	 (should (equal (purpose--modeline-string) " [test!]"))
-	 (purpose-set-window-purpose-dedicated-p nil nil)
-	 (should (equal (purpose--modeline-string) " [test]")))
+      nil '(("xxx-test" . test)) nil
+    (set-window-buffer nil (get-buffer-create "xxx-test"))
+    (purpose-set-window-purpose-dedicated-p nil t)
+    (should (equal (purpose--modeline-string) " [test!]"))
+    (purpose-set-window-purpose-dedicated-p nil nil)
+    (should (equal (purpose--modeline-string) " [test]")))
       (purpose-kill-buffers-safely "xxx-test")
       (purpose-set-window-purpose-dedicated-p nil nil))))
 

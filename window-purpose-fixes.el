@@ -36,9 +36,9 @@
 ;;; executing `compilation-next-error-function'
 
 (define-purpose-compatible-advice 'compilation-next-error-function
-  :around purpose--fix-compilation-next-error
-  (&rest args)
-  "Integrate Purpose and `compilation-next-error-function'.
+    :around purpose--fix-compilation-next-error
+    (&rest args)
+    "Integrate Purpose and `compilation-next-error-function'.
 Advice that prevents `compilation-next-error-function' from hiding the
 compilation buffer.  This is done by ensuring that the buffer is
 dedicated for the duration of the function.
@@ -114,9 +114,9 @@ When opening files from the neotree window, use Purpose only when
 necessary.
 Note: Don't call this function before `neotree' is loaded."
   (define-purpose-compatible-advice 'neo-global--create-window
-    :around purpose-fix-neotree-create-window-advice
-    (&rest args)
-    "Override `neo-global--create-window' with `purpose--fix-create-neo-window'.
+      :around purpose-fix-neotree-create-window-advice
+      (&rest args)
+      "Override `neo-global--create-window' with `purpose--fix-create-neo-window'.
 When `purpose--active-p' is nil, call original `neo-global--create-window'."
     ;; new style adivce
     ((if purpose--active-p
@@ -128,9 +128,9 @@ When `purpose--active-p' is nil, call original `neo-global--create-window'."
        ad-do-it)))
 
   (define-purpose-compatible-advice 'neo-open-file
-    :around purpose-fix-neotree-open-file-advice
-    (full-path &optional arg)
-    "When ARG is nil, make sure Purpose is off while executing `neo-open-file'."
+      :around purpose-fix-neotree-open-file-advice
+      (full-path &optional arg)
+      "When ARG is nil, make sure Purpose is off while executing `neo-open-file'."
     ;; new style advice
     ((if (and purpose--active-p (null arg))
          (find-file full-path)
@@ -168,9 +168,9 @@ When `purpose--active-p' is nil, call original `neo-global--create-window'."
   "Make Purpose inactive during `popwin:replicate-window-config'.
 Don't call this function before `popwin' is loaded."
   (define-purpose-compatible-advice 'popwin:replicate-window-config
-    :around purpose--fix-popwin-replicate
-    (&rest args)
-    "Make Purpose inactive during `popwin:replicate-window-config'."
+      :around purpose--fix-popwin-replicate
+      (&rest args)
+      "Make Purpose inactive during `popwin:replicate-window-config'."
     ;; new style advice
     ((without-purpose (apply oldfun args)))
     ;; old style advice

@@ -30,26 +30,26 @@
 This tests that `purpose-compile-user-configuration' creates the correct
 hash tables for the uncompiled alists."
   (purpose-with-empty-config
-   (let
-       ((purpose-user-mode-purposes '((prog-mode . edit)
-				      (dired-mode . dired)))
-	(purpose-user-name-purposes '(("editor" . edit)
-				      ("foo" . bar)))
-	(purpose-user-regexp-purposes '(("^\\*" . common))))
-     (purpose-compile-user-configuration)
-     (should (equal (hash-table-keys purpose--user-mode-purposes) '(dired-mode prog-mode)))
-     (should (equal (hash-table-values purpose--user-mode-purposes) '(dired edit)))
-     (should (equal (hash-table-keys purpose--user-name-purposes) '("foo" "editor")))
-     (should (equal (hash-table-values purpose--user-name-purposes) '(bar edit)))
-     (should (equal (hash-table-keys purpose--user-regexp-purposes) '("^\\*")))
-     (should (equal (hash-table-values purpose--user-regexp-purposes) '(common))))
-   (let (purpose-user-mode-purposes
-	 purpose-user-name-purposes
-	 purpose-user-regexp-purposes)
-     (purpose-compile-user-configuration)
-     (should (equal (hash-table-count purpose--user-mode-purposes) 0))
-     (should (equal (hash-table-count purpose--user-name-purposes) 0))
-     (should (equal (hash-table-count purpose--user-regexp-purposes) 0)))))
+    (let
+        ((purpose-user-mode-purposes '((prog-mode . edit)
+                                       (dired-mode . dired)))
+         (purpose-user-name-purposes '(("editor" . edit)
+                                       ("foo" . bar)))
+         (purpose-user-regexp-purposes '(("^\\*" . common))))
+      (purpose-compile-user-configuration)
+      (should (equal (hash-table-keys purpose--user-mode-purposes) '(dired-mode prog-mode)))
+      (should (equal (hash-table-values purpose--user-mode-purposes) '(dired edit)))
+      (should (equal (hash-table-keys purpose--user-name-purposes) '("foo" "editor")))
+      (should (equal (hash-table-values purpose--user-name-purposes) '(bar edit)))
+      (should (equal (hash-table-keys purpose--user-regexp-purposes) '("^\\*")))
+      (should (equal (hash-table-values purpose--user-regexp-purposes) '(common))))
+    (let (purpose-user-mode-purposes
+          purpose-user-name-purposes
+          purpose-user-regexp-purposes)
+      (purpose-compile-user-configuration)
+      (should (equal (hash-table-count purpose--user-mode-purposes) 0))
+      (should (equal (hash-table-count purpose--user-name-purposes) 0))
+      (should (equal (hash-table-count purpose--user-regexp-purposes) 0)))))
 
 
 (ert-deftest purpose-test-compile-ext-config ()
@@ -57,26 +57,26 @@ hash tables for the uncompiled alists."
 This tests that `purpose-compile-extended-configuration' creates the
 correct hash tables for the uncompiled alists."
   (purpose-with-empty-config
-   (let
-       ((purpose-extended-conf
-	 (purpose-conf "test"
-		       :mode-purposes '((prog-mode . edit)
-					(dired-mode . dired))
-		       :name-purposes '(("editor" . edit)
-					("foo" . bar))
-		       :regexp-purposes '(("^\\*" . common)))))
-     (purpose-set-extension-configuration :test purpose-extended-conf)
-     (should (equal (hash-table-keys purpose--extended-mode-purposes) '(dired-mode prog-mode)))
-     (should (equal (hash-table-values purpose--extended-mode-purposes) '(dired edit)))
-     (should (equal (hash-table-keys purpose--extended-name-purposes) '("foo" "editor")))
-     (should (equal (hash-table-values purpose--extended-name-purposes) '(bar edit)))
-     (should (equal (hash-table-keys purpose--extended-regexp-purposes) '("^\\*")))
-     (should (equal (hash-table-values purpose--extended-regexp-purposes) '(common))))
-   (let (purpose-extended-configuration)
-     (purpose-compile-extended-configuration)
-     (should (equal (hash-table-count purpose--extended-mode-purposes) 0))
-     (should (equal (hash-table-count purpose--extended-name-purposes) 0))
-     (should (equal (hash-table-count purpose--extended-regexp-purposes) 0)))))
+    (let
+        ((purpose-extended-conf
+          (purpose-conf "test"
+                        :mode-purposes '((prog-mode . edit)
+                                         (dired-mode . dired))
+                        :name-purposes '(("editor" . edit)
+                                         ("foo" . bar))
+                        :regexp-purposes '(("^\\*" . common)))))
+      (purpose-set-extension-configuration :test purpose-extended-conf)
+      (should (equal (hash-table-keys purpose--extended-mode-purposes) '(dired-mode prog-mode)))
+      (should (equal (hash-table-values purpose--extended-mode-purposes) '(dired edit)))
+      (should (equal (hash-table-keys purpose--extended-name-purposes) '("foo" "editor")))
+      (should (equal (hash-table-values purpose--extended-name-purposes) '(bar edit)))
+      (should (equal (hash-table-keys purpose--extended-regexp-purposes) '("^\\*")))
+      (should (equal (hash-table-values purpose--extended-regexp-purposes) '(common))))
+    (let (purpose-extended-configuration)
+      (purpose-compile-extended-configuration)
+      (should (equal (hash-table-count purpose--extended-mode-purposes) 0))
+      (should (equal (hash-table-count purpose--extended-name-purposes) 0))
+      (should (equal (hash-table-count purpose--extended-regexp-purposes) 0)))))
 
 
 (ert-deftest purpose-test-compile-default-config ()
@@ -84,58 +84,58 @@ correct hash tables for the uncompiled alists."
 This tests that `purpose-compile-default-configuration' creates the
 correct hash tables."
   (purpose-with-empty-config
-   (purpose-compile-default-configuration)
-   (should (equal (hash-table-keys purpose--default-mode-purposes)
-		  '(package-menu-mode
-		    image-mode
-		    compilation-mode
-		    grep-mode
-		    occur-mode
-		    Buffer-menu-mode
-		    ibuffer-mode
-		    dired-mode
-		    comint-mode
-		    text-mode
-		    prog-mode)))
-   (should (equal (hash-table-values purpose--default-mode-purposes)
-		  '(package
-		    image
-		    search
-		    search
-		    search
-		    buffers
-		    buffers
-		    dired
-		    terminal
-		    edit
-		    edit)))
-   (should (equal (hash-table-keys purpose--default-name-purposes)
-		  '("*shell*" ".hgignore" ".gitignore")))
-   (should (equal (hash-table-values purpose--default-name-purposes)
-		  '(terminal edit edit)))
-   (should (equal (hash-table-keys purpose--default-regexp-purposes)
-                  '("^ \\*Minibuf-[0-9]*\\*$")))
-   (should (equal (hash-table-values purpose--default-regexp-purposes)
-                  '(minibuf)))))
+    (purpose-compile-default-configuration)
+    (should (equal (hash-table-keys purpose--default-mode-purposes)
+                   '(package-menu-mode
+                     image-mode
+                     compilation-mode
+                     grep-mode
+                     occur-mode
+                     Buffer-menu-mode
+                     ibuffer-mode
+                     dired-mode
+                     comint-mode
+                     text-mode
+                     prog-mode)))
+    (should (equal (hash-table-values purpose--default-mode-purposes)
+                   '(package
+                     image
+                     search
+                     search
+                     search
+                     buffers
+                     buffers
+                     dired
+                     terminal
+                     edit
+                     edit)))
+    (should (equal (hash-table-keys purpose--default-name-purposes)
+                   '("*shell*" ".hgignore" ".gitignore")))
+    (should (equal (hash-table-values purpose--default-name-purposes)
+                   '(terminal edit edit)))
+    (should (equal (hash-table-keys purpose--default-regexp-purposes)
+                   '("^ \\*Minibuf-[0-9]*\\*$")))
+    (should (equal (hash-table-values purpose--default-regexp-purposes)
+                   '(minibuf)))))
 
 (ert-deftest purpose-test-set-ext-conf-error ()
   "Test error cases for settings/deleting extension configuration.
 See `purpose-set-extension-configuration' and
 `purpose-del-extension-configuration'."
   (purpose-with-empty-config
-   (should-error (purpose-set-extension-configuration 'foo (purpose-conf "foo")))
-   (purpose-set-extension-configuration :foo (purpose-conf "foo"))
-   (should-error (purpose-del-extension-configuration 'foo))
-   (purpose-del-extension-configuration :foo)))
+    (should-error (purpose-set-extension-configuration 'foo (purpose-conf "foo")))
+    (purpose-set-extension-configuration :foo (purpose-conf "foo"))
+    (should-error (purpose-del-extension-configuration 'foo))
+    (purpose-del-extension-configuration :foo)))
 
 (ert-deftest purpose-test-temp-config-1 ()
   "Test macros for changing the purpose configuration temporarily.
 This one tests `purpose-with-temp-purposes'."
   (let ((original-purposes (purpose-test-sort-symbols (purpose-get-all-purposes))))
     (purpose-with-temp-purposes
-     '(("foo" . foo)) '((".*\\.c" . c)) '((python-mode . py))
-     (should (equal (purpose-test-sort-symbols (purpose-get-all-purposes))
-                    '(c foo general py))))
+        '(("foo" . foo)) '((".*\\.c" . c)) '((python-mode . py))
+      (should (equal (purpose-test-sort-symbols (purpose-get-all-purposes))
+                     '(c foo general py))))
     (should (equal (purpose-test-sort-symbols (purpose-get-all-purposes))
                    original-purposes))))
 
@@ -144,8 +144,8 @@ This one tests `purpose-with-temp-purposes'."
 This one tests `purpose-with-empty-purposes'."
   (let ((original-purposes (purpose-test-sort-symbols (purpose-get-all-purposes))))
     (purpose-with-empty-purposes
-     (should (equal (purpose-test-sort-symbols (purpose-get-all-purposes))
-                    '(general))))
+      (should (equal (purpose-test-sort-symbols (purpose-get-all-purposes))
+                     '(general))))
     (should (equal (purpose-test-sort-symbols (purpose-get-all-purposes))
                    original-purposes))))
 
@@ -154,10 +154,10 @@ This one tests `purpose-with-empty-purposes'."
 This one tests `purpose-with-additional-purposes'."
   (let ((original-purposes (purpose-test-sort-symbols (purpose-get-all-purposes))))
     (purpose-with-additional-purposes
-     '(("foo" . foo)) '((".*\\.c" . c)) '((python-mode . py))
-     (should (equal (purpose-test-sort-symbols (purpose-get-all-purposes))
-                    (purpose-test-sort-symbols
-                     (delete-dups (append original-purposes '(c foo py)))))))
+        '(("foo" . foo)) '((".*\\.c" . c)) '((python-mode . py))
+      (should (equal (purpose-test-sort-symbols (purpose-get-all-purposes))
+                     (purpose-test-sort-symbols
+                      (delete-dups (append original-purposes '(c foo py)))))))
     (should (equal (purpose-test-sort-symbols (purpose-get-all-purposes))
                    original-purposes))))
 

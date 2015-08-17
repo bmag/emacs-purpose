@@ -184,6 +184,19 @@ frame. This means you will get a "popup" frame for help buffers.
                purpose-display-pop-up-frame))
 ```
 
+### Respect purposes when killing a buffer
+When killing a visible buffer, Emacs has to decide which buffer to show instead.
+Enabling the `purpose-x-kill` extension will make Emacs consider the purpoes of
+the window that needs to show a new buffer. If the window is purpose-dedicated,
+the killed buffer is replaced with another buffer with the same purpose. If there
+are no buffers with the same purpose as the killed buffer, the window is deleted.
+To enable the `purpose-x-kill` extension:
+
+```elisp
+(require 'window-purpose-x)
+(purpose-x-kill-setup)
+```
+
 ## Using Purpose with other packages
 See [Integration With Other Packages](https://github.com/bmag/emacs-purpose/wiki/Integration-With-Other-Packages)
 for information about how some packages relate to Purpose.

@@ -78,6 +78,7 @@
   "Create a function named NAME to check the content of a list.
 The generated function receives parameter OBJ, and checks that it is a
 list and each entry in it satisifies ENTRY-PRED."
+  (declare (indent defun) (debug t))
   `(defun ,name (obj)
      "Check that OBJ is a list, and each entry in it satisifies ,entry-pred."
      (and (listp obj)
@@ -353,6 +354,7 @@ done."
 
 (defmacro purpose-save-purpose-config (&rest body)
   "Save the purpose configuration, execute BODY, restore the configuration."
+  (declare (indent defun) (debug t))
   `(let ((purpose--user-mode-purposes (copy-hash-table purpose--user-mode-purposes))
          (purpose--user-name-purposes (copy-hash-table purpose--user-name-purposes))
          (purpose--user-regexp-purposes (copy-hash-table purpose--user-regexp-purposes))
@@ -375,21 +377,23 @@ NAMES, REGEXPS and MODES should be alists as described in
 `purpose-user-name-purposes', `purpose-user-regexp-purposes' and
 `purpose-user-mode-purposes'.
 NAMES, REGEXPS and MODES are used instead of the current purpose configuration
-while BODY is executed. The purpose configuration is restored after BODY
+while BODY is executed.  The purpose configuration is restored after BODY
 is executed."
+  (declare (indent 3) (debug t))
   `(purpose-save-purpose-config
-    (let ((purpose-use-default-configuration nil)
-          (purpose-extended-configuration nil)
-          (purpose-user-name-purposes ,names)
-          (purpose-user-regexp-purposes ,regexps)
-          (purpose-user-mode-purposes ,modes))
-      (purpose-compile-user-configuration)
-      (purpose-compile-extended-configuration)
-      ,@body)))
+     (let ((purpose-use-default-configuration nil)
+           (purpose-extended-configuration nil)
+           (purpose-user-name-purposes ,names)
+           (purpose-user-regexp-purposes ,regexps)
+           (purpose-user-mode-purposes ,modes))
+       (purpose-compile-user-configuration)
+       (purpose-compile-extended-configuration)
+       ,@body)))
 
 (defmacro purpose-with-empty-purposes (&rest body)
   "Execute BODY with an empty purpose configuration.
 The purpose configuration is restored after BODY is executed."
+  (declare (indent defun) (debug t))
   `(purpose-with-temp-purposes nil nil nil ,@body))
 
 (defmacro purpose-with-additional-purposes (names regexps modes &rest body)
@@ -398,14 +402,15 @@ NAMES, REGEXPS and MODES should be alists as described in
 `purpose-user-name-purposes', `purpose-user-regexp-purposes' and
 `purpose-user-mode-purposes'.
 NAMES, REGEXPS and MODES are used to add purposes to the current purpose
-configuration while BODY is executed. The purpose configuration is restored
+configuration while BODY is executed.  The purpose configuration is restored
 after BODY is executed."
+  (declare (indent 3) (debug t))
   `(purpose-save-purpose-config
-    (let ((purpose-user-name-purposes (append ,names purpose-user-name-purposes))
-          (purpose-user-regexp-purposes (append ,regexps purpose-user-regexp-purposes))
-          (purpose-user-mode-purposes (append ,modes purpose-user-mode-purposes)))
-      (purpose-compile-user-configuration)
-      ,@body)))
+     (let ((purpose-user-name-purposes (append ,names purpose-user-name-purposes))
+           (purpose-user-regexp-purposes (append ,regexps purpose-user-regexp-purposes))
+           (purpose-user-mode-purposes (append ,modes purpose-user-mode-purposes)))
+       (purpose-compile-user-configuration)
+       ,@body)))
 
 
 

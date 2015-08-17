@@ -1,4 +1,4 @@
-;;; test-helper.el --- Test helpers -*- lexical-binding: t -*-
+;;; test-helper --- Test helper for window-purpose -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2015 Bar Magal
 
@@ -21,37 +21,63 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
-;; This file contains test helpers.
+;; This file contains test helpers for window-purpose.
+;; The sandbox part is inspired from https://github.com/tonini/overseer.el/blob/master/test/test-helper.el
 
 ;;; Code:
+
+(require 'f)
+
+(defvar cpt-path
+  (f-parent (f-this-file)))
+
+(defvar window-purpose-test-path
+  (f-dirname (f-this-file)))
+
+(defvar window-purpose-root-path
+  (f-parent window-purpose-test-path))
+
+(defvar window-purpose-sandbox-path
+  (f-expand "sandbox" window-purpose-test-path))
+
+(when (f-exists? window-purpose-sandbox-path)
+  (error "Something is already in %s. Check and destroy it yourself" window-purpose-sandbox-path))
+
+(defmacro within-sandbox (&rest body)
+  "Evaluate BODY in an empty sandbox directory."
+  `(let ((default-directory window-purpose-sandbox-path))
+     (when (f-exists? window-purpose-sandbox-path)
+       (f-delete default-directory :force))
+     (f-mkdir window-purpose-sandbox-path)
+     ,@body
+     (f-delete default-directory :force)))
+
+(require 'ert)
 
 (set-frame-width nil 80)
 (set-frame-height nil 24)
 
-(message "setting undercover")
-(require 'undercover)
-(undercover "window-purpose.el"
-            "window-purpose-configuration.el"
-            "window-purpose-core.el"
-            "window-purpose-layout.el"
-            "window-purpose-prefix-overload.el"
-            "window-purpose-switch.el"
-            "window-purpose-utils.el"
-            "window-purpose-fixes.el"
-            "window-purpose-x.el")
+;; In 24.4 and 24.5, setting `undercover' causes an error when requiring `window-purpose'
+(when (version< emacs-version "24.4")
+  (message "setting undercover")
+  (condition-case err
+      (progn
+        (require 'undercover)
+        (undercover "*.el"))
+    (error (message "error setting undercover: %s" err))))
 
 (message "loading purpose")
-
 (require 'window-purpose)
 (require 'window-purpose-x)
 
-(message "loading other packages")
+;; (message "loading other packages")
 
-(require 'lv)
-(require 'helm)
-(require 'neotree)
-(require 'popwin)
-(require 'guide-key)
+;; (require 'lv)
+;; (require 'helm)
+;; (require 'neotree)
+;; (require 'popwin)
+;; (require 'guide-key)
+;; (require 'which-key)
 
 (message "defining helper functions and variables")
 
@@ -101,6 +127,7 @@ it.")
       result)))
 
 (defmacro purpose-with-empty-config (&rest body)
+  (declare (indent defun) (debug t))
   `(let ((purpose--user-mode-purposes (make-hash-table))
          (purpose--user-name-purposes (make-hash-table :test #'equal))
          (purpose--user-regexp-purposes (make-hash-table :test #'equal))
@@ -118,12 +145,13 @@ it.")
      ,@body))
 
 (defmacro purpose-with-temp-config (modes names regexps &rest body)
+  (declare (indent 3) (debug t))
   `(purpose-with-empty-config
-    (let ((purpose-user-mode-purposes ,modes)
-          (purpose-user-name-purposes ,names)
-          (purpose-user-regexp-purposes ,regexps))
-      (purpose-compile-user-configuration)
-      ,@body)))
+     (let ((purpose-user-mode-purposes ,modes)
+           (purpose-user-name-purposes ,names)
+           (purpose-user-regexp-purposes ,regexps))
+       (purpose-compile-user-configuration)
+       ,@body)))
 
 (defun purpose-kill-buffers-safely (&rest buffers)
   "Safely kill BUFFERS.
@@ -133,6 +161,7 @@ Each item in BUFFERS is either a buffer or a buffer's name."
     (mapc #'(lambda (buf) (ignore-errors (kill-buffer buf))) buffers)))
 
 (defmacro purpose-call-with-prefix-arg (arg command)
+  (declare (indent defun) (debug t))
   `(let ((current-prefix-arg ,arg))
      (call-interactively ,command)))
 
@@ -159,6 +188,7 @@ The buffers created have the names \"xxx-p0-0\", \"xxx-p0-1\",
   (mapcar #'buffer-name (purpose-displayed-buffers frame)))
 
 (defmacro purpose-check-displayed-buffers (buffer-names)
+  (declare (indent defun) (debug t))
   `(should (equal (sort (purpose-displayed-buffer-names) #'string-lessp)
                   (sort ,buffer-names #'string-lessp))))
 
@@ -180,5 +210,5 @@ This is a destructive function; it reuses SYMBOLS' storage if possible."
   (cl-sort symbols #'string< :key #'symbol-name))
 
 (message "done defining helpers")
-
+(provide 'test-helper)
 ;;; test-helper.el ends here

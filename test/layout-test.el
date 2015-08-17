@@ -154,21 +154,21 @@
   "Test that `purpose-set-window-purpose' does set the purpose."
   (unwind-protect
       (purpose-with-temp-config
-       '((foo-mode . purp1) (bar-mode . purp2))
-       nil
-       nil
-       (purpose-insert-user-input "purp1")
-       (purpose-call-with-prefix-arg t 'purpose-set-window-purpose)
-       (should (equal (purpose-window-purpose) 'purp1))
-       (should-not (purpose-window-purpose-dedicated-p))
-       (purpose-insert-user-input "purp2")
-       (call-interactively 'purpose-set-window-purpose)
-       (should (equal (purpose-window-purpose) 'purp2))
-       (should (purpose-window-purpose-dedicated-p))
-       (purpose-insert-user-input "purp1")
-       (purpose-call-with-prefix-arg t 'purpose-set-window-purpose)
-       (should (equal (purpose-window-purpose) 'purp1))
-       (should-not (purpose-window-purpose-dedicated-p)))
+          '((foo-mode . purp1) (bar-mode . purp2))
+          nil
+          nil
+        (purpose-insert-user-input "purp1")
+        (purpose-call-with-prefix-arg t 'purpose-set-window-purpose)
+        (should (equal (purpose-window-purpose) 'purp1))
+        (should-not (purpose-window-purpose-dedicated-p))
+        (purpose-insert-user-input "purp2")
+        (call-interactively 'purpose-set-window-purpose)
+        (should (equal (purpose-window-purpose) 'purp2))
+        (should (purpose-window-purpose-dedicated-p))
+        (purpose-insert-user-input "purp1")
+        (purpose-call-with-prefix-arg t 'purpose-set-window-purpose)
+        (should (equal (purpose-window-purpose) 'purp1))
+        (should-not (purpose-window-purpose-dedicated-p)))
     (delete-other-windows)
     (set-window-dedicated-p nil nil)
     (purpose-set-window-purpose-dedicated-p nil nil)

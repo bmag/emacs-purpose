@@ -1,22 +1,27 @@
 language: emacs-lisp
-before_install:
-  # prepare paths for EVM and Cask
-  - sudo mkdir /usr/local/evm
-  - sudo chown $USER:$USER /usr/local/evm
-  - export PATH="$HOME/.cask/bin:$PATH"
-  - export PATH="$HOME/.evm/bin:$PATH"
-  # install EVM, Emacs and Cask (Emacs before Cask, because Cask needs Emacs)
-  - curl -fssl https://raw.githubusercontent.com/rejeep/evm/master/go | bash
-  - evm install $EVM_EMACS --use --skip
-  - curl -fsSL https://raw.githubusercontent.com/cask/cask/master/go | python
-  # initiate cask
-  - cask
-env:
-  # - EVM_EMACS=emacs-24.1-bin
-  # - EVM_EMACS=emacs-24.2-bin
-  - EVM_EMACS=emacs-24.3-bin
-  - EVM_EMACS=emacs-24.4-bin
-  - EVM_EMACS=emacs-24.5-bin
+
 script:
   - emacs --version
   - make test
+
+env:
+  matrix:
+    - EVM_EMACS=emacs-24.5-bin
+    - EVM_EMACS=emacs-24.4-bin
+    - EVM_EMACS=emacs-24.3-bin
+    # - EVM_EMACS=emacs-24.2-bin
+    # - EVM_EMACS=emacs-24.1-bin
+    # - EVM_EMACS=emacs-git-snapshot
+matrix:
+  fast_finish: true
+  # allow_failures:
+  #   - env: EVM_EMACS=emacs-git-snapshot
+
+sudo: required
+before_install:
+  - curl -fsSkL https://gist.github.com/rejeep/7736123/raw > travis.sh && source ./travis.sh
+  - evm install $EVM_EMACS --use --skip
+  - cask
+
+# notifications:
+#   email: false

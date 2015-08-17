@@ -617,5 +617,98 @@ The relation between `purpose-x-persp-switch-buffer-other-frame' and
 
 ;;; --- purpose-x-persp ends here ---
 
+
+
+;;; --- purpose-x-kill ---
+;;; an extensions that makes emacs respect purpose-dedicated window parameter
+;;; when killing a buffer that is visible in a window.
+
+;; copied from `replace-buffer-in-windows' and edited to respect the
+;; purpose-dedicated window parameter
+(defun purpose-x-replace-buffer-in-windows-1 (&optional buffer-or-name)
+  "Replace BUFFER-OR-NAME with some other buffer in all windows showing it.
+BUFFER-OR-NAME may be a buffer or the name of an existing buffer and
+defaults to the current buffer.
+
+When a window showing BUFFER-OR-NAME is buffer-dedicated, that window is
+deleted.  If that window is the only window on its frame, the frame is
+deleted too when there are other frames left.  If there are no other
+frames left, some other buffer is displayed in that window.
+
+When a window showing BUFFER-OR-NAME is purpose-dedicated, BUFFER-OR-NAME
+is replaced with another buffer with the same purpose.  If there are no
+other buffers with the same purpose, follow the same rules as if the
+window was buffer-dedicated.
+
+This function removes the buffer denoted by BUFFER-OR-NAME from all
+window-local buffer lists."
+  (interactive "bBuffer to replace: ")
+  (let* ((buffer (window-normalize-buffer buffer-or-name))
+         (purpose (purpose-buffer-purpose buffer))
+         (other-buffers (delete buffer (purpose-buffers-with-purpose purpose))))
+    (dolist (window (window-list-1 nil nil t))
+      (if (eq (window-buffer window) buffer)
+          (unless (window--delete window t t)
+            (let ((dedicated (purpose-window-purpose-dedicated-p window))
+                  (deletable (window-deletable-p window)))
+              (cond
+               ((and dedicated other-buffers)
+                ;; dedicated, so replace with a buffer with the same purpose
+                (set-window-buffer window (car other-buffers)))
+               ((and dedicated deletable (not other-buffers))
+                ;; dedicated, but no other buffers with the same purpose, so
+                ;; delete the window/frame
+                (if (eq deletable 'frame)
+                    (delete-frame (window-frame window))
+                  (delete-window window)))
+               (t
+                ;; 1) not dedicated, or 2) dedicated and no other buffers with
+                ;; the same purpose, but the window isn't deletable.
+                ;; remove dedicated status and switch to previous buffer
+                (purpose-set-window-purpose-dedicated-p window nil)
+                (set-window-dedicated-p window nil)
+                (switch-to-prev-buffer window 'kill)))))
+        ;; Unrecord BUFFER in WINDOW.
+        (unrecord-window-buffer window buffer)))))
+
+(define-purpose-compatible-advice 'replace-buffer-in-windows
+    :override purpose-x-replace-buffer-in-windows
+    (&optional buffer-or-name)
+    "Override `replace-buffer-in-windows' with a purpose-aware version."
+  ((purpose-x-replace-buffer-in-windows-1 buffer-or-name))
+  ((setq ad-return-value (purpose-x-replace-buffer-in-windows-1 buffer-or-name))))
+
+(defun purpose-x-kill-sync ()
+  "Synchronize `replace-buffer-in-windows' with `purpose-mode'.
+If `purpose-mode' is enabled, override `replace-buffer-in-windows' with
+`purpose-x-replace-buffer-in-windows'.  If `purpose-mode' is disabled,
+cancel the override of `replace-buffer-in-windows'."
+  (if purpose-mode
+      (purpose-advice-add 'replace-buffer-in-windows :override 'purpose-x-replace-buffer-in-windows)
+    (purpose-advice-remove 'replace-buffer-in-windows :override 'purpose-x-replace-buffer-in-windows)))
+
+(defun purpose-x-kill-setup ()
+  "Activate purpose-x-kill extension.
+This extension makes `kill-buffer' aware of the purpose-dedicated window
+parameter, when killing a visible buffer.  If a buffer that is being
+killed is displayed in a window,and that window is purpose-dedicated,
+then try to replace the buffer with another buffer with the same purpose.
+If that isn't possible, treat the window as if it was buffer-dedicated.
+
+This is implemented by overriding `replace-buffer-in-windows' with
+`purpose-x-replace-buffer-in-windows-1'.  See
+`purpose-x-replace-buffer-in-windows-1' for more details."
+  (interactive)
+  (purpose-x-kill-sync)
+  (add-hook 'purpose-mode-hook 'purpose-x-kill-sync))
+
+(defun purpose-x-kill-unset ()
+  "Deactivate purpose-x-kill extension."
+  (interactive)
+  (purpose-advice-remove 'replace-buffer-in-windows :override 'purpose-x-replace-buffer-in-windows)
+  (remove-hook 'purpose-mode-hook 'purpose-x-kill-sync))
+
+;;; --- purpose-x-kill ends here ---
+
 (provide 'window-purpose-x)
 ;;; window-purpose-x.el ends here

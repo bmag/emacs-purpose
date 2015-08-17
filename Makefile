@@ -1,22 +1,25 @@
-EMACS ?= emacs
 CASK ?= cask
-SOURCES = window-purpose-utils.el window-purpose-configuration.el window-purpose-core.el window-purpose-prefix-overload.el window-purpose-switch.el window-purpose-layout.el window-purpose-fixes.el window-purpose.el window-purpose-x.el
+EMACS ?= emacs
 INPUT_FILE := "test/user-input.txt"
 
 all: test
 
-deps:
-	${CASK} install
+# ecukes not used, so test only init
+test: unit
 
-test: clean deps test-fast
-
-test-fast:
+unit:
 	rm -f ${INPUT_FILE}
 	touch ${INPUT_FILE}
 	${CASK} exec ert-runner < ${INPUT_FILE}
 
-compile: clean-elc deps
-	${CASK} exec ${EMACS} -Q --batch -L . -f batch-byte-compile ${SOURCES}
+# ecukes:
+# 	${CASK} exec ecukes
+
+install:
+	${CASK} install
+
+compile:
+	${CASK} exec ${EMACS} -Q --batch -L . -f batch-byte-compile window-purpose*.el
 
 clean: clean-elc clean-deps
 
@@ -25,5 +28,10 @@ clean-elc:
 
 clean-deps:
 	rm -rf .cask/
+
+# make ARGS='--eval "(message \"run me like this\")"' run
+# make ARGS='--batch --eval "(message \"or like this\")"' run
+run:
+	${CASK} exec ${EMACS} -Q -L . ${ARGS}
 
 .PHONY: all test clean
