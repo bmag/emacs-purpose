@@ -727,10 +727,3 @@ This is implemented by overriding `replace-buffer-in-windows' with
 
 (provide 'window-purpose-x)
 ;;; window-purpose-x.el ends here
-
-
-
-
-
-
-
