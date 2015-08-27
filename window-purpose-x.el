@@ -644,14 +644,17 @@ The relation between `purpose-x-persp-switch-buffer-other-frame' and
   "Replace BUFFER-OR-NAME with some other buffer in all windows showing it.
 BUFFER-OR-NAME may be a buffer or the name of an existing buffer and
 defaults to the current buffer.
+
 When a window showing BUFFER-OR-NAME is buffer-dedicated, that window is
 deleted.  If that window is the only window on its frame, the frame is
 deleted too when there are other frames left.  If there are no other
 frames left, some other buffer is displayed in that window.
+
 When a window showing BUFFER-OR-NAME is purpose-dedicated, BUFFER-OR-NAME
 is replaced with another buffer with the same purpose.  If there are no
 other buffers with the same purpose, follow the same rules as if the
 window was buffer-dedicated.
+
 This function removes the buffer denoted by BUFFER-OR-NAME from all
 window-local buffer lists."
   (interactive "bBuffer to replace: ")
@@ -706,6 +709,7 @@ parameter, when killing a visible buffer.  If a buffer that is being
 killed is displayed in a window,and that window is purpose-dedicated,
 then try to replace the buffer with another buffer with the same purpose.
 If that isn't possible, treat the window as if it was buffer-dedicated.
+
 This is implemented by overriding `replace-buffer-in-windows' with
 `purpose-x-replace-buffer-in-windows-1'.  See
 `purpose-x-replace-buffer-in-windows-1' for more details."
@@ -723,3 +727,10 @@ This is implemented by overriding `replace-buffer-in-windows' with
 
 (provide 'window-purpose-x)
 ;;; window-purpose-x.el ends here
+
+
+
+
+
+
+
