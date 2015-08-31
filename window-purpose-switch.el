@@ -1031,7 +1031,7 @@ If Purpose is active (`purpose--active-p' is non-nil), call
 (defmacro without-purpose (&rest body)
   "Make Purpose inactive while executing BODY.
 This works internally by temporarily setting `purpose--active-p'."
-  (declare (indent defun) (debug t))
+  (declare (indent defun) (debug body))
   `(let ((purpose--active-p nil))
      ,@body))
 
@@ -1039,7 +1039,7 @@ This works internally by temporarily setting `purpose--active-p'."
   "Create a command that runs COMMAND with purpose inactive.
 This works internally by using `without-purpose' and
 `call-interactively'."
-  (declare (indent defun) (debug t))
+  (declare (indent defun) (debug function-form))
   `(lambda ()
      (interactive)
      (without-purpose
@@ -1116,7 +1116,7 @@ Another example:
   (add-to-list purpose-special-action-sequences
                `(terminal ,(purpose-generate-display-and-dedicate
                             purpose-display-at-bottom 6)))"
-  (declare (indent defun) (debug t))
+  (declare (indent defun) (debug (function-form &rest sexp)))
   `(lambda (buffer alist)
      (let ((window (apply ,display-fn buffer alist (list,@extra-args))))
        (when window
@@ -1139,7 +1139,7 @@ Possible usage:
             (purpose-generate-display-and-do
               'purpose-display-at-left
               (lambda (window) (message \"Let's do stuff!!\"))))"
-  (declare (indent defun) (debug t))
+  (declare (indent defun) (debug (function-form function-form)))
   `(lambda (buffer alist)
      (let ((window (funcall ,display-fn buffer alist)))
        (when window
@@ -1154,7 +1154,7 @@ Possible usage:
   "Override `purpose-special-action-sequences' temporarily.
 Set ACTIONS as `purpose-special-action-sequences' while BODY is executed.
 `purpose-special-action-sequences' is restored after BODY is executed."
-  (declare (indent 1) (debug t))
+  (declare (indent 1) (debug (sexp body)))
   `(let ((purpose-special-action-sequences ,actions))
      ,@body))
 
@@ -1163,7 +1163,7 @@ Set ACTIONS as `purpose-special-action-sequences' while BODY is executed.
 Shortcut for using `purpose-with-temp-display-actions' with only one action.
 ACTION should be an entry suitable for `purpose-special-action-sequences'.
 BODY has the same meaning as in `purpose-with-temp-display-actions'."
-  (declare (indent 1) (debug t))
+  (declare (indent 1) (debug (sexp body)))
   `(purpose-with-temp-display-actions (list ,action) ,@body))
 
 (defmacro purpose-with-additional-display-actions (actions &rest body)
@@ -1171,7 +1171,7 @@ BODY has the same meaning as in `purpose-with-temp-display-actions'."
 ACTIONS is a list of actions that are added to
 `purpose-special-action-sequences' while BODY is executed.
 `purpose-special-action-sequences' is restored after BODY is executed."
-  (declare (indent 1) (debug t))
+  (declare (indent 1) (debug (sexp body)))
   `(let ((purpose-special-action-sequences
           (append ,actions purpose-special-action-sequences)))
      ,@body))
@@ -1182,7 +1182,7 @@ Shortcut for using `purpose-with-additional-display-actions' with only one
 action.
 ACTION should be an entry suitable for `purpose-special-action-sequences'.
 BODY has the same meaning as in `purpose-with-additional-display-actions'."
-  (declare (indent 1) (debug t))
+  (declare (indent 1) (debug (sexp body)))
   `(purpose-with-additional-display-actions (list ,action) ,@body))
 
 

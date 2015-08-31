@@ -26,7 +26,7 @@
 ;;; Code:
 
 (defmacro purpose-x-kill-test (&rest body)
-  (declare (indent defun) (debug t))
+  (declare (indent defun) (debug body))
   `(save-window-excursion
      (unwind-protect
          (progn

@@ -203,7 +203,7 @@ Functions tested are:
       (should-not (purpose-get-bottom-window)))))
 
 (defmacro purpose-test-preferred-prompt-checker (expected)
-  (declare (indent defun) (debug t))
+  (declare (indent defun) (debug symbolp))
   (cl-case expected
     ('ido '(equal (purpose-get-read-function 'ido-meth 'helm-meth 'vanilla-meth) 'ido-meth))
     ('helm '(equal (purpose-get-read-function 'ido-meth 'helm-meth 'vanilla-meth) 'helm-meth))

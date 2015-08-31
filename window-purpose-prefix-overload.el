@@ -92,7 +92,7 @@ C-u C-u or C-u 2: third command;
 and so on.
 Use it like this:
    (define-purpose-prefix-overload hello '(command1 command2 command3))"
-  (declare (indent defun) (debug t))
+  (declare (indent defun) (debug (&define name (&rest sexp))))
   (unless (eval commands)
     (error "Argument COMMANDS cannot be empty"))
   `(defun ,name (&optional arg)
