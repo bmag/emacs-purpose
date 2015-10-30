@@ -753,13 +753,15 @@ If ALIST is nil, it is ignored and `purpose--alist' is used instead."
   (purpose-message "Purpose display: Buffer: %S; Alist: %S" buffer alist)
   (when (purpose--use-action-function-p buffer alist)
     (let-alist alist
-      (let* ((special-action-sequence (purpose--special-action-sequence buffer
+      (let* ((user-action-sequence .user-action-sequence)
+             (special-action-sequence (purpose--special-action-sequence buffer
                                                                         alist))
              (normal-action-sequence (purpose-alist-get
                                       (or .action-order
                                           purpose-default-action-order)
                                       purpose-action-sequences))
-             (action-sequence (append special-action-sequence
+             (action-sequence (append user-action-sequence
+                                      special-action-sequence
                                       normal-action-sequence))
              (new-window
               ;; call all display actions in action-sequence until one of them
@@ -877,23 +879,37 @@ Never selects the currently selected window."
 
 ;;; Overrides (advices)
 
-;; TODO: maybe recognize some more actions
 (defun purpose-display--action-to-order (action)
   "Return appropriate `action-order' value for ACTION."
   (when (not (listp action))            ; non-nil, non-list
     'prefer-other-window))
+
+(defun purpose-display--action-to-sequence (action)
+  "Return appropriate action sequence for ACTION.
+If ACTION is not t, it should be a list whose car is a function or a
+list of functions, as described in `display-buffer'.  In such case,
+treat the funcion(s) as an action sequence."
+  (when (listp action)
+    (let ((fn (car action)))
+      (if (listp fn)
+          fn
+        (list fn)))))
 
 (define-purpose-compatible-advice 'display-buffer
     :around purpose-display-buffer-advice
     (buffer-or-name &optional action frame)
     "Update `purpose--alist' when calling `display-buffer'."
   ;; new style advice
-  ((let* ((action-order (purpose-display--action-to-order action))
-          (purpose--alist (if action-order
-                              (purpose-alist-set 'action-order
-                                                 action-order
-                                                 purpose--alist)
-                            purpose--alist)))
+  ((let ((action-order (purpose-display--action-to-order action))
+         (user-action-sequence (purpose-display--action-to-sequence action))
+         (purpose--alist purpose--alist))
+     (when action-order
+       (setq purpose--alist
+             (purpose-alist-set 'action-order action-order purpose--alist)))
+     (when user-action-sequence
+       (setq purpose--alist (purpose-alist-set 'user-action-sequence
+                                               user-action-sequence
+                                               purpose--alist)))
      (funcall oldfun buffer-or-name action frame)))
 
   ;; old style advice
