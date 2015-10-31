@@ -914,11 +914,15 @@ treat the funcion(s) as an action sequence."
 
   ;; old style advice
   ((let* ((action-order (purpose-display--action-to-order action))
-          (purpose--alist (if action-order
-                              (purpose-alist-set 'action-order
-                                                 action-order
-                                                 purpose--alist)
-                            purpose--alist)))
+          (user-action-sequence (purpose-display--action-to-sequence action))
+          (purpose--alist purpose--alist))
+     (when action-order
+       (setq purpose--alist
+             (purpose-alist-set 'action-order action-order purpose--alist)))
+     (when user-action-sequence
+       (setq purpose--alist (purpose-alist-set 'user-action-sequence
+                                               user-action-sequence
+                                               purpose--alist)))
      ad-do-it)))
 
 (define-purpose-compatible-advice 'switch-to-buffer
