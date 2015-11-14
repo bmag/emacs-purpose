@@ -108,14 +108,12 @@ Install helm's purpose configuration."
          (window (display-buffer buffer)))
     (neo-window--init window buffer)
     (neo-global--attach)
-    (neo-global--reset-window-size)
+    (neo-global--reset-width)
     window))
 
 (defun purpose--fix-display-neotree (buffer alist)
   "Display neotree window, with Purpose."
-  (let* ((first-window (if neo-modern-sidebar
-                           (frame-root-window)
-                         (neo-global--get-first-window)))
+  (let* ((first-window (frame-root-window))
          (new-window (split-window first-window nil 'left)))
     (purpose-change-buffer buffer new-window 'window alist)
     new-window))
