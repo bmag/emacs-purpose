@@ -90,6 +90,8 @@ All windows are purpose-dedicated.")
                   (inferior-python-mode . misc)
                   (python-inferior-mode . misc)
                   (org-mode . todo)
+                  (grep-mode . misc)
+                  (css-mode . edit)
                   )))
 
 (defvar purpose-x-code1-buffers-changed nil
