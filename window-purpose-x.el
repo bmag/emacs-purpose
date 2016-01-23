@@ -66,9 +66,16 @@
               (0.19333333333333333 0.0 0.8266666666666667 0.85))
     (:purpose misc :purpose-dedicated t :width 0.6 :height 0.1 :edges
               (0.19333333333333333 0.8722222222222222 0.8266666666666667 0.9722222222222222))
+    )
+    (t
+     (125 0 152 35)
+    (:purpose ilist :purpose-dedicated t :width 0.15333333333333332 :height 0.6 :edges
+              (0.82666666666666667 0.0 0.9722222222222222 0.6))
+    (:purpose todo :purpose-dedicated t :width 0.15333333333333332 :height 0.372222222 :edges
+              (0.8266666666666667 0.6 0.9722222222222222 0.9722222222222222))
+
      )
-    (:purpose ilist :purpose-dedicated t :width 0.15333333333333332 :height 0.9722222222222222 :edges
-              (0.8266n666666666667 0.0 1.0133333333333334 0.9722222222222222)))
+    )
   "Window layout for purpose-x-code1-dired-ibuffer.
 Has a main 'edit window, and two side windows - 'dired and 'buffers.
 All windows are purpose-dedicated.")
@@ -82,6 +89,7 @@ All windows are purpose-dedicated.")
                   (imenu-list-major-mode . ilist)
                   (inferior-python-mode . misc)
                   (python-inferior-mode . misc)
+                  (org-mode . todo)
                   )))
 
 (defvar purpose-x-code1-buffers-changed nil
@@ -631,9 +639,6 @@ The relation between `purpose-x-persp-switch-buffer-other-frame' and
   (switch-to-buffer-other-frame buffer norecord))
 
 ;;; --- purpose-x-persp ends here ---
-
-
-
 ;;; --- purpose-x-kill ---
 ;;; an extensions that makes emacs respect purpose-dedicated window parameter
 ;;; when killing a buffer that is visible in a window.
