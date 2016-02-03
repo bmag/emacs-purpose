@@ -948,7 +948,12 @@ If Purpose is active (`purpose--active-p' is non-nil), call
                               ;; but want it to be nil, so we check
                               ;; `called-interactively-p' as well
                               (and force-same-window
-                                   (not (called-interactively-p 'interactive))))
+                                   (not (called-interactively-p 'interactive))
+                                   ;; `ivy--switch-buffer-action' replicates the
+                                   ;; interactive behavior, so handle the same as
+                                   ;; an interactive call
+                                   (not (member 'ivy--switch-buffer-action
+                                                (purpose--function-stack)))))
      (funcall oldfun buffer-or-name norecord force-same-window)))
 
   ;; old style advice
@@ -963,7 +968,12 @@ If Purpose is active (`purpose--active-p' is non-nil), call
                                     ;; but want it to be nil, so we check
                                     ;; `called-interactively-p' as well
                                     (and force-same-window
-                                         (not (called-interactively-p 'interactive)))))
+                                         (not (called-interactively-p 'interactive))
+                                         ;; `ivy--switch-buffer-action' replicates the
+                                         ;; interactive behavior, so handle the same as
+                                         ;; an interactive call
+                                         (not (member 'ivy--switch-buffer-action
+                                                      (purpose--function-stack))))))
      ad-do-it)))
 
 (define-purpose-compatible-advice 'switch-to-buffer-other-window

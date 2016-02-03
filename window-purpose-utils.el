@@ -180,5 +180,21 @@ for each entry in hash-table TABLE."
       "Return all values in HASH-TABLE."
         (purpose--iter-hash (lambda (_kk vv) vv) hash-table))))
 
+;; taken from http://emacs.stackexchange.com/a/7405/6533, credit to Jordon Biondo
+(defun purpose--call-stack ()
+  "Return the current call stack frames."
+  (let ((frames)
+        (frame)
+        (index 5))
+    (while (setq frame (backtrace-frame index))
+      (push frame frames)
+      (cl-incf index))
+    (cl-remove-if-not 'car frames)))
+
+;; taken from http://emacs.stackexchange.com/a/7405/6533, credit to Jordon Biondo
+(defun purpose--function-stack ()
+  "Like `purpose--call-stack' but is a list of only the function names."
+  (butlast (mapcar 'cl-second (purpose--call-stack))))
+
 (provide 'window-purpose-utils)
 ;;; window-purpose-utils.el ends here

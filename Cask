@@ -9,6 +9,7 @@
  (depends-on "cl-lib")
  (depends-on "let-alist")
  (depends-on "imenu-list")
+ ;; (depends-on "counsel") ;; for ivy.el
  ;; (depends-on "hydra") ;; for lv.el
  ;; (depends-on "helm")
  ;; (depends-on "neotree")
