@@ -143,14 +143,16 @@ If a non-buffer-dedicated window with purpose 'dired exists, display
 the directory of the current buffer in that window, using `dired'.
 If there is no window available, do nothing.
 If current buffer doesn't have a filename, do nothing."
-  (when (and (buffer-file-name)
-             (cl-delete-if #'window-dedicated-p
-                           (purpose-windows-with-purpose 'dired)))
-    (save-selected-window
-      (dired (file-name-directory (buffer-file-name)))
-      (when (fboundp 'dired-hide-details-mode)
-        (dired-hide-details-mode))
-      (bury-buffer (current-buffer)))))
+  (when (not (string= (purpose--buffer-major-mode (current-buffer)) "org-mode"))
+    (when (and (buffer-file-name)
+               (cl-delete-if #'window-dedicated-p
+                             (purpose-windows-with-purpose 'dired)))
+      (save-selected-window
+        (dired (file-name-directory (buffer-file-name)))
+        (when (fboundp 'dired-hide-details-mode)
+          (dired-hide-details-mode))
+        (bury-buffer (current-buffer)))))
+  )
 
 (defun purpose-x-code1-update-changed ()
   "Update auxiliary buffers if frame/buffer had changed.
