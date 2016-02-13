@@ -26,6 +26,8 @@
 ;;; Code:
 
 (require 'cl-lib)
+;; subr-x isn't available in 24.3
+(require 'subr-x nil t)
 
 (defcustom purpose-message-on-p nil
   "If non-nil, `purpose-message' will produce a message.
@@ -195,6 +197,29 @@ for each entry in hash-table TABLE."
 (defun purpose--function-stack ()
   "Like `purpose--call-stack' but is a list of only the function names."
   (butlast (mapcar 'cl-second (purpose--call-stack))))
+
+(defalias 'purpose--suffix-p
+  (if (fboundp 'string-suffix-p)
+      #'string-suffix-p
+    ;; taken from string-suffix-p in subr.el in Emacs 24.5.1
+    (lambda (suffix string  &optional ignore-case)
+      "Return non-nil if SUFFIX is a suffix of STRING.
+If IGNORE-CASE is non-nil, the comparison is done without paying
+attention to case differences."
+      (let ((start-pos (- (length string) (length suffix))))
+        (and (>= start-pos 0)
+             (eq t (compare-strings suffix nil nil
+                                    string start-pos nil ignore-case)))))))
+
+(defalias 'purpose--remove-suffix
+  (if (fboundp 'string-remove-suffix)
+      #'string-remove-suffix
+    ;; based on string-remove-suffix in subr-x.el in Emacs 24.5.1
+    (lambda (string suffix)
+      "Remove SUFFIX from STRING if present."
+      (if (purpose--suffix-p suffix string)
+          (substring string 0 (- (length string) (length suffix)))
+        string))))
 
 (provide 'window-purpose-utils)
 ;;; window-purpose-utils.el ends here

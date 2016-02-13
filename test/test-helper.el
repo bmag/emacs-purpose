@@ -67,6 +67,9 @@
 (message "loading purpose")
 (require 'window-purpose)
 (require 'window-purpose-x)
+(setq purpose-layout-dirs
+      '("test/layouts2/"
+        "test/layouts1/"))
 
 ;; (message "loading other packages")
 

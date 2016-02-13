@@ -66,36 +66,82 @@
       (purpose-kill-buffers-safely "*pu-dummy-foo*")
       (purpose-set-window-purpose-dedicated-p nil nil))))
 
-(ert-deftest purpose-cover-save-layout ()
-  "Test that `purpose-save-window-layout' and `purpose-save-frame-layout' don't cause errors."
+(ert-deftest purpose-cover-save-layout-file ()
+  "Test that `purpose-save-window-layout-file' and `purpose-save-frame-layout-file' don't cause errors."
   (let ((filename "just-some-file"))
     (unwind-protect
         (progn
           (delete-other-windows)
           (split-window)
-          (purpose-save-window-layout filename)
+          (purpose-save-window-layout-file filename)
           (delete-file filename)
-          (purpose-save-frame-layout filename))
+          (purpose-save-frame-layout-file filename))
       (ignore-errors (delete-file filename)))))
 
-(ert-deftest purpose-cover-load-layout ()
-  "Test that `purpose-load-window-layout' and `purpose-load-frame-layout' don't cause errors."
+(ert-deftest purpose-cover-save-layout ()
+  "Test that `purpose-save-window-layout' and `purpose-save-frame-layout' don't cause errors."
+  (let* ((layout-name "just-some-layout")
+         (layout-dir (car purpose-layout-dirs))
+         (window-filename (concat (file-name-as-directory layout-dir)
+                                  layout-name ".window-layout"))
+         (frame-filename (concat (file-name-as-directory layout-dir)
+                                  layout-name ".frame-layout")))
+    (unwind-protect
+        (progn
+          (delete-other-windows)
+          (split-window)
+          (purpose-save-window-layout layout-name layout-dir)
+          (should (file-exists-p window-filename))
+          (delete-file window-filename)
+          (purpose-save-frame-layout layout-name layout-dir)
+          (should (file-exists-p frame-filename))
+          (delete-file frame-filename))
+      (ignore-errors (delete-file window-filename))
+      (ignore-errors (delete-file frame-filename)))))
+
+(ert-deftest purpose-cover-load-layout-file ()
+  "Test that `purpose-load-window-layout-file' and `purpose-load-frame-layout-file' don't cause errors."
   (let ((filename "just-some-file"))
     (unwind-protect
         (progn
           (delete-other-windows)
           (split-window)
           (message "saving window layout ...")
-          (purpose-save-window-layout filename)
+          (purpose-save-window-layout-file filename)
           (delete-other-windows)
           (message "loading window layout ...")
-          (purpose-load-window-layout filename)
+          (purpose-load-window-layout-file filename)
           (should (equal (length (window-list)) 2))
           (message "saving frame layout ...")
-          (purpose-save-frame-layout filename)
+          (purpose-save-frame-layout-file filename)
           (message "loading frame layout")
-          (purpose-load-frame-layout filename))
+          (purpose-load-frame-layout-file filename))
       (ignore-errors (delete-file filename)))))
+
+(ert-deftest purpose-test-load-layout ()
+  "Test that `purpose-load-window-layout' and `purpose-load-frame-layout-file' load a layout correctly."
+  (let ((layout-in-dir1 "dired2")
+        (layout-in-dir2 "dired-edit-general")
+        (layout-in-both-dirs "edit-terminal")
+        (frame-layout "edit-terminal"))
+    (message "loading window layout from lower priority directory ...")
+    (purpose-load-window-layout layout-in-dir1)
+    (should (equal (mapcar #'purpose-window-purpose (window-list))
+                   '(dired dired)))
+    (message "loading window layout from higher priority directory ...")
+    (purpose-load-window-layout layout-in-dir2)
+    (should (equal (mapcar #'purpose-window-purpose (window-list))
+                   '(dired edit general)))
+    (message "loading window layout from both directories (should prefer higher priority dir) ...")
+    (purpose-load-window-layout layout-in-both-dirs)
+    ;; layout from lower priority dir produces '(edit edit terminal) instead
+    (should (equal (mapcar #'purpose-window-purpose (window-list))
+                   '(edit terminal)))
+    (message "loading frame layout ...")
+    ;; frame-layout should only contain one frame, so no need to delete frames afterwards
+    (purpose-load-frame-layout frame-layout)
+    (should (equal (mapcar #'purpose-window-purpose (window-list))
+                   '(edit edit terminal terminal)))))
 
 (ert-deftest purpose-test-interactive-save-window-layout ()
   "Test interactive saving and loading of window layout."
@@ -108,11 +154,11 @@
           (setq stored-layout (purpose-get-window-layout))
           (should stored-layout)
           (purpose-insert-user-input filename)
-          (call-interactively 'purpose-save-window-layout)
+          (call-interactively 'purpose-save-window-layout-file)
           (should (file-exists-p filename))
           (delete-other-windows)
           (purpose-insert-user-input filename)
-          (call-interactively 'purpose-load-window-layout)
+          (call-interactively 'purpose-load-window-layout-file)
           (should (equal stored-layout (purpose-get-window-layout))))
       (ignore-errors (delete-file filename)))))
 
@@ -128,11 +174,11 @@
           (setq stored-layout (purpose-get-frame-layout))
           (should stored-layout)
           (purpose-insert-user-input filename)
-          (call-interactively 'purpose-save-frame-layout)
+          (call-interactively 'purpose-save-frame-layout-file)
           (should (file-exists-p filename))
           (delete-other-windows)
           (purpose-insert-user-input filename)
-          (call-interactively 'purpose-load-frame-layout)
+          (call-interactively 'purpose-load-frame-layout-file)
           (should (equal stored-layout (purpose-get-frame-layout))))
       (ignore-errors (delete-file filename)))))
 
