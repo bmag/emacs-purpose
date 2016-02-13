@@ -63,8 +63,10 @@ In init file:
 | <kbd>C-c , d</kbd>   | `purpose-toggle-window-purpose-dedicated`                                                                                 |
 | <kbd>C-c , D</kbd>   | `purpose-toggle-window-buffer-dedicated`                                                                                  |
 | <kbd>C-c , 1</kbd>   | `purpose-delete-non-dedicated-windows`                                                                                    |
-|             | `purpose-save-window-layout`: save current layout to file                                                                 |
-|             | `purpose-load-window-layout`: load layout from file                                                                       |
+|             | `purpose-save-window-layout`: save current layout (by name)                                                                |
+|             | `purpose-load-window-layout`: load layout (by name)                                                                       |
+|             | `purpose-save-window-layout-file`: save current layout directly to file                                                                |
+|             | `purpose-load-window-layout`: load layout directly from file                                                                       |
 |             | `purpose-reset-window-layout`: reload previously loaded layout                                                            |
 
 ### Example: Simple Python Layout
@@ -113,6 +115,9 @@ purpose. This window will only display buffers with the same purpose. A "!" in
 the mode-line next to the window's purpose indicates that the window is
 purpose-dedicated.
 
+You can delete all non-dedicated windows by using
+`purpose-delete-non-dedicated-windows`.
+
 ### Switching buffers
 When switching buffers, Purpose will display the new buffer in the correct
 window, according to the current configuration.
@@ -137,18 +142,26 @@ current window. Otherwise, a dummy buffer will be created and used.
 ### Changing layout
 Purpose lets you save, load and reset the window layout.
 
-Use `purpose-save-window-layout` to save the current window layout to a file.
+Use `purpose-save-window-layout` to save the current window layout. The layout
+will be saved in a directory of your choice, in a file named
+`<layout-name>.window-layout`.
 
-Use `purpose-load-window-layout` to load a window layout from a file.
+Use `purpose-load-window-layout` to load a window layout. The available layouts
+are located the directories specified in customizable variable `purpose-layout-dirs`.
+
+Use `purpose-save-window-layout-file` to save the current window layout directly to
+a file of your choice.
+
+Use `purpose-load-window-layout-file` to load a window layout directly from a file
+of your choice.
 
 Use `purpose-reset-window-layout` to reset the window layout to the latest
 layout that you loaded.
 
-You may want to store all your layouts in a directory, and change the value of
-`purpose-default-layout-file` to point to that directory.
-
-You can delete all non-dedicated windows by using
-`purpose-delete-non-dedicated-windows`. 
+In addition to window layouts, Purpose also lets save, load and reset the frame
+layout. A "frame layout" consists of the window layouts of multiple frames.
+All of the window layout commands have frame layout equivalents, e.g.
+`purpose-load-frame-layout` is equivalent to `purpose-load-window-layout`.
 
 ## Customizing Purpose
 
@@ -196,6 +209,11 @@ To enable the `purpose-x-kill` extension:
 (require 'window-purpose-x)
 (purpose-x-kill-setup)
 ```
+
+### Location of Layout Files
+Window layout and frame layout files are stored in the directories specified by
+`purpose-layout-dirs`. By default, its value is `("~/.emacs.d/layouts/")`. To store
+layouts in a different location, simply change the value of this variable.
 
 ## Using Purpose with other packages
 See [Integration With Other Packages](https://github.com/bmag/emacs-purpose/wiki/Integration-With-Other-Packages)
