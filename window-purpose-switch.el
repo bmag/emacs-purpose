@@ -768,7 +768,7 @@ If ALIST is nil, it is ignored and `purpose--alist' is used instead."
               ;; succeeds, and return the window used for display (action's
               ;; return value)
               (cl-do ((action-sequence action-sequence (cdr action-sequence))
-                      (window nil 
+                      (window nil
                               (progn
                                 (purpose-message "trying: %S"
                                                  (car action-sequence))
@@ -800,7 +800,10 @@ If ALIST is nil, it is ignored and `purpose--alist' is used instead."
                           (purpose-message
                            "falling back to regular display-buffer")
                           nil)))))
-          (when window
+          ;; window can be a non-nil non-window object. e.g.
+          ;; `display-buffer-no-window' returns 'fail (`display-buffer' treats
+          ;; 'fail specially)
+          (when (windowp window)
             (prog1 window
               (run-hook-with-args 'purpose-display-buffer-functions
                                   window))))))))
@@ -881,7 +884,7 @@ Never selects the currently selected window."
 
 (defun purpose-display--action-to-order (action)
   "Return appropriate `action-order' value for ACTION."
-  (when (not (listp action))            ; non-nil, non-list
+  (unless (listp action)            ; non-nil, non-list
     'prefer-other-window))
 
 (defun purpose-display--action-to-sequence (action)
