@@ -49,6 +49,8 @@
 (require 'dired)
 (require 'ibuffer)
 (require 'ibuf-ext)
+;; needed until imenu-list is updated
+(defvar purpose-special-action-sequences nil)
 (require 'imenu-list)
 
 (defvar purpose-x-code1--window-layout
@@ -359,20 +361,26 @@ When changing the value of this variable in elisp code, you should call
   "Set up a popup-like behavior for buffers with purpose PURPOSE.
 DISPLAY-FN is the display function to use for creating the popup window
 for purpose PURPOSE, and defaults to `purpose-display-at-bottom'."
-  (setq purpose-special-action-sequences
-        (cl-delete purpose purpose-special-action-sequences :key #'car))
-  (push (list purpose
-              #'purpose-display-reuse-window-buffer
-              #'purpose-display-reuse-window-purpose
-              (or display-fn #'purpose-display-at-bottom))
-        purpose-special-action-sequences))
+  (setq display-buffer-alist
+        (cl-delete (purpose-display-buffer-predicate purpose)
+                   display-buffer-alist
+                   :key #'car
+                   :test #'equal))
+  (push `(,(purpose-display-buffer-predicate purpose)
+          (purpose-display-reuse-window-buffer
+           purpose-display-reuse-window-purpose
+           ,(or display-fn #'purpose-display-at-bottom)))
+        display-buffer-alist))
 
 (defun purpose-x-unpopupify-purpose (purpose)
   "Remove popup-like behavior for buffers purpose PURPOSE.
 This actually removes any special treatment for PURPOSE in
-`purpose-special-action-sequences', not only popup-like behavior."
-  (setq purpose-special-action-sequences
-        (cl-delete purpose purpose-special-action-sequences :key #'car)))
+`display-buffer-alist', not only popup-like behavior."
+  (setq display-buffer-alist
+        (cl-delete (purpose-display-buffer-predicate purpose)
+                   display-buffer-alist
+                   :key #'car
+                   :test #'equal)))
 
 (defun purpose-x-popwin-update-conf ()
   "Update purpose-x-popwin's purpose configuration.
@@ -489,8 +497,6 @@ the variables `purpose-x-popwin-major-modes',
 Look at `purpose-x-popwin-*' variables and functions to learn more."
   (interactive)
   (purpose-x-popwin-update-conf)
-  (setq purpose-special-action-sequences
-        (cl-delete 'popup purpose-special-action-sequences :key #'car))
   (purpose-x-popupify-purpose 'popup #'purpose-x-popwin-display-buffer))
 
 (defun purpose-x-popwin-unset ()

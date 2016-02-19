@@ -151,16 +151,14 @@ When `purpose--active-p' is nil, call original `neo-global--create-window'."
          (setq ad-return-value (find-file full-path))
        (without-purpose ad-do-it))))
 
-  ;; using purpose 'Neotree, because using 'neotree causes problems with
-  ;; `purpose-special-action-sequences' ('neotree is also a function, so
-  ;; `purpose--special-action-sequence' will try to call it)
   (purpose-set-extension-configuration
    :neotree
-   (purpose-conf "Neotree" :name-purposes `((,neo-buffer-name . Neotree))))
-  (add-to-list 'purpose-special-action-sequences
-               '(Neotree purpose-display-reuse-window-buffer
-                         purpose-display-reuse-window-purpose
-                         purpose--fix-display-neotree))
+   (purpose-conf "Neotree" :name-purposes `((,neo-buffer-name . neotree))))
+  (add-to-list 'display-buffer-alist
+               `(,(purpose-display-buffer-predicate 'neotree)
+                 (purpose-display-reuse-window-buffer
+                  purpose-display-reuse-window-purpose
+                  purpose--fix-display-neotree)))
   (purpose-advice-add 'neo-global--create-window
                       :around 'purpose-fix-neotree-create-window-advice)
   (purpose-advice-add 'neo-open-file

@@ -95,18 +95,6 @@ it yourself.")
 
 (defvar purpose-default-action-order 'prefer-other-window)
 
-(defvar purpose-special-action-sequences nil
-  "This variable makes Purpose handle some buffers differently.
-`purpose-special-action-sequences' should be a list.  Each entry in the
-list is a list itself, where:
-1. the entry's first item (entry's car) is a condition
-2. the entry's rest items (entry's cdr) are display functions
-Condition is either a purpose, or a predicate function that takes 3
-arguments: PURPOSE, BUFFER, ALIST.
-When `purpose--action-function' tries to display a buffer, it will try
-first the action sequences in `purpose-special-action-sequences' whose
-condition was met.")
-
 (defcustom purpose-display-at-top-height 8
   "Height for new windows created by `purpose-display-at-top'.
 This should be either a positive integer or a percentage between 0 to 1.
@@ -192,6 +180,19 @@ WINDOW can be reused if it isn't buffer-dedicated and if it already has
 the purpose PURPOSE."
   (and (not (window-dedicated-p window))
        (eql purpose (purpose-window-purpose window))))
+
+(defmacro purpose-display-buffer-predicate (purpose)
+  "Create a purpose predicate for use with `display-buffer-alist'.
+Return a lambda that checks if a buffer's purpose is PURPOSE.
+The lambda can be used as the condition part of an entry in
+`display-buffer-alist'.
+
+Example:
+ (push `(,(purpose-display-buffer-predicate 'terminal)
+         (purpose-dislpay-reuse-window-purpose
+          purpose-display-maybe-other-window))')"
+  `(lambda (buffer _action)
+     (eq (purpose-buffer-purpose buffer) ,purpose)))
 
 (defun purpose--reusable-frames (alist)
   "Return a list of reusable frames.
@@ -702,27 +703,6 @@ have the default width."
               in purpose-action-function-ignore-buffer-names
               never (string-match-p ignored-regexp buffer-name)))))
 
-(defun purpose--special-action-sequence (buffer alist)
-  "Return special action sequences to use for display BUFFER.
-This function loops over list `purpose-special-action-sequences' and for
-each entry in the list:
-- check if the entry's condition (entry's car):
-  a. is equal to BUFFER's purpose, or
-  b. is a function that returns non-nil when called with these 3
-     arguments: buffer's purpose, BUFFER, ALIST.
-- if so, append the entry's action sequence to the result
-The function returns a list of display functions that
-`purpose--action-function' should use before trying the regular action
-sequence."
-  (let ((purpose (purpose-buffer-purpose buffer)))
-    (purpose-flatten
-     (cl-loop
-      for (condition . action-sequence) in purpose-special-action-sequences
-      when (or (eql purpose condition)
-               (and (functionp condition)
-                    (funcall condition purpose buffer alist)))
-      collect action-sequence))))
-
 ;; Purpose action function (integration with `display-buffer')
 (defun purpose--action-function (buffer alist)
   "Action function to use for overriding default display-buffer
@@ -735,14 +715,11 @@ If ALIST is nil, it is ignored and `purpose--alist' is used instead."
   (when (purpose--use-action-function-p buffer alist)
     (let-alist alist
       (let* ((user-action-sequence .user-action-sequence)
-             (special-action-sequence (purpose--special-action-sequence buffer
-                                                                        alist))
              (normal-action-sequence (purpose-alist-get
                                       (or .action-order
                                           purpose-default-action-order)
                                       purpose-action-sequences))
              (action-sequence (append user-action-sequence
-                                      special-action-sequence
                                       normal-action-sequence))
              (new-window
               ;; call all display actions in action-sequence until one of them
@@ -1112,9 +1089,9 @@ Example of how this macro might be used:
             (purpose-generate-display-and-dedicate
              'purpose-display-at-bottom))
 Another example:
-  (add-to-list purpose-special-action-sequences
-               `(terminal ,(purpose-generate-display-and-dedicate
-                            purpose-display-at-bottom 6)))"
+  (add-to-list display-buffer-alist
+               `(\"*ielm*\" ,(purpose-generate-display-and-dedicate
+                              purpose-display-at-bottom 6)))"
   (declare (indent defun) (debug (function-form &rest sexp)))
   `(lambda (buffer alist)
      (let ((window (apply ,display-fn buffer alist (list,@extra-args))))
@@ -1144,45 +1121,6 @@ Possible usage:
        (when window
          (funcall ,do-fn window))
        window)))
-
-
-
-;;; change `purpose-special-action-sequences' temporarily
-
-(defmacro purpose-with-temp-display-actions (actions &rest body)
-  "Override `purpose-special-action-sequences' temporarily.
-Set ACTIONS as `purpose-special-action-sequences' while BODY is executed.
-`purpose-special-action-sequences' is restored after BODY is executed."
-  (declare (indent 1) (debug (sexp body)))
-  `(let ((purpose-special-action-sequences ,actions))
-     ,@body))
-
-(defmacro purpose-with-temp-display-action (action &rest body)
-  "Override `purpose-special-action-sequences' temporarily.
-Shortcut for using `purpose-with-temp-display-actions' with only one action.
-ACTION should be an entry suitable for `purpose-special-action-sequences'.
-BODY has the same meaning as in `purpose-with-temp-display-actions'."
-  (declare (indent 1) (debug (sexp body)))
-  `(purpose-with-temp-display-actions (list ,action) ,@body))
-
-(defmacro purpose-with-additional-display-actions (actions &rest body)
-  "Add to `purpose-special-action-sequences' temporarily.
-ACTIONS is a list of actions that are added to
-`purpose-special-action-sequences' while BODY is executed.
-`purpose-special-action-sequences' is restored after BODY is executed."
-  (declare (indent 1) (debug (sexp body)))
-  `(let ((purpose-special-action-sequences
-          (append ,actions purpose-special-action-sequences)))
-     ,@body))
-
-(defmacro purpose-with-additional-display-action (action &rest body)
-  "Add to `purpose-special-action-sequences' temporarily.
-Shortcut for using `purpose-with-additional-display-actions' with only one
-action.
-ACTION should be an entry suitable for `purpose-special-action-sequences'.
-BODY has the same meaning as in `purpose-with-additional-display-actions'."
-  (declare (indent 1) (debug (sexp body)))
-  `(purpose-with-additional-display-actions (list ,action) ,@body))
 
 
 

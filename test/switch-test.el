@@ -355,36 +355,6 @@ Window layout should be unchanged."
       (purpose-mode -1)
       (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p1-0" "xxx-p1-1"))))
 
-(ert-deftest purpose-test-special-action-sequences ()
-  "Test `purpose-special-action-sequences' properly affects display behavior.
-- (purpose . (display-functions)) causes <display-functions> to be
-  called for buffers with <purpose>.
-- (predicate . (display-functions)) causes <display-functions> to be
-  called for buffers that match <predicate>."
-  (save-window-excursion
-    (unwind-protect
-        (purpose-with-temp-config
-            nil nil '(("^xxx-p0-" . p0) ("^xxx-p1-" . p1) ("^xxx-p2-" . p2))
-          (purpose-create-buffers-for-test :p0 1 :p1 1 :p2 1)
-          (purpose-mode 1)
-          (setq test-happend 0)
-          (let ((purpose-special-action-sequences
-                 '((p1
-                    (lambda (buffer alist) (setq test-happened 1) (display-buffer-at-bottom buffer alist)))
-                   ((lambda (purpose buffer alist) (eql (purpose-buffer-purpose buffer) 'p2))
-                    (lambda (buffer alist) (setq test-happened 2) (display-buffer-at-bottom buffer alist))))))
-            (delete-other-windows)
-            (set-window-buffer nil "xxx-p0-0")
-            (switch-to-buffer "xxx-p1-0")
-            (message "Windows: %S" (window-list))
-            (should (equal test-happened 1))
-            (delete-other-windows)
-            (set-window-buffer nil "xxx-p0-0")
-            (switch-to-buffer "xxx-p2-0")
-            (should (equal test-happened 2))))
-      (purpose-mode -1)
-      (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p1-0" "xxx-p2-0"))))
-
 (ert-deftest purpose-cover-select-buffer-without-action-order ()
   "Test `purpose-select-buffer' does use `purpose-default-action-order'."
   (save-window-excursion
@@ -437,36 +407,6 @@ Window layout should be unchanged."
       (delete-other-windows)
       (purpose-set-window-purpose-dedicated-p nil nil)
       (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p1-0"))))
-
-(ert-deftest purpose-test-temp-actions-1 ()
-  "Test macros for changing `purpose-special-action-sequences' temporarily.
-This one tests `purpose-with-temp-display-actions' and
-`purpose-with-temp-display-action'."
-  (let ((original-actions purpose-special-action-sequences)
-        (new-actions '((py purpose-display-reuse-window-buffer)
-                       (c purpose-display-reuse-window-purpose))))
-    (purpose-with-temp-display-actions new-actions
-      (should (equal purpose-special-action-sequences new-actions)))
-    (should (equal purpose-special-action-sequences original-actions))
-    (purpose-with-temp-display-action (car new-actions)
-      (should (equal purpose-special-action-sequences (list (car new-actions)))))
-    (should (equal purpose-special-action-sequences original-actions))))
-
-(ert-deftest purpose-test-temp-actions-1 ()
-  "Test macros for changing `purpose-special-action-sequences' temporarily.
-This one tests `purpose-with-additional-display-actions' and
-`purpose-with-additional-display-action'."
-  (let ((original-actions purpose-special-action-sequences)
-        (new-actions '((py purpose-display-reuse-window-buffer)
-                       (c purpose-display-reuse-window-purpose))))
-    (purpose-with-additional-display-actions new-actions
-      (should (equal purpose-special-action-sequences
-                     (append new-actions original-actions))))
-    (should (equal purpose-special-action-sequences original-actions))
-    (purpose-with-additional-display-action (car new-actions)
-      (should (equal purpose-special-action-sequences
-                     (append (list (car new-actions)) original-actions))))
-    (should (equal purpose-special-action-sequences original-actions))))
 
 (provide 'switch-test)
 
