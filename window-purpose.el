@@ -294,11 +294,12 @@ This function is called when `purpose-mode' is deactivated."
   (if purpose-mode
       (progn
         (purpose--add-advices)
-        (setq display-buffer-overriding-action
+        (setq display-buffer-base-action
               '(purpose--action-function . nil))
         (setq purpose--active-p t)
         (purpose-fix-install))
     (purpose--remove-advices)
+    (setq display-buffer-base-action '(nil))
     (setq purpose--active-p nil)))
 
 (push '(purpose-dedicated . writable) window-persistent-parameters)
