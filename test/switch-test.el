@@ -150,6 +150,10 @@
             (select-window (split-window))
             (set-window-buffer nil "xxx-p0-0")
             ;; (purpose-switch-buffer-other-window "xxx-p0-1")
+            ;; test fails here because fallback behavior has changed
+            ;; this failure started when `purpose-display-fallback' was removed, because now
+            ;; the fallback is controlled by `display-buffer-fallback-action'
+            ;; TODO: decide on proper fallback behavior, implemented and fix tests
             (switch-to-buffer-other-window "xxx-p0-1")
             (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-1" "xxx-p1-0"))
             (purpose-mode -1)))
@@ -257,6 +261,11 @@
             (set-window-buffer nil "xxx-p0-0")
             (set-window-dedicated-p nil t)
             ;; (purpose-pop-buffer-same-window "xxx-p0-1")
+            ;; test fails here because of error while falling back to display "xxx-p0-1"
+            ;; in a new frame via `display-buffer-pop-up-frame'.
+            ;; this error started when `purpose-display-fallback' was removed, because now
+            ;; the fallback is controlled by `display-buffer-fallback-action'
+            ;; TODO: decide on proper fallback behavior, implemented and fix tests
             (pop-to-buffer-same-window "xxx-p0-1")
             (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-1" "xxx-p1-0"))
             (purpose-mode -1)))
