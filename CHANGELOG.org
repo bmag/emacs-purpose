@@ -1,0 +1,28 @@
+* base-action branch
+** HOOK INTO ~display-buffer-base-action~ INSTEAD OF ~display-buffer-overriding-action~
+   MAJOR MAJOR MAJOR!!! This is a major change in implementation details. It is
+   inteded to simplify the configuration of display rules by using the original
+   ~display-buffer-alist~, which isn't shadowed by Purpose anymore.
+** get rid a ~purpose-display-fallback~
+   No longer necessary, use regular ~display-buffer~ fallback mechanism via
+   ~display-buffer-fallback-action~
+** ~purpose-special-action-sequences~ is deprecated and replaced by ~display-buffer-alist~
+   Example of configuration migration:
+   
+   Old:
+   #+BEGIN_SRC emacs-lisp
+   (push '(Neotree purpose-display-reuse-window-buffer
+           purpose-display-reuse-window-purpose
+           purpose--fix-display-neotree)
+         purpose-special-action-sequences)
+   #+END_SRC
+
+   New:
+   #+BEGIN_SRC emacs-lisp
+   (push '((lambda (buffer)
+             (eq (purpose-buffer-purpose buffer) 'Neotree))
+           (purpose-display-reuse-window-buffer
+            purpose-display-reuse-window-purpose
+            purpose--fix-display-neotree))
+         display-buffer-alist)
+   #+END_SRC
