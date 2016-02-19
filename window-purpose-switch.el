@@ -38,25 +38,6 @@
 `switch-to-buffer' behavior should not be overridden.  This is a list of
 names.")
 
-(defcustom purpose-display-fallback 'pop-up-window
-  "Fallback action to use when `purpose--action-function' couldn't
-display a buffer.
-This should be either `pop-up-window' for displaying the buffer in a new
-window, `pop-up-frame' for displaying the buffer in a new frame, `error'
-for signalling an error, or nil for using the regular (purpose-less)
-`display-buffer' behavior.
-`purpose-display-fallback' can also be a display function.  In this
-case, the function is called with two arguments: BUFFER and ALIST, and
-should return the window that it used to display the buffer.
-Any other value is treated the same as nil."
-  :group 'purpose
-  :type '(choice (const pop-up-window)
-                 (const pop-up-frame)
-                 (const error)
-                 (const nil)
-                 function)
-  :package-version "1.4")
-
 (defcustom purpose-display-buffer-functions nil
   "Hook to run after displaying a buffer with `purpose--action-function'.
 This hook is called with one argument - the window used for display."
@@ -774,39 +755,13 @@ If ALIST is nil, it is ignored and `purpose--alist' is used instead."
                                                  (car action-sequence))
                                 (funcall (car action-sequence) buffer alist))))
                   ((or (null action-sequence) window) window))))
-        (let ((window (if new-window
-                          new-window
-                        (cond
-                         ((eql purpose-display-fallback 'pop-up-frame)
-                          (purpose-message
-                           "trying fallback: purpose-display-pop-up-frame")
-                          (purpose-display-pop-up-frame buffer alist))
-
-                         ((eql purpose-display-fallback 'pop-up-window)
-                          (purpose-message
-                           "trying fallback: purpose-display-pop-up-window")
-                          (purpose-display-pop-up-window buffer alist))
-
-                         ((or (eql purpose-display-fallback 'error)
-                              (eql .action-order 'force-same-window))
-                          (error "No window available"))
-
-                         ((functionp purpose-display-fallback)
-                          (purpose-message
-                           "trying custom fallback %s" purpose-display-fallback)
-                          (funcall purpose-display-fallback buffer alist))
-
-                         (t
-                          (purpose-message
-                           "falling back to regular display-buffer")
-                          nil)))))
-          ;; window can be a non-nil non-window object. e.g.
-          ;; `display-buffer-no-window' returns 'fail (`display-buffer' treats
-          ;; 'fail specially)
-          (when (windowp window)
-            (prog1 window
-              (run-hook-with-args 'purpose-display-buffer-functions
-                                  window))))))))
+        ;; window can be a non-nil non-window object. e.g.
+        ;; `display-buffer-no-window' returns 'fail (`display-buffer' treats
+        ;; 'fail specially)
+        (when (windowp new-window)
+          (prog1 new-window
+            (run-hook-with-args 'purpose-display-buffer-functions
+                                new-window)))))))
 
 (defun purpose-select-buffer (buffer-or-name &optional action-order norecord)
   "Display buffer BUFFER-OR-NAME in window and then select that window.
