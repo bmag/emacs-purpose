@@ -66,7 +66,7 @@ This function should be advised around
 (defun purpose--fix-hydra-lv ()
   "Add hydra's LV buffer to Purpose's ignore list."
   (eval-after-load 'lv
-    '(add-to-list 'purpose-action-function-ignore-buffer-names "^\\*LV\\*$")))
+    '(add-to-list 'purpose-ignored-buffer-regexps "^\\*LV\\*$")))
 
 
 
@@ -81,9 +81,9 @@ This function should be advised around
 Add helm's buffers to Purposes's ignore list.
 Install helm's purpose configuration."
   (eval-after-load 'helm
-    '(add-to-list 'purpose-action-function-ignore-buffer-names "^\\*Helm"))
+    '(add-to-list 'purpose-ignored-buffer-regexps "^\\*Helm"))
   (eval-after-load 'helm
-    '(add-to-list 'purpose-action-function-ignore-buffer-names "^\\*helm"))
+    '(add-to-list 'purpose-ignored-buffer-regexps "^\\*helm"))
   (eval-after-load 'helm
     '(purpose-set-extension-configuration :helm purpose--helm-conf)))
 
@@ -212,7 +212,7 @@ Don't call this function before `popwin' is loaded."
   "Don't interfere with which-key, and use a seperate which-key purpose."
   (eval-after-load 'which-key
     '(progn
-       (add-to-list 'purpose-action-function-ignore-buffer-names (regexp-quote which-key-buffer-name))
+       (add-to-list 'purpose-ignored-buffer-regexps (regexp-quote which-key-buffer-name))
        (purpose-set-extension-configuration
         :which-key
         (purpose-conf

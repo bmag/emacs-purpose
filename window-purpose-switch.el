@@ -29,14 +29,24 @@
 (require 'window-purpose-core)
 (require 'window-purpose-utils)
 
-(defvar purpose-action-function-ignore-buffer-names
+;; Can't get rid of `purpose-ignored-buffer-regexps' because of features with
+;; bad implementation of window creation, such as `ispell''s *Choices* window.
+;; Such features usually split a window and then use `switch-to-buffer' to make
+;; that window display the wanted buffer. The correct way is to use
+;; `pop-to-buffer' a suitable ACTION argument.
+;; In their defense, many features predate the ACTION argument.
+(defvar purpose-ignored-buffer-regexps
   '("^\\*Completions\\*$"
     "^\\*Ido Completions\\*$"
     ;; `ispell' uses *Choices* buffer
     "^\\*Choices\\*$")
-  "Names of buffers for which the default `display-buffer' and
-`switch-to-buffer' behavior should not be overridden.  This is a list of
-names.")
+  "Don't change display behavior for buffers matching in this list.
+If any of the regexps in `purpose-ignored-buffer-regexps' match a
+buffer's name, then the default behavior of `display-buffer' and
+`switch-to-buffer' isn't overriden when displaying that buffer.
+
+This variable should contain a list of regular expressions which
+will be matched against buffer names.")
 
 (defcustom purpose-display-buffer-functions nil
   "Hook to run after displaying a buffer with `purpose--action-function'.
@@ -700,7 +710,7 @@ have the default width."
    (not (cdr (assoc 'inhibit-purpose alist)))
    (let ((buffer-name (buffer-name buffer)))
      (cl-loop for ignored-regexp
-              in purpose-action-function-ignore-buffer-names
+              in purpose-ignored-buffer-regexps
               never (string-match-p ignored-regexp buffer-name)))))
 
 ;; Purpose action function (integration with `display-buffer')
@@ -881,7 +891,7 @@ If Purpose is active (`purpose--active-p' is non-nil), call
   ((purpose-message "switch-to-buffer advice")
    ;; check the full `purpose--use-action-function-p' here, because
    ;; if purpose shouldn't be used for some reason (such as
-   ;; `purpose-action-function-ignore-buffer-names'), then we want
+   ;; `purpose-ignored-buffer-regexps'), then we want
    ;; to fallback to `switch-to-buffer', instead of
    ;; `display-buffer'
    (if (purpose--use-action-function-p (window-normalize-buffer-to-switch-to
