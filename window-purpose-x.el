@@ -283,24 +283,20 @@ Add `golden-ratio' at the end of `purpose-select-buffer-hook' if
 ;;; An extension for displaying buffers in a temporary popup-window, similar
 ;;; to the `popwin' package.
 
-(defcustom purpose-x-popwin-position 'bottom
+(defcustom purpose-x-popwin-position 'below
   "Position for the popup window.
-Legal values for this variable are 'top, 'bottom, 'left and 'right.  It
-is also possible to set this variable to a function.  That function will
-be used to create new popup windows and should be a display function
-compatible with `display-buffer'."
+Legal values for this variable are 'above, 'below, 'left and 'right."
   :group 'purpose
-  :type '(choice (const top)
-                 (const bottom)
+  :type '(choice (const above)
+                 (const below)
                  (const left)
-                 (const right)
-                 function)
-  :package-version "1.4")
+                 (const right))
+  :package-version "2.0")
 
 (defcustom purpose-x-popwin-width 0.4
   "Width of popup window when displayed at left or right.
-Can have the same values as `purpose-display-at-left-width' and
-`purpose-display-at-right-width'"
+Can have the same values as `window-width' alist entry as
+described in `display-buffer'."
   :group 'purpose
   :type '(choice number
                  (const nil))
@@ -308,8 +304,8 @@ Can have the same values as `purpose-display-at-left-width' and
 
 (defcustom purpose-x-popwin-height 0.35
   "Height of popup window when displayed at top or bottom.
-Can have the same values as `purpose-display-at-top-height' and
-`purpose-display-at-bottom-height'"
+Can have the same values as `window-height' alist entry as
+described in `display-buffer'."
   :group 'purpose
   :type '(choice number
                  (const nil))
@@ -357,10 +353,17 @@ When changing the value of this variable in elisp code, you should call
   :initialize 'custom-initialize-default
   :package-version "1.4")
 
-(defun purpose-x-popupify-purpose (purpose &optional display-fn)
+(defun purpose-x-popupify-purpose (purpose &optional display-fn alist)
   "Set up a popup-like behavior for buffers with purpose PURPOSE.
+
 DISPLAY-FN is the display function to use for creating the popup window
-for purpose PURPOSE, and defaults to `purpose-display-at-bottom'."
+for purpose PURPOSE, and defaults to `purpose-display-split-window'.
+
+ALIST is the action alist to use, and defaults to
+ `((window-width . 32) (window-height . 8) (split-side . below))'.
+
+This means that by default the popup window will be 8 lines high
+and appear at the bottom of the frame."
   (setq display-buffer-alist
         (cl-delete (purpose-display-buffer-predicate purpose)
                    display-buffer-alist
@@ -369,7 +372,8 @@ for purpose PURPOSE, and defaults to `purpose-display-at-bottom'."
   (push `(,(purpose-display-buffer-predicate purpose)
           (purpose-display-reuse-window-buffer
            purpose-display-reuse-window-purpose
-           ,(or display-fn #'purpose-display-at-bottom)))
+           ,(or display-fn #'purpose-display-split-frame))
+          ,@(or alist '((window-width . 32) (window-height . 8) (split-side . below))))
         display-buffer-alist))
 
 (defun purpose-x-unpopupify-purpose (purpose)
@@ -397,31 +401,17 @@ The configuration is updated according to
                                           purpose-x-popwin-buffer-name-regexps))))
       (purpose-set-extension-configuration :popwin conf))))
 
-(defun purpose-x-popwin-get-display-function ()
-  "Return function for creating new popup windows.
-The function is determined by the value of `purpose-x-popwin-position'."
-  (or (cl-case purpose-x-popwin-position
-        ('top 'purpose-display-at-top)
-        ('bottom 'purpose-display-at-bottom)
-        ('left 'purpose-display-at-left)
-        ('right 'purpose-display-at-right))
-      (and (functionp purpose-x-popwin-position)
-           purpose-x-popwin-position)
-      (user-error "purpose-x-popwin-position has an invalid value: %S"
-                  purpose-x-popwin-position)))
-
 (defun purpose-x-popwin-display-buffer (buffer alist)
   "Display BUFFER in a popup window.
 See `display-buffer' for the meaning of ALIST."
-  (let ((purpose-display-at-top-height purpose-x-popwin-height)
-        (purpose-display-at-bottom-height purpose-x-popwin-height)
-        (purpose-display-at-left-width purpose-x-popwin-width)
-        (purpose-display-at-right-width purpose-x-popwin-width))
-    (let ((window
-           (funcall (purpose-x-popwin-get-display-function) buffer alist)))
+  (let* ((alist (purpose-alist-set 'window-width purpose-x-popwin-width alist))
+         (alist (purpose-alist-set 'window-height purpose-x-popwin-height alist))
+         (alist (purpose-alist-set 'split-side purpose-x-popwin-position alist))
+         (window (purpose-display-split-frame buffer alist)))
+    (when window
       (purpose-set-window-purpose-dedicated-p window t)
-      (purpose-x-popwin-add-hooks)
-      window)))
+      (purpose-x-popwin-add-hooks))
+    window))
 
 (defun purpose-x-popwin-close-windows ()
   "Delete all popup windows.

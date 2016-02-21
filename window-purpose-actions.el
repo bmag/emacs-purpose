@@ -26,7 +26,7 @@
 ;; implementations of similar window-creation code, some worse than others.
 ;; Here, we provide some of the missing display actions and display functions.
 
-;; Available utilities:
+;; Available auxiliary functions:
 ;; - `purpose-fit-window-to-buffer-horizontally'
 
 ;; Available display functions:
@@ -45,6 +45,10 @@
 
 ;;; Code:
 
+(require 'window-purpose-utils)
+
+;;; Auxiliary functions:
+
 (defun purpose-fit-window-to-buffer-horizontally (&rest args)
   "Fit window to buffer horizontally.
 This is the same as `fit-window-to-buffer', but only allows to
@@ -55,6 +59,10 @@ This function can be called with the same arguments as
 `fit-window-to-buffer'."
   (let ((fit-window-to-buffer-horizontally 'only))
     (apply #'fit-window-to-buffer args)))
+
+
+
+;;; Display functions:
 
 (defun purpose-display-split-window (buffer alist &optional window)
   "Split selected window and display BUFFER in the new window.
@@ -82,7 +90,7 @@ argument."
          (window (or window
                      (purpose-alist-get 'split-window alist)))
          (new-window (split-window window nil side)))
-    (purpose-change-buffer buffer new-window 'window alist)))
+    (window--display-buffer buffer new-window 'window alist)))
 
 (defun purpose-display-split-frame (buffer alist &optional frame)
   "Split selected frame and display BUFFER in the new window.
@@ -103,6 +111,10 @@ argument."
   (let ((frame (or frame
                    (purpose-alist-get 'split-frame alist))))
     (purpose-display-split-window buffer alist (frame-root-window frame))))
+
+
+
+;;; Display actions:
 
 (defvar purpose-split-above-action
   '(purpose-display-split-window

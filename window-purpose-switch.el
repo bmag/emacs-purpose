@@ -26,6 +26,7 @@
 
 (require 'cl-lib)
 (require 'let-alist)
+(require 'window-purpose-actions)
 (require 'window-purpose-core)
 (require 'window-purpose-utils)
 
@@ -105,60 +106,6 @@ it yourself.")
 
 (defvar purpose-default-action-order 'prefer-other-window)
 
-(defcustom purpose-display-at-top-height 8
-  "Height for new windows created by `purpose-display-at-top'.
-This should be either a positive integer or a percentage between 0 to 1.
-If it is a positive integer, it is the number of lines in new windows
-created by `purpose-display-at-top'.  If it is a percentage, the height
-of new windows will be that percentage out of the frame's total height.
-`purpose-display-at-top-height' can also have a value of nil.  In this
-case, `purpose-display-at-top-height' is ignored."
-  :group 'purpose
-  :type '(choice number
-                 (const nil))
-  :package-version "1.4")
-
-(defcustom purpose-display-at-bottom-height 8
-  "Height for new windows created by `purpose-display-at-bottom'.
-This should be either a positive integer or a percentage between 0 to 1.
-If it is a positive integer, it is the number of lines in new windows
-created by `purpose-display-at-bottom'.  If it is a percentage, the
-height of new windows will be that percentage out of the frame's total
-height.
-`purpose-display-at-bottom-height' can also have a value of nil.  In
-this case, `purpose-display-at-bottom-height' is ignored."
-  :group 'purpose
-  :type '(choice number
-                 (const nil))
-  :package-version "1.4")
-
-(defcustom purpose-display-at-left-width 32
-  "Width for new windows created by `purpose-display-at-left'.
-This should be either a positive integer or a percentage between 0 to 1.
-If it is a positive integer, it is the number of lines in new windows
-created by `purpose-display-at-left'.  If it is a percentage, the width
-of new windows will be that percentage out of the frame's total width.
-`purpose-display-at-left-width' can also have a value of nil.  In this
-case, `purpose-display-at-left-width' is ignored."
-  :group 'purpose
-  :type '(choice number
-                 (const nil))
-  :package-version "1.4")
-
-(defcustom purpose-display-at-right-width 32
-  "Width for new windows created by `purpose-display-at-right'.
-This should be either a positive integer or a percentage between 0 to 1.
-If it is a positive integer, it is the number of lines in new windows
-created by `purpose-display-at-right'.  If it is a percentage, the
-width of new windows will be that percentage out of the frame's total
-width.
-`purpose-display-at-right-width' can also have a value of nil.  In
-this case, `purpose-display-at-right-width' is ignored."
-  :group 'purpose
-  :type '(choice number
-                 (const nil))
-  :package-version "1.4")
-
 
 
 ;;; Level1 actions
@@ -172,12 +119,6 @@ this case, `purpose-display-at-right-width' is ignored."
 ;; -- how should we split the frame? should we consider other frames as well
 ;; maybe-pop-up-window: display buffer in a new window in the selected frame, if possible (window can be split)
 ;; pop-up-frame: display buffer in a new frame
-
-(defun purpose-change-buffer (buffer window type alist)
-  "Display BUFFER in WINDOW, but don't select it.
-BUFFER, WINDOW, TYPE and ALIST have the same meaning as
-`window--display-buffer'.'"
-  (window--display-buffer buffer window type alist))
 
 (defun purpose-window-buffer-reusable-p (window buffer)
   "Return non-nil if WINDOW can be reused to display BUFFER.
@@ -275,7 +216,7 @@ that frame."
         (setq windows (delq (selected-window) windows)))
       (setq window (car windows))
       (when window
-        (purpose-change-buffer buffer window 'reuse alist))
+        (window--display-buffer buffer window 'reuse alist))
       window)))
 
 (defun purpose-display-reuse-window-purpose (buffer alist &optional purpose)
@@ -315,7 +256,7 @@ that a window on another frame is chosen, avoid raising that frame."
         (setq windows (delq (selected-window) windows)))
       (setq window (car windows))
       (when window
-        (purpose-change-buffer buffer window 'reuse alist))
+        (window--display-buffer buffer window 'reuse alist))
       window)))
 
 (defun purpose-display-reuse-window-buffer-other-frame (buffer alist)
@@ -350,7 +291,7 @@ that frame."
                    windows))
     (setq window (car windows))
     (when window
-      (purpose-change-buffer buffer window 'reuse alist))
+      (window--display-buffer buffer window 'reuse alist))
     window))
 
 (defun purpose-display-reuse-window-purpose-other-frame (buffer alist &optional purpose)
@@ -390,13 +331,13 @@ that a window on another frame is chosen, avoid raising that frame."
                    windows))
     (setq window (car windows))
     (when window
-      (purpose-change-buffer buffer window 'reuse alist))
+      (window--display-buffer buffer window 'reuse alist))
     window))
 
 (defun purpose-display-same-window (buffer alist)
   "Display BUFFER in selected window, no matter what.
 This function ignores window dedication and any entry in ALIST."
-  (purpose-change-buffer buffer (selected-window) 'reuse alist)
+  (window--display-buffer buffer (selected-window) 'reuse alist)
   (selected-window))
 
 (defun purpose-display-maybe-same-window (buffer alist)
@@ -449,7 +390,7 @@ Possible windows to use match these requirements:
       (setq windows (delete (selected-window) windows))
       (setq window (car windows))
       (when window
-        (purpose-change-buffer buffer window 'reuse alist)
+        (window--display-buffer buffer window 'reuse alist)
         window))))
 
 (defun purpose-display-maybe-other-frame (buffer alist)
@@ -468,7 +409,7 @@ This function doesn't raise the new frame."
                       (remove (selected-frame) (frame-list)))))
            (window (car windows)))
       (when window
-        (purpose-change-buffer buffer window 'reuse alist)
+        (window--display-buffer buffer window 'reuse alist)
         window))))
 
 (defun purpose-display-pop-up-window--internal (buffer alist force-split)
@@ -484,7 +425,7 @@ used window, split the selected window."
          (new-window (or (split-window-sensibly old-window)
                          (and force-split
                               (split-window old-window)))))
-    (purpose-change-buffer buffer new-window 'window alist)
+    (window--display-buffer buffer new-window 'window alist)
     new-window))
 
 (defun purpose-display-pop-up-window (buffer alist)
@@ -524,7 +465,7 @@ both.  In case of conflict, `pop-up-frame-parameters' takes precedence."
                       (funcall pop-up-frame-function))))
            (window (and frame (frame-selected-window frame))))
       (when window
-        (purpose-change-buffer buffer window 'frame alist)))))
+        (window--display-buffer buffer window 'frame alist)))))
 
 (defun purpose-display-maybe-pop-up-frame (buffer alist)
   "Display BUFFER in a new frame, if possible.
@@ -602,100 +543,31 @@ ALIST has the same meaning as in `display-buffer'."
                                                      buffer))))
         ;; reuse window
         (progn
-          (purpose-change-buffer buffer window 'reuse alist)
+          (window--display-buffer buffer window 'reuse alist)
           window)
       ;; create window
       (let ((new-window (funcall window-creator)))
         (when new-window
-          (purpose-change-buffer buffer new-window 'window alist)
+          (window--display-buffer buffer new-window 'window alist)
           new-window)))))
 
+;; `purpose-display-at-top' is kept as a usage example for `purpose-display--at'.
 (defun purpose-display-at-top (buffer alist &optional height)
   "Display BUFFER at the top window, create such window if necessary.
 \"top window\" is a window as returned by `purpose-get-top-window'.
-ALIST is for compatibility with `display-buffer' and is ignored.
-HEIGHT specifies the height of the new window, if a new window needs to
-be created, and can take the same values as
-`purpose-display-at-top-height'.  If HEIGHT is nil, then the height of
-the new window is specified by `purpose-display-at-top-height'.  If
-`purpose-display-at-top-height' is also nil, then the new window will
-have the default height."
+ALIST has the same meaning as in `display-buffer'.
+HEIGHT specifies the height of the new window, if a new window
+needs to be created, and can take the same values as a
+`window-height' entry in ALIST."
   (purpose-display--at
    #'purpose-get-top-window
-   #'(lambda ()
-       (let* ((height (purpose--normalize-height
-                       (or height
-                           purpose-display-at-top-height)))
-              (height (when height (- height))))
-         (ignore-errors
-           (split-window (frame-root-window) height 'above))))
-   buffer
-   alist))
-
-(defun purpose-display-at-bottom (buffer alist &optional height)
-  "Display BUFFER at the bottom window, create such window if necessary.
-\"bottom window\" is a window as returned by
-`purpose-get-bottom-window'.
-ALIST is for compatibility with `display-buffer' and is ignored.
-HEIGHT specifies the height of the new window, if a new window needs to
-be created, and can take the same values as
-`purpose-display-at-bottom-height'.  If HEIGHT is nil, then the height
-of the new window is specified by `purpose-display-at-bottom-height'.
-If `purpose-display-at-bottom-height' is also nil, then the new window
-will have the default height."
-  (purpose-display--at
-   #'purpose-get-bottom-window
-   #'(lambda ()
-       (let* ((height (purpose--normalize-height
-                       (or height
-                           purpose-display-at-bottom-height)))
-              (height (when height (- height))))
-         (ignore-errors
-           (split-window (frame-root-window) height 'below))))
-   buffer
-   alist))
-
-(defun purpose-display-at-left (buffer alist &optional width)
-  "Display BUFFER at the left window, create such window if necessary.
-\"left window\" is a window as returned by `purpose-get-left-window'.
-ALIST is for compatibility with `display-buffer' and is ignored.
-WIDTH specifies the width of the new window, if a new window needs to
-be created, and can take the same values as
-`purpose-display-at-left-width'.  If WIDTH is nil, then the width of the
-new window is specified by `purpose-display-at-left-width'.  If
-`purpose-display-at-left-width' is also nil, then the new window will
-have the default width."
-  (purpose-display--at
-   #'purpose-get-left-window
-   #'(lambda ()
-       (let* ((width (purpose--normalize-width
-                      (or width
-                          purpose-display-at-left-width)))
-              (width (when width (- width))))
-         (ignore-errors
-           (split-window (frame-root-window) width 'left))))
-   buffer
-   alist))
-
-(defun purpose-display-at-right (buffer alist &optional width)
-  "Display BUFFER at the right window, create such window if necessary.
-\"right window\" is a window as returned by `purpose-get-right-window'.
-ALIST is for compatibility with `display-buffer' and is ignored.
-WIDTH specifies the width of the new window, if a new window needs to be
-created, and can take the same values as
-`purpose-display-at-right-width'.  If WIDTH is nil, then the width of
-the new window is specified by `purpose-display-at-right-width'.  If
-`purpose-display-at-right-width' is also nil, then the new window will
-have the default width."
-  (purpose-display--at
-   #'purpose-get-right-window
-   #'(lambda ()
-       (let* ((width (purpose--normalize-width
-                      (or width
-                          purpose-display-at-right-width)))
-              (width (when width (- width))))
-         (ignore-errors
-           (split-window (frame-root-window) width 'right))))
+   (lambda ()
+     (let* ((height (purpose--normalize-height
+                     (or height
+                         (purpose-alist-get 'window-height alist))))
+            (height (when height (- height))))
+       (ignore-errors
+         (split-window (frame-root-window) height 'above))))
    buffer
    alist))
 
@@ -1097,11 +969,13 @@ and EXTRA-ARGS, like so:
 Example of how this macro might be used:
   (defalias 'display-at-bottom-and-dedicate
             (purpose-generate-display-and-dedicate
-             'purpose-display-at-bottom))
+             'purpose-display-split-frame))
 Another example:
   (add-to-list display-buffer-alist
                `(\"*ielm*\" ,(purpose-generate-display-and-dedicate
-                              purpose-display-at-bottom 6)))"
+                              purpose-display-split-frame)
+                            (split-side . below)
+                            (window-height . 12)))"
   (declare (indent defun) (debug (function-form &rest sexp)))
   `(lambda (buffer alist)
      (let ((window (apply ,display-fn buffer alist (list,@extra-args))))
@@ -1121,9 +995,9 @@ The lambda returns the window used for display, or nil if display was
 unsuccessful.
 
 Possible usage:
-  (defalias 'display-at-left-and-do-stuff
+  (defalias 'display-split-frame-and-do-stuff
             (purpose-generate-display-and-do
-              'purpose-display-at-left
+              'purpose-display-split-frame
               (lambda (window) (message \"Let's do stuff!!\"))))"
   (declare (indent defun) (debug (function-form function-form)))
   `(lambda (buffer alist)
