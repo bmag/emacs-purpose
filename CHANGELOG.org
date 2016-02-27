@@ -2,7 +2,9 @@
 
 * master (unreleased)
 ** New Features
-*** easier configuration with ~purpose-add-user-purposes~ and ~purpose-remove-user-purposes~
+*** New functions for easier purpose configuration
+    User purposes: ~purpose-add-user-purposes~, ~purpose-remove-user-purposes~
+    Extension purposes: ~purpose-add-extension-purposes~, ~purpose-remove-extension-purposes~
 ** Bug Fixes
 *** [[https://github.com/bmag/emacs-purpose/issues/79][#79]]: nil buffer means ~other-buffer~ for some buffer switching commands
     These commands are: ~purpose-switch-buffer~,
