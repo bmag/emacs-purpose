@@ -291,7 +291,6 @@ Fill `purpose--extended-mode-purposes',
 
 (defun purpose-compile-default-configuration ()
   "Compile the default purpose configuraion."
-
   (purpose--fill-hash purpose--default-mode-purposes
                       '((prog-mode . edit)
                         (text-mode . edit)
@@ -317,7 +316,7 @@ Fill `purpose--extended-mode-purposes',
 
 
 
-;;; API functions for extensions
+;;; convenient API functions
 
 ;;;###autoload
 (defun purpose-set-extension-configuration (keyword config)
@@ -347,6 +346,58 @@ Deletion is actually done by setting the extension's entry to nil.
 This function calls `purpose-compile-extended-configuration' when its
 done."
   (purpose-set-extension-configuration keyword nil))
+
+(cl-defun purpose-add-user-purposes (&key modes names regexps)
+  "Add and compile multiple user purposes.
+MODES must be a valid alist mapping major modes to purposes.
+NAMES must be a valid alist mapping names to purposes.
+REGEXPS must be a valid alist mapping regexps to purposes.
+
+This function calls `purpose-compile-user-configuration' to
+update user purposes.
+
+Example:
+ (purpose-add-user-purposes :modes '((org-mode . org)
+                                     (help-mode . popup))
+                            :names '((\"*scratch*\" . popup))
+                            :regexps '((\"^\\*foo\" . terminal)))"
+  (unless (purpose-mode-alist-p modes)
+    (user-error "Malformed modes alist: %s" modes))
+  (unless (purpose-name-alist-p names)
+    (user-error "Malformed names alist: %s" names))
+  (unless (purpose-regexp-alist-p regexps)
+    (user-error "Malformed regexps alist: %s" regexps))
+  (setq purpose-user-mode-purposes (append modes purpose-user-mode-purposes)
+        purpose-user-name-purposes (append names purpose-user-name-purposes)
+        purpose-user-regexp-purposes (append regexps purpose-user-regexp-purposes))
+  (purpose-compile-user-configuration))
+
+(cl-defun purpose-remove-user-purposes (&key modes names regexps)
+  "Remove and compile multiple user purposes.
+MODES must be a list of major modes.
+NAMES must be a list of names.
+REGEXPS must be a list of regexps.
+
+This function calls `purpose-compile-user-configuration' to
+update user purposes.
+
+Example:
+ (purpose-remove-user-purposes :modes '(org-mode help-mode)
+                               :names '(\"*scratch*\")
+                               :regexps '(\"^\\*foo\"))"
+  (setq purpose-user-mode-purposes
+        (cl-set-difference purpose-user-mode-purposes modes
+                           :test (lambda (entry mode)
+                                   (eql (car entry) mode)))
+        purpose-user-name-purposes
+        (cl-set-difference purpose-user-name-purposes names
+                           :test (lambda (entry name)
+                                   (string= (car entry) name)))
+        purpose-user-regexp-purposes
+        (cl-set-difference purpose-user-regexp-purposes regexps
+                           :test (lambda (entry regexp)
+                                   (string= (car entry) regexp))))
+  (purpose-compile-user-configuration))
 
 
 

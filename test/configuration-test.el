@@ -161,6 +161,24 @@ This one tests `purpose-with-additional-purposes'."
     (should (equal (purpose-test-sort-symbols (purpose-get-all-purposes))
                    original-purposes))))
 
+(ert-deftest purpose-test-user-convenience ()
+  "Test `purpose-add-user-purposes' and `purpose-remove-user-purposes'."
+  (let ((original-purposes (purpose-test-sort-symbols (purpose-get-all-purposes))))
+    "Testing purpose-add-user-purposes ..."
+    (purpose-add-user-purposes :modes '((org-mode . org)
+                                        (help-mode . popup))
+                               :names '(("*scratch*" . scratch))
+                               :regexps '(("^\\*foo" . foo)))
+    (should (equal (purpose-test-sort-symbols (purpose-get-all-purposes))
+                   (purpose-test-sort-symbols
+                    (delete-dups (append original-purposes '(org popup scratch foo))))))
+    "Testing purpose-remove-user-purposes ..."
+    (purpose-remove-user-purposes :modes '(org-mode help-mode)
+                                  :names '("*scratch*")
+                                  :regexps '("^\\*foo"))
+    (should (equal (purpose-test-sort-symbols (purpose-get-all-purposes))
+                   original-purposes))))
+
 (provide 'configuration-test)
 
 ;;; configuration-test.el ends here
