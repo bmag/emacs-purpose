@@ -1,0 +1,11 @@
+#+TITLE: Changelog
+
+* master (unreleased)
+** New Features
+*** easier configuration with ~purpose-add-user-purposes~ and ~purpose-remove-user-purposes~
+** Bug Fixes
+*** [[https://github.com/bmag/emacs-purpose/issues/79][#79]]: nil buffer means ~other-buffer~ for some buffer switching commands
+    These commands are: ~purpose-switch-buffer~,
+    ~purpose-switch-buffer-other-window~, ~purpose-pop-buffer~ and
+    ~purpose-pop-buffer-same-window~.
+*** dislpay function returning ~fail~ means don't display buffer at all
