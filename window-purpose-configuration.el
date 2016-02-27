@@ -80,7 +80,7 @@ The generated function receives parameter OBJ, and checks that it is a
 list and each entry in it satisifies ENTRY-PRED."
   (declare (indent defun) (debug (&define name function-form)))
   `(defun ,name (obj)
-     "Check that OBJ is a list, and each entry in it satisifies ,entry-pred."
+     ,(format "Check that OBJ is a list, and each entry in it satisifies %s." entry-pred)
      (and (listp obj)
           (cl-loop for entry in obj
                    always (funcall ,entry-pred entry)))))
