@@ -216,6 +216,16 @@ WINDOW must be a live window and defaults to the selected one."
    (purpose--window-percentage-to-height height-percentage window)
    window))
 
+(defun purpose--tree-width-from-edges (tree)
+  "Get TREE's total width."
+  (let ((edges (nth 1 tree)))
+    (- (nth 2 edges) (car edges))))
+
+(defun purpose--tree-height-from-edges (tree)
+  "Get TREE's total height."
+  (let ((edges (nth 1 tree)))
+    (- (nth 3 edges) (nth 1 edges))))
+
 
 
 ;;; Helpers for finding layouts by name
@@ -303,25 +313,31 @@ appear in LAYOUT-DIRS."
                   (cl-second window-tree))
             (mapcar #'purpose--get-window-layout-1 (cddr window-tree)))))
 
-(defun purpose--set-window-layout-1 (tree window)
-  "Helper function for `purpose-set-window-layout'."
+(defun purpose--set-window-layout-1 (tree window ref-width ref-height)
+  "Helper function for `purpose-set-window-layout'.
+REF-WIDTH and REF-HEIGHT are the sizes of the root window, as
+saved in the top-level tree (not the actual sizes of the selected
+frame)."
   (if (purpose-window-params-p tree)
       (progn
+        ;; set size and properties of leaf window
         (purpose--set-size-percentage (plist-get tree :width)
                                       (plist-get tree :height)
                                       window)
         (purpose-set-window-properties tree window))
 
-    ;; this section is commented out, because it doesn't really matter
-    ;; (let ((edges (second tree)))
-    ;;   (purpose--set-size-percentage (- (third edges) (first edges))
-    ;;             (- (fourth edges) (second edges))
-    ;;             window))
+    ;; set size of parent window
+    (let ((width-percentage (/ (purpose--tree-width-from-edges tree)
+                               ref-width 1.0))
+          (height-percentage (/ (purpose--tree-height-from-edges tree)
+                                ref-height 1.0)))
+      (purpose--set-size-percentage width-percentage height-percentage window))
 
+    ;; split parent window and recurse into children
     (let ((windows (purpose--split-window tree window)))
       (cl-loop for sub-tree in (cddr tree)
                for window in windows
-               do (purpose--set-window-layout-1 sub-tree window)))))
+               do (purpose--set-window-layout-1 sub-tree window ref-width ref-height)))))
 
 
 
@@ -354,7 +370,9 @@ This function doesn't change the selected frame (uses
     ;; 2. split window, recurse for each window
     (if (purpose-window-params-p layout)
         (purpose-set-window-properties layout)
-      (purpose--set-window-layout-1 layout (selected-window)))
+      (purpose--set-window-layout-1 layout (selected-window)
+                                    (purpose--tree-width-from-edges layout)
+                                    (purpose--tree-height-from-edges layout)))
     (unless norecord
       (ring-insert purpose-recent-window-layouts layout))))
 
