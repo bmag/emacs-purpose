@@ -92,6 +92,11 @@ All windows are purpose-dedicated.")
                   (org-mode . todo)
                   (grep-mode . misc)
                   (css-mode . edit)
+                  (shell-mode . misc)
+                  (eshell-mode . misc)
+                  (term-mode . misc)
+                  (yaml-mode . edit)
+                  (conf-unix-mode . edit)
                   )))
 
 (defvar purpose-x-code1-buffers-changed nil
