@@ -120,10 +120,10 @@
 
 (ert-deftest purpose-test-load-layout ()
   "Test that `purpose-load-window-layout' and `purpose-load-frame-layout-file' load a layout correctly."
-  (let ((layout-in-dir1 "dired2")
-        (layout-in-dir2 "dired-edit-general")
-        (layout-in-both-dirs "edit-terminal")
-        (frame-layout "edit-terminal"))
+  (let ((layout-in-dir1 "test-dired2")
+        (layout-in-dir2 "test-dired-edit-general")
+        (layout-in-both-dirs "test-edit-terminal")
+        (frame-layout "test-edit-terminal"))
     (message "loading window layout from lower priority directory ...")
     (purpose-load-window-layout layout-in-dir1)
     (should (equal (mapcar #'purpose-window-purpose (window-list))
@@ -142,6 +142,15 @@
     (purpose-load-frame-layout frame-layout)
     (should (equal (mapcar #'purpose-window-purpose (window-list))
                    '(edit edit terminal terminal)))))
+
+(ert-deftest purpose-test-find-built-in-layout ()
+  "Test that layouts from `purpose--built-in-layouts-dir' can be found."
+  (message "Testing built-in layouts ...")
+  (message "Use built-in: %S" purpose-use-built-in-layouts)
+  (message "Built-in dir: %S" purpose--built-in-layouts-dir)
+  (message "Normalized dirs: %S" (purpose-normalize-layout-directories nil t))
+  (should (purpose-find-window-layout "edit-terminal"))
+  (should (purpose-find-window-layout "edit-terminal-general")))
 
 (ert-deftest purpose-test-interactive-save-window-layout ()
   "Test interactive saving and loading of window layout."

@@ -1,10 +1,14 @@
 #+TITLE: Changelog
 
-* master (unreleased)
+* next release
 ** New Features
 *** New functions for easier purpose configuration
     User purposes: ~purpose-add-user-purposes~, ~purpose-remove-user-purposes~
     Extension purposes: ~purpose-add-extension-purposes~, ~purpose-remove-extension-purposes~
+*** Purpose ships with preinstalled layouts
+    Subdirectory ~layouts~ contains preinstalled layouts. Customizable variable
+    ~purpose-use-built-in-layouts~ controls if those layouts are available to
+    the user (available by default).
 ** Bug Fixes
 *** [[https://github.com/bmag/emacs-purpose/issues/79][#79]]: nil buffer means ~other-buffer~ for some buffer switching commands
     These commands are: ~purpose-switch-buffer~,
