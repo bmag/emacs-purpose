@@ -152,6 +152,18 @@
   (should (purpose-find-window-layout "edit-terminal"))
   (should (purpose-find-window-layout "edit-terminal-general")))
 
+(ert-deftest purpose-test-list-layouts ()
+  "Test that `purpose-all-window/frame-layouts' find all layouts."
+  (let ((frame-layouts (purpose-all-frame-layouts nil nil)))
+    (should (= (length frame-layouts) 1))
+    ;; frame-layouts should contain only strings
+    (should-not (cl-remove-if #'stringp frame-layouts)))
+  (let ((window-layouts (purpose-all-window-layouts nil nil)))
+    (should (= (length window-layouts) 3))
+    ;; window-layouts should contain only strings
+    (should-not (cl-remove-if #'stringp window-layouts)))
+  )
+
 (ert-deftest purpose-test-interactive-save-window-layout ()
   "Test interactive saving and loading of window layout."
   (let ((filename "just-another-file")
