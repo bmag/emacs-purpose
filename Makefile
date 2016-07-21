@@ -15,10 +15,13 @@ unit:
 # ecukes:
 # 	${CASK} exec ecukes
 
+buttercup:
+	${CASK} exec buttercup -L .
+
 install:
 	${CASK} install
 
-compile:
+compile: clean-elc
 	${CASK} exec ${EMACS} -Q --batch -L . -f batch-byte-compile window-purpose*.el
 
 clean: clean-elc clean-deps
