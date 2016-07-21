@@ -460,7 +460,9 @@ To load a window layout from a specific file, use
   (interactive)
   (let ((name (or name (funcall (purpose-get-completing-read-function)
                                 "[PU] Load window layout:"
-                                (purpose-all-window-layouts) nil t))))
+                                (purpose-all-window-layouts layout-dirs
+                                                            purpose-use-built-in-layouts)
+                                nil t))))
     ;; layout with NAME is guaranteed to exist because of non-nil REQUIRE-MATCH
     ;; argument to (purpose-get-completing-read-function).
     (purpose-load-window-layout-file (purpose-find-window-layout name layout-dirs))))
@@ -563,7 +565,9 @@ To load a frame layout from a specific file, use
   (interactive)
   (let ((name (or name (funcall (purpose-get-completing-read-function)
                                 "[PU] Load frame layout:"
-                                (purpose-all-frame-layouts) nil t))))
+                                (purpose-all-frame-layouts layout-dirs
+                                                           purpose-use-built-in-layouts)
+                                nil t))))
     ;; layout with NAME is guaranteed to exist because of non-nil REQUIRE-MATCH
     ;; argument to (purpose-get-completing-read-function).
     (purpose-load-frame-layout-file (purpose-find-frame-layout name layout-dirs))))
