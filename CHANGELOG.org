@@ -16,3 +16,4 @@
     ~purpose-switch-buffer-other-window~, ~purpose-pop-buffer~ and
     ~purpose-pop-buffer-same-window~.
 *** dislpay function returning ~fail~ means don't display buffer at all
+*** [[https://github.com/bmag/emacs-purpose/issues/80][#80]]: added autoloads to some commands outside of window-purpose.el
