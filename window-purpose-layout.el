@@ -396,6 +396,16 @@ This function doesn't change the selected frame (uses
       (purpose--set-window-layout-1 layout (selected-window)
                                     (purpose--tree-width-from-edges layout)
                                     (purpose--tree-height-from-edges layout)))
+    ;; if purpose has more than 1 window, try to show different buffers in those
+    ;; windows
+    (let ((purposes (delete-dups (mapcar #'purpose-window-purpose
+                                         (window-list frame)))))
+      (dolist (purpose purposes)
+        (cl-mapcar #'set-window-buffer
+                   (purpose-windows-with-purpose purpose frame)
+                   ;; TODO: implement function to take only first N buffers with a
+                   ;; certain purpose, instead of getting all them (more efficient)
+                   (purpose-buffers-with-purpose purpose))))
     (unless norecord
       (ring-insert purpose-recent-window-layouts layout))))
 

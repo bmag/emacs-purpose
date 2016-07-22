@@ -215,7 +215,7 @@ attention to case differences."
   (if (fboundp 'string-remove-suffix)
       #'string-remove-suffix
     ;; based on string-remove-suffix in subr-x.el in Emacs 24.5.1
-    (lambda (string suffix)
+    (lambda (suffix string)
       "Remove SUFFIX from STRING if present."
       (if (purpose--suffix-p suffix string)
           (substring string 0 (- (length string) (length suffix)))
