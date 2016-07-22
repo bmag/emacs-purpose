@@ -312,6 +312,7 @@ WINDOW defaults to the selected window."
     flag))
 
 ;; not really purpose-related, but helpful for the user
+;;;###autoload
 (defun purpose-toggle-window-buffer-dedicated (&optional window)
   "Toggle window WINDOW's dedication to its current buffer on or off.
 WINDOW defaults to the selected window."
