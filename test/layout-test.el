@@ -217,6 +217,29 @@
   (message "resetting frame layout ...")
   (purpose-reset-frame-layout))
 
+(ert-deftest purpose-test-set-layout ()
+  "Test that `purpose-set-window-layout' sets correct buffers."
+  (unwind-protect
+      (purpose-with-temp-config
+          nil
+          '(("p0" . purp1) ("p1" . purp1))
+          nil
+        (get-buffer-create "p0")
+        (get-buffer-create "p1")
+        (delete-other-windows)
+        (set-window-dedicated-p nil nil)
+        (set-window-buffer nil "p0")
+        (set-window-buffer nil "p1")
+        (split-window)
+        (let ((layout (purpose-get-window-layout)))
+          (delete-other-windows)
+          (purpose-set-window-layout layout)
+          (purpose-check-displayed-buffers '("p0" "p1"))))
+    (delete-other-windows)
+    (set-window-dedicated-p nil nil)
+    (purpose-set-window-purpose-dedicated-p nil nil)
+    (purpose-kill-buffers-safely "p0" "p1")))
+
 (ert-deftest purpose-test-set-window-purpose ()
   "Test that `purpose-set-window-purpose' does set the purpose."
   (unwind-protect

@@ -228,11 +228,12 @@ The window's purpose is determined by its buffer's purpose.
 WINDOW defaults to the selected window."
   (purpose-buffer-purpose (window-buffer window)))
 
-(defun purpose-windows-with-purpose (purpose)
-  "Return a list of all live windows with purpose PURPOSE."
+(defun purpose-windows-with-purpose (purpose &optional frame)
+  "Return a list of all live windows with purpose PURPOSE in FRAME.
+FRAME defaults to the selected frame."
   (cl-remove-if-not #'(lambda (window)
                         (eql purpose (purpose-window-purpose window)))
-                    (window-list)))
+                    (window-list frame)))
 
 (defun purpose-get-all-purposes ()
   "Return a list of all known purposes."
