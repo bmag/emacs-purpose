@@ -399,6 +399,7 @@ This function doesn't change the selected frame (uses
     (unless norecord
       (ring-insert purpose-recent-window-layouts layout))))
 
+;;;###autoload
 (defun purpose-save-window-layout-file (&optional filename)
   "Save window layout of current frame to file FILENAME.
 If FILENAME is nil, use `purpose-default-layout-file' instead."
@@ -413,6 +414,7 @@ If FILENAME is nil, use `purpose-default-layout-file' instead."
     ;; `read' later in `purpose-load-window-layout-file'
     (insert (format "%S" (purpose-get-window-layout)))))
 
+;;;###autoload
 (defun purpose-load-window-layout-file (&optional filename)
   "Load window layout from file FILENAME.
 If FILENAME is nil, use `purpose-default-layout-file' instead."
@@ -427,6 +429,7 @@ If FILENAME is nil, use `purpose-default-layout-file' instead."
      (insert-file-contents (or filename purpose-default-layout-file))
      (read (point-marker)))))
 
+;;;###autoload
 (defun purpose-save-window-layout (name directory)
   "Save a window layout.
 NAME is the name to give the window layout.
@@ -446,6 +449,7 @@ DIRECTORY is the directory in which to save the layout."
       (make-directory directory t))
     (purpose-save-window-layout-file layout-file)))
 
+;;;###autoload
 (defun purpose-load-window-layout (&optional name layout-dirs)
   "Load a window layout.
 NAME is the name of a window layout.  If NAME is not given, prompt the
@@ -504,6 +508,7 @@ specified by LAYOUT."
   (unless norecord
     (ring-insert purpose-recent-frame-layouts layout)))
 
+;;;###autoload
 (defun purpose-save-frame-layout-file (&optional filename)
   "Save frame layout of Emacs to file FILENAME.
 If FILENAME is nil, use `purpose-default-layout-file' instead."
@@ -518,6 +523,7 @@ If FILENAME is nil, use `purpose-default-layout-file' instead."
     ;; `read' later in `purpose-load-window-layout-file'
     (insert (format "%S" (purpose-get-frame-layout)))))
 
+;;;###autoload
 (defun purpose-load-frame-layout-file (&optional filename)
   "Load frame layout from file FILENAME.
 If FILENAME is nil, use `purpose-default-layout-file' instead."
@@ -532,6 +538,7 @@ If FILENAME is nil, use `purpose-default-layout-file' instead."
      (insert-file-contents (or filename purpose-default-layout-file))
      (read (point-marker)))))
 
+;;;###autoload
 (defun purpose-save-frame-layout (name directory)
   "Save a frame layout.
 NAME is the name to give the frame layout.
@@ -551,6 +558,7 @@ DIRECTORY is the directory in which to save the layout."
       (make-directory directory t))
     (purpose-save-frame-layout-file layout-file)))
 
+;;;###autoload
 (defun purpose-load-frame-layout (&optional name layout-dirs)
   "Load a frame layout.
 NAME is the name of a frame layout.  If NAME is not given, prompt the
@@ -589,6 +597,7 @@ Use INDEX=0 for most recent."
 
 ;;; Other
 
+;;;###autoload
 (defun purpose-delete-non-dedicated-windows ()
   "Delete all windows that aren't dedicated to their purpose or buffer."
   (interactive)
@@ -599,6 +608,7 @@ Use INDEX=0 for most recent."
               (delete-window window)))
         (window-list)))
 
+;;;###autoload
 (defun purpose-set-window-purpose (purpose &optional dont-dedicate)
   "Set window's purpose to PURPOSE, and dedicate it.
 With prefix argument (DONT-DEDICATE is non-nil), don't dedicate the
