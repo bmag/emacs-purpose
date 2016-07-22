@@ -54,6 +54,34 @@
         (cons t (format "Expected frame to show all of %S" buffer-names))
       (cons t (format "Expected frame not to show at least one of %S" buffer-names)))))
 
+(buttercup-define-matcher :to-show-buffer (window buffer-or-name)
+  (let ((buff (window-normalize-buffer buffer-or-name))
+        (win (window-normalize-window window)))
+    (if (eq (window-buffer win) buff)
+        (cons t (format "Expected window %S to show %s" win (buffer-name buff)))
+      (cons nil (format "Expected window %S not to show %s" win (buffer-name buff))))))
+
+;; TODO: implement `expect-window-config' for matching particular window
+;; configurations
+;; (defun expect-window-config (frame wconf)
+;;   )
+;; selected: is selected-window
+;; p-ded: purpose-dedicated
+;; b-ded: buffer-dedicated
+;; params: general window parameters
+;; split: generic split, either horizontal or vertical. Split direction usually
+;;        depends on screen size, so it's better not to specify it, lest the
+;;        test results will depend on the tester's monitor size.
+;; (expect-window-config nil
+;;   '("buf1" :selected t :params '((purpose-dedicated . t))))
+;; (expect-window-config nil
+;;   '(split ("buf1" :selected t :p-ded t)
+;;           ("buf2" :p-ded nil)))
+;; (expect-window-config nil
+;;   '(split ("buf1" :selected t :p-ded t)
+;;           (split ("buf2" :p-ded nil)
+;;                  ("buf3" :b-ded t))))
+
 (purpose-mode)
 
 (describe "switch-buffer suite"
@@ -92,6 +120,8 @@
     (purpose-set-window-purpose-dedicated-p nil t)
     (switch-to-buffer "xxx-p1-0")
     (expect (selected-frame) :to-show-exactly-buffers '("xxx-p0-0" "xxx-p1-0"))
-    (expect (purpose-window-purpose-dedicated-p) :to-be t)
-    (expect (purpose-window-purpose-dedicated-p (next-window)) :to-be nil))
+    (expect (selected-window) :to-show-buffer "xxx-p1-0")
+    (expect (next-window) :to-show-buffer "xxx-p0-0")
+    (expect (purpose-window-purpose-dedicated-p) :to-be nil)
+    (expect (purpose-window-purpose-dedicated-p (next-window)) :to-be t))
   )
