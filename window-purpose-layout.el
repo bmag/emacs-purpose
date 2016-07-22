@@ -35,8 +35,7 @@
     (concat (file-name-directory load-file-name) "layouts/"))
   "Location of built-in layouts shipped with Purpose.")
 
-;; set to nil temporarily, until recipe is updated in melpa
-(defcustom purpose-use-built-in-layouts nil
+(defcustom purpose-use-built-in-layouts t
   "If nil, don't use layouts from `purpose--built-in-layouts-dir'."
   :group 'purpose
   :type 'boolean
