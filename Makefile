@@ -18,6 +18,11 @@ unit:
 buttercup:
 	${CASK} exec buttercup -L .
 
+# for systems where cask is not an option. must install requirements to user
+# elpa dir in this case
+buttercup-nocask:
+	emacs -batch -Q -L . -f package-initialize -f buttercup-run-discover
+
 install:
 	${CASK} install
 
