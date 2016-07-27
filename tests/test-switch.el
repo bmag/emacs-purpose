@@ -28,6 +28,92 @@
   (purpose-compile-extended-configuration)
   (purpose-compile-default-configuration))
 
+;;; --- extract window-recipe-like trees from `window-tree'
+(defvar window-data-extractors
+  (list :name (lambda (win) (buffer-name (window-buffer win)))
+        :purpose #'purpose-window-purpose
+        :selected (lambda (win) (eq win (frame-selected-window win)))
+        :b-ded #'window-dedicated-p
+        :p-ded #'purpose-window-purpose-dedicated-p))
+
+(defun map-plist (func plist)
+  "Apply FUNC to each key-value pair in PLIST.
+FUNC is called as (FUNC key value) for each pair."
+  (do* ((plist plist (cddr plist))
+        (key (car plist) (car plist))
+        (value (cadr plist) (cadr plist))
+        (result))
+      ;; `consp' test stops loop for plist values of `()' and also `(:a)', IOW
+      ;; ignores last element if plist has an odd (not even) length
+      ((not (consp (cdr plist)))
+       (nreverse result))
+    (push (funcall func key value) result)))
+
+(defun alist-to-plist (alist)
+  (nreverse (seq-reduce
+             (lambda (result next-pair)
+               (cons (cdr next-pair) (cons (car next-pair) result)))
+             alist nil)))
+
+(defun extract-window-data (window)
+  (alist-to-plist (map-plist (lambda (key extractor)
+                               (cons key (funcall extractor window)))
+                             window-data-extractors)))
+
+(defun extract-window-tree-1 (tree)
+  (if (windowp tree)
+      (extract-window-data tree)
+    ;; FUTURE: can replace 'split with `extract-split-data' (or something)
+    (cons 'split (seq-map #'extract-window-tree-1 (cddr tree)))))
+
+(defun extract-window-tree (&optional frame)
+  (extract-window-tree-1 (car (window-tree frame))))
+
+;;; ---
+;;; --- window-recipe matcher
+(defvar window-data-comparers
+  (list :name #'string=
+        :purpose #'eq
+        :selected #'eq
+        :b-ded #'eq
+        :p-ded #'eq))
+
+(defun plist-to-alist (plist)
+  (map-plist #'cons plist))
+
+(defun window-matches-recipe-p (window recipe)
+  (cl-loop for (key . expect-val) in (plist-to-alist recipe)
+           for comparer = (plist-get window-data-comparers key)
+           for val = (plist-get window key)
+           unless comparer do (error "Unknown comparer %S" key)
+           always (funcall comparer val expect-val)))
+
+(defun tree-matches-recipe-p (tree recipe)
+  (if (eq (car recipe) 'split)
+      ;; should be split
+      (and (eq (car tree) 'split)
+           (= (length tree) (length recipe))
+           (cl-loop for sub-tree in (cdr tree)
+                    for sub-recipe in (cdr recipe)
+                    always (tree-matches-recipe-p sub-tree sub-recipe)))
+    ;; should be window
+    (and (not (eq (car tree) 'split))
+         (window-matches-recipe-p tree recipe))))
+
+(buttercup-define-matcher :to-match-window-recipe (tree recipe)
+  (if (tree-matches-recipe-p tree recipe)
+      (cons t (format "Expcted window tree %S to match recipe %S" tree recipe))
+    (cons nil (format "Expected window tree %S to be different from recipe %S" tree recipe))))
+
+(buttercup-define-matcher :to-match-window-tree (recipe)
+  (let ((tree (extract-window-tree)))
+    (if (tree-matches-recipe-p tree recipe)
+        (cons t (format "Expcted window recipe %S to match tree %S" recipe tree))
+      (cons nil (format "Expected window recipe %S to be different from tree %S" recipe tree)))))
+
+;;; ---
+
+;;; --- obsolete?
 (defun frame-buffers (frame)
   (seq-map #'window-buffer (window-list frame 'no-minibuffer)))
 
@@ -60,27 +146,7 @@
     (if (eq (window-buffer win) buff)
         (cons t (format "Expected window %S to show %s" win (buffer-name buff)))
       (cons nil (format "Expected window %S not to show %s" win (buffer-name buff))))))
-
-;; TODO: implement `expect-window-config' for matching particular window
-;; configurations
-;; (defun expect-window-config (frame wconf)
-;;   )
-;; selected: is selected-window
-;; p-ded: purpose-dedicated
-;; b-ded: buffer-dedicated
-;; params: general window parameters
-;; split: generic split, either horizontal or vertical. Split direction usually
-;;        depends on screen size, so it's better not to specify it, lest the
-;;        test results will depend on the tester's monitor size.
-;; (expect-window-config nil
-;;   '("buf1" :selected t :params '((purpose-dedicated . t))))
-;; (expect-window-config nil
-;;   '(split ("buf1" :selected t :p-ded t)
-;;           ("buf2" :p-ded nil)))
-;; (expect-window-config nil
-;;   '(split ("buf1" :selected t :p-ded t)
-;;           (split ("buf2" :p-ded nil)
-;;                  ("buf3" :b-ded t))))
+;;; ---
 
 (purpose-mode)
 
@@ -104,24 +170,32 @@
 
   (it "switch-to-buffer to same purpose"
     (switch-to-buffer "xxx-p0-1")
-    (expect (selected-frame) :to-show-exactly-buffers '("xxx-p0-1")))
+    ;; (expect (selected-frame) :to-show-exactly-buffers '("xxx-p0-1"))
+    (expect '(:name "xxx-p0-1") :to-match-window-tree)
+    )
 
   (it "switch-to-buffer to other purpose"
     (switch-to-buffer "xxx-p1-0")
-    (expect (selected-frame) :to-show-exactly-buffers '("xxx-p1-0")))
+    ;; (expect (selected-frame) :to-show-exactly-buffers '("xxx-p1-0"))
+    (expect (extract-window-tree) :to-match-window-recipe '(:name "xxx-p1-0")))
 
   (it "switch-to-buffer from purpose-dedicated to same purpose"
     (purpose-set-window-purpose-dedicated-p nil t)
     (switch-to-buffer "xxx-p0-1")
-    (expect (selected-frame) :to-show-exactly-buffers '("xxx-p0-1"))
-    (expect (purpose-window-purpose-dedicated-p)))
+    ;; (expect (selected-frame) :to-show-exactly-buffers '("xxx-p0-1"))
+    ;; (expect (purpose-window-purpose-dedicated-p))
+    (expect '(:name "xxx-p0-1" :p-ded t) :to-match-window-tree)
+    )
 
   (it "switch-to-buffer from purpose-dedicated to other purpose"
     (purpose-set-window-purpose-dedicated-p nil t)
     (switch-to-buffer "xxx-p1-0")
-    (expect (selected-frame) :to-show-exactly-buffers '("xxx-p0-0" "xxx-p1-0"))
-    (expect (selected-window) :to-show-buffer "xxx-p1-0")
-    (expect (next-window) :to-show-buffer "xxx-p0-0")
-    (expect (purpose-window-purpose-dedicated-p) :to-be nil)
-    (expect (purpose-window-purpose-dedicated-p (next-window)) :to-be t))
+    ;; (expect (selected-frame) :to-show-exactly-buffers '("xxx-p0-0" "xxx-p1-0"))
+    ;; (expect (selected-window) :to-show-buffer "xxx-p1-0")
+    ;; (expect (next-window) :to-show-buffer "xxx-p0-0")
+    ;; (expect (purpose-window-purpose-dedicated-p) :to-be nil)
+    ;; (expect (purpose-window-purpose-dedicated-p (next-window)) :to-be t)
+    (expect '(split (:name "xxx-p0-0" :p-ded t)
+                    (:name "xxx-p1-0" :p-ded nil :selected t))
+            :to-match-window-tree))
   )
