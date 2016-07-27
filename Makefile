@@ -16,7 +16,7 @@ unit:
 # 	${CASK} exec ecukes
 
 buttercup:
-	${CASK} exec buttercup -L .
+	${CASK} exec buttercup -L . -L tests
 
 # for systems where cask is not an option. must install requirements to user
 # elpa dir in this case

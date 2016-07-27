@@ -2,6 +2,8 @@
 
 (require 'buttercup)
 (require 'seq)
+;; based on https://github.com/sviridov/undercover.el-buttercup-integration-example/blob/master/tests/test-multiply.el
+(require 'undercover-init.el)
 (require 'window-purpose)
 
 (defun get-purpose-config ()
@@ -148,17 +150,17 @@ FUNC is called as (FUNC key value) for each pair."
       (cons nil (format "Expected window %S not to show %s" win (buffer-name buff))))))
 ;;; ---
 
-(purpose-mode)
-
 (describe "switch-buffer suite"
   :var (config-snapshot)
   (before-all
+    (purpose-mode)
     (setq config-snapshot (get-purpose-config))
     (load-purpose-config
      (make-purpose-config :regexps '(("^xxx-p0-" . p0)
                                      ("^xxx-p1-" . p1)))))
   (after-all
-    (load-purpose-config config-snapshot))
+    (load-purpose-config config-snapshot)
+    (purpose-mode -1))
   (before-each
     (seq-map #'get-buffer-create
              '("xxx-p0-0" "xxx-p0-1" "xxx-p1-0"))
