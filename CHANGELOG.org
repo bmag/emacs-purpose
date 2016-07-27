@@ -1,6 +1,6 @@
 #+TITLE: Changelog
 
-* next release
+* Release 1.6
 ** New Features
 *** New functions for easier purpose configuration
     User purposes: ~purpose-add-user-purposes~, ~purpose-remove-user-purposes~
