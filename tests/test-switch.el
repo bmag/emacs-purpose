@@ -13,8 +13,7 @@
     (load-purpose-config config-snapshot)
     (purpose-mode -1))
   (before-each
-    (seq-map #'get-buffer-create
-             '("xxx-p0-0" "xxx-p0-1" "xxx-p1-0"))
+    (create-buffers "xxx-p0-0" "xxx-p0-1" "xxx-p1-0")
     (let ((ignore-window-parameters t))
       (delete-other-windows))
     (set-window-dedicated-p nil nil)

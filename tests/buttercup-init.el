@@ -151,5 +151,7 @@ FUNC is called as (FUNC key value) for each pair."
       (cons nil (format "Expected window %S not to show %s" win (buffer-name buff))))))
 ;;; ---
 
+(defun create-buffers (&rest names)
+  (seq-map #'get-buffer-create names))
 
 (provide 'buttercup-init)
