@@ -5,7 +5,7 @@ INPUT_FILE := "test/user-input.txt"
 all: test
 
 # ecukes not used, so test only init
-test: unit
+test: buttercup
 
 unit:
 	rm -f ${INPUT_FILE}
