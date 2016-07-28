@@ -154,4 +154,9 @@ FUNC is called as (FUNC key value) for each pair."
 (defun create-buffers (&rest names)
   (seq-map #'get-buffer-create names))
 
+(buttercup-define-matcher :to-exist (filename)
+  (if (file-exists-p filename)
+      (cons t (format "Expected file %S to exist" filename))
+    (cons nil (format "Expected file %S to not exist" filename))))
+
 (provide 'buttercup-init)
