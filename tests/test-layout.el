@@ -104,7 +104,8 @@
   (after-each
     (load-purpose-config config-suite-snapshot))
 
-  (describe "purpose-window-params" (it "returns a window-params object"
+  (describe "purpose-window-params"
+    (it "returns a window-params object"
       (load-purpose-config (make-purpose-config :names '(("xxx-p0-0" . p0))))
       (set-window-buffer nil "xxx-p0-0")
       (purpose-set-window-purpose-dedicated-p nil t)
@@ -458,6 +459,7 @@
         (expect 'purpose-save-frame-layout-file :to-have-been-called-with
                 (concat (file-name-as-directory new-dir) layout-name ".frame-layout"))
         (expect new-dir :to-exist)))
+
     (describe "purpose-load-frame-layout"
       (it "loads correct file from directory"
         (spy-on 'purpose-load-frame-layout-file)
@@ -526,9 +528,58 @@
         (purpose-load-recent-frame-layout 0)
         (expect 'purpose-set-frame-layout :to-have-been-called-with 'a t)
         (purpose-load-recent-frame-layout 1)
-        (expect 'purpose-set-frame-layout :to-have-been-called-with 'b nil))))
+        (expect 'purpose-set-frame-layout :to-have-been-called-with 'b nil)))
 
-  ;; TODO: `purpose-set-window-layout' should change `purpose-recent-window-layouts' (unless norecord)
+    (describe "purpose-set-window-layout"
+      (it "adds layout to `purpose-recent-window-layouts'"
+        (setq purpose-recent-window-layouts (make-ring 50))
+        (ring-insert purpose-recent-window-layouts 'a)
+        (dolist (func (list 'delete-other-windows 'set-window-dedicated-p 'purpose-window-params-p
+                            'purpose-set-window-properties 'purpose--set-window-layout-1
+                            'purpose-windows-with-purpose 'purpose-buffers-with-purpose
+                            'purpose--tree-width-from-edges 'purpose--tree-height-from-edges))
+          (spy-on func))
+        (purpose-set-window-layout 'b)
+        (expect (ring-ref purpose-recent-window-layouts 0) :to-be 'b)))
+
+    (describe "purpose-set-frame-layout"
+      (it "adds layout to `purpose-recent-frame-layouts'"
+        (setq purpose-recent-frame-layouts (make-ring 50))
+        (ring-insert purpose-recent-frame-layouts '(a))
+        (dolist (func (list 'delete-other-frames 'purpose-set-window-layout 'make-frame))
+          (spy-on func))
+        (purpose-set-frame-layout '(b))
+        (expect (ring-ref purpose-recent-frame-layouts 0) :to-equal '(b)))))
+
+  (describe "purpose-delete-window* Functions"
+    (describe "purpose--delete-window-at"
+      (it "throws error when window not found"
+        (expect (lambda () (purpose--delete-window-at #'ignore))
+                :to-throw 'error)))
+
+    (describe "purpose-delete-window-at-top"
+      (it "deletes top window"
+        (set-window-buffer (split-window nil nil 'above) "xxx-p0-1")
+        (purpose-delete-window-at-top)
+        (expect '(:name "xxx-p0-0") :to-match-window-tree)))
+
+    (describe "purpose-delete-window-at-bottom"
+      (it "deletes bottom window"
+        (set-window-buffer (split-window nil nil 'below) "xxx-p0-1")
+        (purpose-delete-window-at-bottom)
+        (expect '(:name "xxx-p0-0") :to-match-window-tree)))
+
+    (describe "purpose-delete-window-at-left"
+      (it "deletes left window"
+        (set-window-buffer (split-window nil nil 'left) "xxx-p0-1")
+        (purpose-delete-window-at-left)
+        (expect '(:name "xxx-p0-0") :to-match-window-tree)))
+
+    (describe "purpose-delete-window-at-right"
+      (it "deletes right window"
+        (set-window-buffer (split-window nil nil 'right) "xxx-p0-1")
+        (purpose-delete-window-at-right)
+        (expect '(:name "xxx-p0-0") :to-match-window-tree))))
+
   ;; TODO: test all interactive calls interactively
-  ;; TODO: `purpose-delete-window-at-*' functions
   )
