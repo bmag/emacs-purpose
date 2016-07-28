@@ -1,5 +1,11 @@
 #+TITLE: Changelog
 
+* next release (2.0)
+** Bug Fixes
+*** ~purpose-load-recent-frame-layout~ now loads the correct layout
+    Previous it would always load the most recent layout (index 0), disregarding
+    the function's ~index~ argument.
+
 * next release
 ** New Features
 *** New functions for easier purpose configuration
