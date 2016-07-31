@@ -9,6 +9,28 @@
 ;; the tested library
 (require 'window-purpose)
 
+;;; simulate user input
+(defconst user-input-filename "tests/user-input.txt")
+(defvar input-lines-inserted 0)
+(defvar max-allowed-input-lines 100)
+(defun validate-user-input (line)
+  "Validate that LINE can be inserted to input.
+LINE must not contain a newline character.
+`input-lines-inserted' must be less than `max-allowed-input-lines'."
+  (when (string-match-p "\n" line)
+    (error "LINE shouldn't contain any newlines."))
+  (unless (< input-lines-inserted max-allowed-input-lines)
+    (error "Wrote too many input lines already.")))
+(defun insert-user-input (line)
+  "Insert LINE into input file.
+The input file is `user-input-filename'.
+
+Gotcha: this will not work when buttercup spies on `insert-file-contents'."
+  ;; throws error if invalid input
+  (validate-user-input line)
+  (setq input-lines-inserted (1+ input-lines-inserted))
+  (shell-command (format "echo %s >> %s" line user-input-filename)))
+
 ;;; save/load purpose configurations
 (defun get-purpose-config ()
   (seq-map (lambda (var)

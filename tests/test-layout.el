@@ -144,7 +144,19 @@
   (describe "purpose-set-window-purpose"
     (it "should change window's purpose"
       (purpose-set-window-purpose 'foo)
-      (expect (purpose-window-purpose) :to-be 'foo)))
+      (expect (purpose-window-purpose) :to-be 'foo))
+    (it "uses purpose inputted by the user"
+      (spy-on 'purpose--set-window-buffer)
+      (spy-on 'purpose-set-window-purpose-dedicated-p)
+      (insert-user-input "foo2")
+      (call-interactively 'purpose-set-window-purpose)
+      (expect 'purpose--set-window-buffer :to-have-been-called-with 'foo2)
+      (expect 'purpose-set-window-purpose-dedicated-p :to-have-been-called-with nil t)
+      (insert-user-input "foo3")
+      (let ((current-prefix-arg t))
+        (call-interactively 'purpose-set-window-purpose))
+      (expect 'purpose--set-window-buffer :to-have-been-called-with 'foo3)
+      (expect 'purpose-set-window-purpose-dedicated-p :to-have-been-called-with nil nil)))
 
   (describe "purpose-delete-non-dedicated-windows"
     (it "should delete only and all non-dedicated windows"
@@ -294,6 +306,9 @@
       :var (testfile)
       (before-all
         (setq testfile "testlayout.window-layout"))
+      (after-all
+        (when (file-exists-p testfile)
+          (delete-file testfile)))
       (before-each
         (when (file-exists-p testfile)
           (delete-file testfile)))
@@ -306,7 +321,11 @@
         (let ((contents (with-temp-buffer
                           (insert-file-contents-literally testfile)
                           (read (current-buffer)))))
-          (expect contents :to-equal (purpose-get-window-layout)))))
+          (expect contents :to-equal (purpose-get-window-layout))))
+      (it "uses filename inputted by the user"
+        (insert-user-input testfile)
+        (call-interactively #'purpose-save-window-layout-file)
+        (expect testfile :to-exist)))
 
     (describe "purpose-load-window-layout-file"
       :var (testfile expected-layout)
@@ -323,7 +342,11 @@
       (it "throws error when file doesn't exist"
         (spy-on 'purpose-set-window-layout)
         (expect (lambda () (purpose-load-window-layout-file "this-file-does-not-exist"))
-                :to-throw 'error)))
+                :to-throw 'error))
+      (it "uses filename inputted by the user"
+        (insert-user-input "tests/layouts1/test-dired2.window-layout")
+        (call-interactively #'purpose-load-window-layout-file)
+        (expect '(split (:purpose dired) (:purpose dired)) :to-match-window-tree)))
 
     (describe "purpose-save-window-layout"
       :var (layout-name layout-dir new-dir)
@@ -346,12 +369,25 @@
         (purpose-save-window-layout layout-name new-dir)
         (expect 'purpose-save-window-layout-file :to-have-been-called-with
                 (concat (file-name-as-directory new-dir) layout-name ".window-layout"))
-        (expect new-dir :to-exist)))
+        (expect new-dir :to-exist))
+      (it "uses filename inputted by the user"
+        (spy-on 'purpose-save-window-layout-file)
+        (insert-user-input layout-name)
+        (insert-user-input layout-dir)
+        (call-interactively 'purpose-save-window-layout)
+        (expect 'purpose-save-window-layout-file :to-have-been-called-with
+                (concat (file-name-as-directory layout-dir) layout-name ".window-layout"))))
 
     (describe "purpose-load-window-layout"
       (it "loads correct file from directory"
         (spy-on 'purpose-load-window-layout-file)
         (purpose-load-window-layout "test-dired2")
+        (expect 'purpose-load-window-layout-file :to-have-been-called-with
+                (expand-file-name "tests/layouts1/test-dired2.window-layout")))
+      (it "uses filename inputted by the user"
+        (spy-on 'purpose-load-window-layout-file)
+        (insert-user-input "test-dired2")
+        (call-interactively 'purpose-load-window-layout)
         (expect 'purpose-load-window-layout-file :to-have-been-called-with
                 (expand-file-name "tests/layouts1/test-dired2.window-layout")))))
 
@@ -418,7 +454,11 @@
         (let ((contents (with-temp-buffer
                           (insert-file-contents-literally testfile)
                           (read (current-buffer)))))
-          (expect contents :to-equal (purpose-get-frame-layout)))))
+          (expect contents :to-equal (purpose-get-frame-layout))))
+      (it "uses filename inputted by the user"
+        (insert-user-input testfile)
+        (call-interactively 'purpose-save-frame-layout-file)
+        (expect testfile :to-exist)))
 
     (describe "purpose-load-frame-layout-file"
       :var (testfile expected-layout)
@@ -435,7 +475,13 @@
       (it "throws error when file doesn't exist"
         (spy-on 'purpose-set-frame-layout)
         (expect (lambda () (purpose-load-frame-layout-file "this-file-does-not-exist"))
-                :to-throw 'error)))
+                :to-throw 'error))
+      (it "uses filename inputted by the user"
+        (insert-user-input testfile)
+        (call-interactively #'purpose-load-frame-layout-file)
+        (expect '(split (split (:purpose edit) (:purpose edit))
+                        (split (:purpose terminal) (:purpose terminal)))
+                :to-match-window-tree)))
 
     (describe "purpose-save-frame-layout"
       :var (layout-name layout-dir new-dir)
@@ -458,12 +504,25 @@
         (purpose-save-frame-layout layout-name new-dir)
         (expect 'purpose-save-frame-layout-file :to-have-been-called-with
                 (concat (file-name-as-directory new-dir) layout-name ".frame-layout"))
-        (expect new-dir :to-exist)))
+        (expect new-dir :to-exist))
+      (it "uses filename inputted by the user"
+        (spy-on 'purpose-save-frame-layout-file)
+        (insert-user-input layout-name)
+        (insert-user-input layout-dir)
+        (call-interactively 'purpose-save-frame-layout)
+        (expect 'purpose-save-frame-layout-file :to-have-been-called-with
+                (concat (file-name-as-directory layout-dir) layout-name ".frame-layout"))))
 
     (describe "purpose-load-frame-layout"
       (it "loads correct file from directory"
         (spy-on 'purpose-load-frame-layout-file)
         (purpose-load-frame-layout "test-edit-terminal")
+        (expect 'purpose-load-frame-layout-file :to-have-been-called-with
+                (expand-file-name "tests/layouts1/test-edit-terminal.frame-layout")))
+      (it "uses filename inputted by the user"
+        (spy-on 'purpose-load-frame-layout-file)
+        (insert-user-input "test-edit-terminal")
+        (call-interactively 'purpose-load-frame-layout)
         (expect 'purpose-load-frame-layout-file :to-have-been-called-with
                 (expand-file-name "tests/layouts1/test-edit-terminal.frame-layout")))))
 
@@ -579,7 +638,4 @@
       (it "deletes right window"
         (set-window-buffer (split-window nil nil 'right) "xxx-p0-1")
         (purpose-delete-window-at-right)
-        (expect '(:name "xxx-p0-0") :to-match-window-tree))))
-
-  ;; TODO: test all interactive calls interactively
-  )
+        (expect '(:name "xxx-p0-0") :to-match-window-tree)))))
