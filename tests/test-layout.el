@@ -105,10 +105,11 @@
     (load-purpose-config config-suite-snapshot))
 
   (describe "purpose-window-params"
-    (it "returns a window-params object"
+    (before-each
       (load-purpose-config (make-purpose-config :names '(("xxx-p0-0" . p0))))
       (set-window-buffer nil "xxx-p0-0")
-      (purpose-set-window-purpose-dedicated-p nil t)
+      (purpose-set-window-purpose-dedicated-p nil t))
+    (it "returns a window-params object"
       (let* ((obj (purpose-window-params))
              (edges (plist-get obj :edges)))
         (expect (plist-get obj :purpose) :to-be 'p0)
@@ -118,7 +119,14 @@
         (expect (nth 0 edges) :to-be-close-to 0.0 1)
         (expect (nth 1 edges) :to-be-close-to 0.0 1)
         (expect (nth 2 edges) :to-be-close-to 1.0 1)
-        (expect (nth 3 edges) :to-be-close-to 1.0 1))))
+        (expect (nth 3 edges) :to-be-close-to 1.0 1)))
+    (it "can get custom extra parameters"
+      (let* ((purpose-get-extra-window-params-functions
+              (list (lambda (&optional window)
+                      (list :prefix (substring-no-properties
+                                     (buffer-name (window-buffer window)) 0 1)))))
+             (obj (purpose-window-params)))
+        (expect (plist-get obj :prefix) :to-equal "x"))))
 
   (describe "purpose-window-params-p"
     (it "recognizes plist with a :purpose key"
@@ -129,6 +137,9 @@
       (expect (purpose-window-params-p 1) :not :to-be-truthy)))
 
   (describe "purpose-set-window-properties"
+    :var (my-ignore)
+    (before-all
+      (fset 'my-ignore (lambda (&rest args) nil)))
     (before-each
       (load-purpose-config (make-purpose-config :names '(("xxx-p0-0" . p0)))))
     (it "sets :purpose correctly"
@@ -139,7 +150,12 @@
       (expect '(:purpose p0 :p-ded nil) :to-match-window-tree))
     (it "sets :purpose-dedicated to t correctly"
       (purpose-set-window-properties '(:purpose p0 :purpose-dedicated t))
-      (expect '(:purpose p0 :p-ded t) :to-match-window-tree)))
+      (expect '(:purpose p0 :p-ded t) :to-match-window-tree))
+    (it "can set custom properties"
+      (spy-on 'my-ignore)
+      (let ((purpose-set-window-properties-functions '(my-ignore)))
+        (purpose-set-window-properties '(:purpose p0 :extra foo))
+        (expect 'my-ignore :to-have-been-called-with '(:purpose p0 :extra foo) nil))))
 
   (describe "purpose-set-window-purpose"
     (it "should change window's purpose"
@@ -300,7 +316,10 @@
                (win3 (nth 3 tree2)))
           (expect (purpose-window-purpose-dedicated-p win1) :to-be-truthy)
           (expect (purpose-window-purpose-dedicated-p win2) :not :to-be-truthy)
-          (expect (purpose-window-purpose-dedicated-p win3) :not :to-be-truthy))))
+          (expect (purpose-window-purpose-dedicated-p win3) :not :to-be-truthy)))
+      (it "can set a layout with only one window"
+          (purpose-set-window-layout '(:purpose edit :purpose-dedicated nil :width 1.0 :height 1.0 :edges (0.0 0.0 1.0 1.0)))
+          (expect '(:purpose edit :p-ded nil) :to-match-window-tree)))
 
     (describe "purpose-save-window-layout-file"
       :var (testfile)
@@ -376,7 +395,11 @@
         (insert-user-input layout-dir)
         (call-interactively 'purpose-save-window-layout)
         (expect 'purpose-save-window-layout-file :to-have-been-called-with
-                (concat (file-name-as-directory layout-dir) layout-name ".window-layout"))))
+                (concat (file-name-as-directory layout-dir) layout-name ".window-layout")))
+      (it "throws error when called interactively with null `purpose-layout-dirs'"
+        (let ((purpose-layout-dirs nil))
+          (expect (lambda () (call-interactively #'purpose-save-window-layout))
+                  :to-throw 'user-error))))
 
     (describe "purpose-load-window-layout"
       (it "loads correct file from directory"
@@ -511,7 +534,11 @@
         (insert-user-input layout-dir)
         (call-interactively 'purpose-save-frame-layout)
         (expect 'purpose-save-frame-layout-file :to-have-been-called-with
-                (concat (file-name-as-directory layout-dir) layout-name ".frame-layout"))))
+                (concat (file-name-as-directory layout-dir) layout-name ".frame-layout")))
+      (it "throws error when called interactively with null `purpose-layout-dirs'"
+        (let ((purpose-layout-dirs nil))
+          (expect (lambda () (call-interactively #'purpose-save-frame-layout))
+                  :to-throw 'user-error))))
 
     (describe "purpose-load-frame-layout"
       (it "loads correct file from directory"
