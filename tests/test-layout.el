@@ -79,6 +79,17 @@
                  (0.5042016806722689 0.49122807017543857 1.0084033613445378 0.9824561403508771)))))
     ))
 
+;; on Emacs 25.0.95.1, the frame is SMALLER than frame's root window, so we
+;; can't rely on it when testing
+(defun fake-frame-width (&optional frame)
+  (window-total-width (frame-root-window frame)))
+(defun fake-frame-height (&optional frame)
+  (window-total-height (frame-root-window frame)))
+(defun emacs-version>= (version)
+  (version<= version emacs-version))
+(defun emacs-version< (version)
+  (version< emacs-version version))
+
 (describe "Layout Suite"
   :var (config-suite-snapshot config-case-snapshot original-layout-dirs)
   (before-all
@@ -106,6 +117,9 @@
 
   (describe "purpose-window-params"
     (before-each
+      (when (emacs-version>= "25")
+        (spy-on 'frame-width :and-call-fake #'fake-frame-width)
+        (spy-on 'frame-height :and-call-fake #'fake-frame-height))
       (load-purpose-config (make-purpose-config :names '(("xxx-p0-0" . p0))))
       (set-window-buffer nil "xxx-p0-0")
       (purpose-set-window-purpose-dedicated-p nil t))
@@ -229,6 +243,9 @@
     (describe "purpose-get-window-layout"
       :var (result)
       (before-each
+        (when (emacs-version>= "25")
+          (spy-on 'frame-width :and-call-fake #'fake-frame-width)
+          (spy-on 'frame-height :and-call-fake #'fake-frame-height))
         (setq win2 (split-window nil nil 'below))
         (purpose-set-window-purpose 'foo1 'dont-dedicate)
         (with-selected-window win2
@@ -277,6 +294,9 @@
                  (:purpose foo2 :purpose-dedicated nil :width 0.75 :height 0.6 :edges (0.25 0.0 1.0 0.6))
                  (:purpose foo3 :purpose-dedicated nil :width 0.75 :height 0.4 :edges (0.25 0.6 1.0 1.0))))))
       (before-each
+        (when (emacs-version>= "25")
+          (spy-on 'frame-width :and-call-fake #'fake-frame-width)
+          (spy-on 'frame-height :and-call-fake #'fake-frame-height))
         (purpose-set-window-layout layout)
         (setq result (purpose-get-window-layout))
         (setq real-tree (car (window-tree))))
@@ -298,7 +318,7 @@
           (expect (plist-get win1 :width) :to-be-close-to 0.25 1)
           (expect (plist-get win1 :height) :to-be-close-to 1.0 1)
           (expect (plist-get win2 :width) :to-be-close-to 0.75 1)
-          (expect (plist-get win2 :height) :to-be-close-to 0.5 1)
+          (expect (plist-get win2 :height) :to-be-close-to 0.6 1)
           (expect (plist-get win3 :width) :to-be-close-to 0.75 1)
           (expect (plist-get win3 :height) :to-be-close-to 0.4 1)))
       (it "creates correct purposes"
