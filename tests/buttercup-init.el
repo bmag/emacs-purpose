@@ -181,4 +181,9 @@ FUNC is called as (FUNC key value) for each pair."
       (cons t (format "Expected file %S to exist" filename))
     (cons nil (format "Expected file %S to not exist" filename))))
 
+(buttercup-define-matcher :window-to-contain (window buffer-or-name)
+  (if (eq (window-buffer window) (get-buffer buffer-or-name))
+      (cons t (format "Expected window %s to contain buffer %s" window buffer-or-name))
+    (cons nil (format "Expected window %s not to contain buffer %s" window buffer-or-name))))
+
 (provide 'buttercup-init)
