@@ -1,7 +1,7 @@
 ;; -*- lexical-binding: t -*-
 (require 'buttercup-init)
 
-(defvar test-purpose-config
+(defvar test-core-purpose-config
   `((purpose-user-name-purposes . (("FOO" . USER1)))
     (purpose-user-regexp-purposes . (("^FOO2\\'" . USER2)))
     (purpose-user-mode-purposes . ((text-mode . USER3)))
@@ -24,7 +24,7 @@
 
   (before-each
     (setq config-case-snapshot (get-purpose-config))
-    (load-purpose-config test-purpose-config)
+    (load-purpose-config test-core-purpose-config)
     (create-buffers "FOO" "FOO2" "FOO3"
                     "BAR" "BAR2" "BAR3"
                     ".gitignore" " *Minibuf-777*" "TUX"

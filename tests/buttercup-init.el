@@ -29,15 +29,15 @@ Gotcha: this will not work when buttercup spies on `insert-file-contents'."
   ;; throws error if invalid input
   (validate-user-input line)
   (setq input-lines-inserted (1+ input-lines-inserted))
-  (shell-command (format "echo %s >> %s" line user-input-filename)))
+  (shell-command (format "echo %s>> %s" line user-input-filename)))
 
 ;;; save/load purpose configurations
 (defun get-purpose-config ()
   (seq-map (lambda (var)
              (cons var (eval var)))
-           '(purpose-user-mode-purposes
-             purpose-user-name-purposes
+           '(purpose-user-name-purposes
              purpose-user-regexp-purposes
+             purpose-user-mode-purposes
              purpose-extended-configuration
              purpose-use-default-configuration)))
 
