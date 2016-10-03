@@ -56,6 +56,40 @@ Gotcha: this will not work when buttercup spies on `insert-file-contents'."
   (purpose-compile-extended-configuration)
   (purpose-compile-default-configuration))
 
+;;; simple frame setters
+(defun build-window (spec window)
+  (set-window-buffer window (get-buffer-create (plist-get spec :name)))
+  (set-window-dedicated-p window (plist-get spec :b-ded))
+  (purpose-set-window-purpose-dedicated-p window (plist-get spec :p-ded))
+  (when (plist-get spec :selected)
+    (set-frame-selected-window (window-frame window) window t)))
+
+(defun reset-frame (&optional frame)
+  (let ((ignore-window-parameters t))
+    (delete-other-windows))
+  (set-window-dedicated-p nil nil)
+  (purpose-set-window-purpose-dedicated-p nil nil))
+
+(defun build-one-window (spec &optional frame)
+  (reset-frame frame)
+  (build-window spec (frame-root-window frame)))
+
+(defun build-two-windows (specs &optional frame)
+  (cl-assert (= (length specs) 2))
+  (reset-frame frame)
+  (split-window (frame-root-window frame))
+  (cl-loop for window in (window-list frame)
+           for spec in specs
+           do (build-window spec window)))
+
+(defun build-three-windows (specs &optional frame)
+  (cl-assert (= (length specs) 3))
+  (reset-frame frame)
+  (split-window (split-window (frame-root-window frame)))
+  (cl-loop for window in (window-list frame)
+           for spec in specs
+           do (build-window spec window)))
+
 ;;; match window recipes and trees
 ;; trees are extracted from `window-tree' to have similar structure to recipes
 (defvar window-data-extractors
