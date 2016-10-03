@@ -380,7 +380,7 @@
         (expect 'purpose-set-window-layout :to-have-been-called-with expected-layout))
       (it "throws error when file doesn't exist"
         (spy-on 'purpose-set-window-layout)
-        (expect (lambda () (purpose-load-window-layout-file "this-file-does-not-exist"))
+        (expect (apply-partially 'purpose-load-window-layout-file "this-file-does-not-exist")
                 :to-throw 'error))
       (it "uses filename inputted by the user"
         (insert-user-input "tests/layouts1/test-dired2.window-layout")
@@ -418,7 +418,7 @@
                 (concat (file-name-as-directory layout-dir) layout-name ".window-layout")))
       (it "throws error when called interactively with null `purpose-layout-dirs'"
         (let ((purpose-layout-dirs nil))
-          (expect (lambda () (call-interactively #'purpose-save-window-layout))
+          (expect (apply-partially 'call-interactively #'purpose-save-window-layout)
                   :to-throw 'user-error))))
 
     (describe "purpose-load-window-layout"
@@ -517,7 +517,7 @@
         (expect 'purpose-set-frame-layout :to-have-been-called-with expected-layout))
       (it "throws error when file doesn't exist"
         (spy-on 'purpose-set-frame-layout)
-        (expect (lambda () (purpose-load-frame-layout-file "this-file-does-not-exist"))
+        (expect (apply-partially 'purpose-load-frame-layout-file "this-file-does-not-exist")
                 :to-throw 'error))
       (it "uses filename inputted by the user"
         (insert-user-input testfile)
@@ -557,7 +557,7 @@
                 (concat (file-name-as-directory layout-dir) layout-name ".frame-layout")))
       (it "throws error when called interactively with null `purpose-layout-dirs'"
         (let ((purpose-layout-dirs nil))
-          (expect (lambda () (call-interactively #'purpose-save-frame-layout))
+          (expect (apply-partially 'call-interactively #'purpose-save-frame-layout)
                   :to-throw 'user-error))))
 
     (describe "purpose-load-frame-layout"
@@ -660,7 +660,7 @@
   (describe "purpose-delete-window* Functions"
     (describe "purpose--delete-window-at"
       (it "throws error when window not found"
-        (expect (lambda () (purpose--delete-window-at #'ignore))
+        (expect (apply-partially 'purpose--delete-window-at #'ignore)
                 :to-throw 'error)))
 
     (describe "purpose-delete-window-at-top"

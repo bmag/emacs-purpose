@@ -1,3 +1,4 @@
+;; -*- lexical-binding: t -*-
 (require 'buttercup-init)
 
 (defvar test-config-purpose-config
