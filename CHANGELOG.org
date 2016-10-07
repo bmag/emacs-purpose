@@ -5,6 +5,8 @@
 *** ~purpose-load-recent-frame-layout~ now loads the correct layout
     Previous it would always load the most recent layout (index 0), disregarding
     the function's ~index~ argument.
+** Changed test framework to Buttercup
+   It is now easier to read, modify and add new tests, thanks to [[https://github.com/jorgenschaefer/emacs-buttercup][Buttercup]].
 
 * Release 1.6
 ** New Features
