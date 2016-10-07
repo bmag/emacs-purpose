@@ -106,11 +106,7 @@
   (before-each
     (setq config-case-snapshot (get-purpose-config))
     (create-buffers "xxx-p0-0" "xxx-p0-1" "xxx-p1-0")
-    (let ((ignore-window-parameters t))
-      (delete-other-windows))
-    (set-window-dedicated-p nil nil)
-    (purpose-set-window-purpose-dedicated-p nil nil)
-    (set-window-buffer nil "xxx-p0-0"))
+    (build-one-window '(:name "xxx-p0-0")))
 
   (after-each
     (load-purpose-config config-suite-snapshot))
@@ -121,8 +117,7 @@
         (spy-on 'frame-width :and-call-fake #'fake-frame-width)
         (spy-on 'frame-height :and-call-fake #'fake-frame-height))
       (load-purpose-config (make-purpose-config :names '(("xxx-p0-0" . p0))))
-      (set-window-buffer nil "xxx-p0-0")
-      (purpose-set-window-purpose-dedicated-p nil t))
+      (build-one-window '(:name "xxx-p0-0" :p-ded t)))
     (it "returns a window-params object"
       (let* ((obj (purpose-window-params))
              (edges (plist-get obj :edges)))

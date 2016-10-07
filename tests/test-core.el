@@ -33,11 +33,7 @@
     (with-current-buffer "BAR3" (sh-mode))
     (with-current-buffer "TUX" (emacs-lisp-mode))
     (with-current-buffer "xxx" (fundamental-mode))
-    (let ((ignore-window-parameters t))
-      (delete-other-windows))
-    (set-window-dedicated-p nil nil)
-    (purpose-set-window-purpose-dedicated-p nil nil)
-    (set-window-buffer nil "xxx"))
+    (build-one-window '(:name "xxx")))
 
   (after-each
     (load-purpose-config config-suite-snapshot))
@@ -72,12 +68,11 @@
       (expect (purpose-buffers-with-purpose 'USER1) :to-equal (list (get-buffer "FOO")))))
   (describe "purpose-window-purpose"
     (it "gets purpose of given window"
-      (set-window-buffer nil "FOO")
+      (build-one-window '(:name "FOO"))
       (expect (purpose-window-purpose) :to-be 'USER1)))
   (describe "purpose-windows-with-purpose"
     (it "finds all windows with given purpose"
-      (set-window-buffer (split-window) "FOO2")
-      (set-window-buffer nil "FOO")
+      (build-two-windows '((:name "FOO" :selected t) (:name "FOO2")))
       (expect (purpose-windows-with-purpose 'USER1) :to-equal (list (selected-window)))))
   (describe "purpose-get-all-purposes"
     (it "finds all purposes that are defined"
