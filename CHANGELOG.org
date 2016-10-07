@@ -5,6 +5,15 @@
 *** ~purpose-load-recent-frame-layout~ now loads the correct layout
     Previous it would always load the most recent layout (index 0), disregarding
     the function's ~index~ argument.
+*** [[https://github.com/bmag/emacs-purpose/issues/96][#96]]: ~purpose-set-window-purpose~ now receives an optional ~window~ argument
+    Function signature has changed from:
+    #+BEGIN_SRC elisp
+      purpose-set-window-purpose (purpose &optional dont-dedicate)
+    #+END_SRC
+    To:
+    #+BEGIN_SRC elisp
+      purpose-set-window-purpose (purpose &optional window dont-dedicate)
+    #+END_SRC
 ** Changed test framework to Buttercup
    It is now easier to read, modify and add new tests, thanks to [[https://github.com/jorgenschaefer/emacs-buttercup][Buttercup]].
 

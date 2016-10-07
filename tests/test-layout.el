@@ -170,17 +170,22 @@
     (it "should change window's purpose"
       (purpose-set-window-purpose 'foo)
       (expect (purpose-window-purpose) :to-be 'foo))
+    (it "can receive an optional window argument"
+      (build-two-windows '((:name "xxx-p0-0" :selected t) (:name "xxx-p0-1")))
+      (purpose-set-window-purpose 'foo (next-window))
+      (expect (purpose-window-purpose) :to-be 'general)
+      (expect (purpose-window-purpose (next-window)) :to-be 'foo))
     (it "uses purpose inputted by the user"
       (spy-on 'purpose--set-window-buffer)
       (spy-on 'purpose-set-window-purpose-dedicated-p)
       (insert-user-input "foo2")
       (call-interactively 'purpose-set-window-purpose)
-      (expect 'purpose--set-window-buffer :to-have-been-called-with 'foo2)
+      (expect 'purpose--set-window-buffer :to-have-been-called-with 'foo2 nil)
       (expect 'purpose-set-window-purpose-dedicated-p :to-have-been-called-with nil t)
       (insert-user-input "foo3")
       (let ((current-prefix-arg t))
         (call-interactively 'purpose-set-window-purpose))
-      (expect 'purpose--set-window-buffer :to-have-been-called-with 'foo3)
+      (expect 'purpose--set-window-buffer :to-have-been-called-with 'foo3 nil)
       (expect 'purpose-set-window-purpose-dedicated-p :to-have-been-called-with nil nil)))
 
   (describe "purpose-delete-non-dedicated-windows"
@@ -242,7 +247,7 @@
           (spy-on 'frame-width :and-call-fake #'fake-frame-width)
           (spy-on 'frame-height :and-call-fake #'fake-frame-height))
         (setq win2 (split-window nil nil 'below))
-        (purpose-set-window-purpose 'foo1 'dont-dedicate)
+        (purpose-set-window-purpose 'foo1 nil 'dont-dedicate)
         (with-selected-window win2
           (purpose-set-window-purpose 'foo2))
         (setq result (purpose-get-window-layout)))

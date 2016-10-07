@@ -619,8 +619,9 @@ Use INDEX=0 for most recent."
         (window-list)))
 
 ;;;###autoload
-(defun purpose-set-window-purpose (purpose &optional dont-dedicate)
-  "Set window's purpose to PURPOSE, and dedicate it.
+(defun purpose-set-window-purpose (purpose &optional window dont-dedicate)
+  "Set WINDOW's purpose to PURPOSE, and dedicate it.
+WINDOW must be a live window and defaults to the selected one.
 With prefix argument (DONT-DEDICATE is non-nil), don't dedicate the
 window.  If DONT-DEDICATE is non-nil, and the current window is
 dedicated, un-dedicate the window.
@@ -628,9 +629,10 @@ Changing the window's purpose is done by displaying a buffer of
 the right purpose in it, or creating a dummy buffer."
   (interactive
    (list (purpose-read-purpose "Purpose: " nil 'confirm)
+         nil
          current-prefix-arg))
-  (purpose--set-window-buffer purpose)
-  (purpose-set-window-purpose-dedicated-p nil (not dont-dedicate)))
+  (purpose--set-window-buffer purpose window)
+  (purpose-set-window-purpose-dedicated-p window (not dont-dedicate)))
 
 (defun purpose--delete-window-at (window-getter &optional frame)
   "Delete window returned by WINDOW-GETTER.
