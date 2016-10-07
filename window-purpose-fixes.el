@@ -66,7 +66,7 @@ This function should be advised around
 (defun purpose--fix-hydra-lv ()
   "Add hydra's LV buffer to Purpose's ignore list."
   (eval-after-load 'lv
-    '(add-to-list 'purpose-action-function-ignore-buffer-names "^\\*LV\\*$")))
+    '(add-to-list 'purpose-action-function-ignore-buffer-names "^ \\*LV\\*$")))
 
 
 

@@ -6,7 +6,7 @@
     Previous it would always load the most recent layout (index 0), disregarding
     the function's ~index~ argument.
 
-* next release
+* Release 1.6
 ** New Features
 *** New functions for easier purpose configuration
     User purposes: ~purpose-add-user-purposes~, ~purpose-remove-user-purposes~
