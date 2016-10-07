@@ -600,7 +600,7 @@ If there is no recent layout, do nothing."
 (defun purpose-load-recent-frame-layout (index)
   "Load frame layout from `purpose-recent-frame-layouts'.
 Use INDEX=0 for most recent."
-  (purpose-set-frame-layout (ring-ref purpose-recent-frame-layouts 0)
+  (purpose-set-frame-layout (ring-ref purpose-recent-frame-layouts index)
                             (zerop index)))
 
 
