@@ -266,4 +266,112 @@ See `purpose-configuration' for a description of a valid entry."
     (unless (symbolp (plist-get entry :mode))
       (error "`:mode' must be a symbol: %S" entry)))))
 
+;;; functions to modify `purpose-configuration'
+
+(cl-defun purpose-add-configuration-entry (origin priority purpose &key name regexp mode)
+  "Add new configuration entry to `purpose-configuration'.
+If the given paramters don't make a valid entry, throw an error
+and don't change `purpose-configuration'.
+
+If there already exist an entry with the same ORIGIN, PRIORITY,
+NAME, REGEXP and MODE, then it is replaced."
+  (let ((new-entry (append (list :origin origin :priority priority :purpose purpose)
+                           (and name (list :name name))
+                           (and regexp (list :regexp regexp))
+                           (and mode (list :mode mode)))))
+    (purpose-validate-entry new-entry)
+    (purpose-delete-configuration-entry origin priority :name name :regexp regexp :mode mode)
+    (push new-entry purpose-configuration)))
+
+(cl-defun purpose-get-configuration-entry (origin priority &key name regexp mode)
+  "Return a `purpose-configuration' entry with matching paramters.
+Return nil if no entry was found."
+  (seq-find (lambda (entry)
+              (and (eq origin (plist-get entry :origin))
+                   (= priority (plist-get entry :priority))
+                   (string= name (plist-get entry :name))
+                   (string= regexp (plist-get entry :regexp))
+                   (eq mode (plist-get entry :mode))))
+            purpose-configuration))
+
+(cl-defun purpose-delete-configuration-entry (origin priority &key name regexp mode)
+  "Remove matching configuration entry from `purpose-configuration'."
+  (setq purpose-configuration
+        (seq-remove (lambda (entry)
+                      (and (eq origin (plist-get entry :origin))
+                           (= priority (plist-get entry :priority))
+                           (string= name (plist-get entry :name))
+                           (string= regexp (plist-get entry :regexp))
+                           (eq mode (plist-get entry :mode))))
+                    purpose-configuration)))
+
+;;; advanced helper functions for configuring `purpose-configuration'
+
+(cl-defun purpose-add-configuration-set (origin priority &key names regexps modes)
+  "Add several configuration entries with the same ORIGIN and PRIORITY.
+NAMES, REGEXPS and MODES must be alist mapping names, regexps and
+modes to purposes, respectively.
+
+If any of the entries is invalid, then `purpose-configuration' is
+not changed."
+  (let ((original-configuration purpose-configuration))
+    (condition-case err
+        (progn
+          (dolist (mode-purpose modes)
+            (purpose-add-configuration-entry origin priority (cdr mode-purpose) :mode (car mode-purpose)))
+          (dolist (regexp-purpose regexps)
+            (purpose-add-configuration-entry origin priority (cdr regexp-purpose) :regexp (car regexp-purpose)))
+          (dolist (name-purpose names)
+            (purpose-add-configuration-entry origin priority (cdr name-purpose) :name (car name-purpose))))
+      (error
+       ;; in case of error, restore original `purpose-configuration' and
+       ;; re-throw error
+       (setq purpose-configuration original-configuration)
+       (signal (car err) (cdr err))))))
+
+(cl-defun purpose-get-configuration-set (origin priority &key names regexps modes)
+  "Get all configuration entries with matching parameters.
+ORIGIN and PRIORITY are the same for all entries. NAMES, REGEXPS
+and MODES are lists of names, regexps and modes, respectively."
+  (delq nil
+        (append
+         (mapcar (apply-partially #'purpose-get-configuration-entry origin priority :name) names)
+         (mapcar (apply-partially #'purpose-get-configuration-entry origin priority :regexp) regexps)
+         (mapcar (apply-partially #'purpose-get-configuration-entry origin priority :mode) modes))))
+
+(cl-defun purpose-delete-configuration-set (origin priority &key names regexps modes)
+  "Delete all matching configuration entries.
+ORIGIN and PRIORITY are the same for all entries. NAMES, REGEXPS
+and MODES are lists of names, regexps and modes, respectively."
+  (mapc (apply-partially #'purpose-delete-configuration-entry origin priority :name) names)
+  (mapc (apply-partially #'purpose-delete-configuration-entry origin priority :regexp) regexps)
+  (mapc (apply-partially #'purpose-delete-configuration-entry origin priority :mode) modes))
+
+(cl-defun purpose-add-user-configuration-entry (purpose &key name regexp mode)
+  "Add new user configuration entry to `purpose-configuration'.
+A user configuration entry is a regular entry, with an origin of
+`user' and a priority of 99. See
+`purpose-add-configuration-entry' for details."
+  (purpose-add-configuration-entry 'user 99 :name name :regexp regexp :mode mode))
+
+(cl-defun purpose-add-extension-configuration-entry (origin purpose &key name regexp mode)
+  "Add new extension configuration entry to `purpose-configuration'.
+A extension configuration entry is a regular entry, with a
+priority of 50. See `purpose-add-configuration-entry' for
+details."
+  (purpose-add-configuration-entry origin 50 :name name :regexp regexp :mode mode))
+
+(cl-defun purpose-add-user-configuration-set (purpose &key names regexps modes)
+  "Add several user configuration entries to `purpose-configuration'.
+A user configuration entry is a regular entry, with an origin of
+`user' and a priority of 99. See `purpose-add-configuration-set'
+for details."
+  (purpose-add-configuration-set 'user 99 :names names :regexps regexps :modes modes))
+
+(cl-defun purpose-add-extension-configuration-set (origin purpose &key names regexps modes)
+  "Add several extension configuration entries to `purpose-configuration'.
+A extension configuration entry is a regular entry, with a priority of 50.
+See `purpose-add-configuration-set' for details."
+  (purpose-add-configuration-set origin 50 :names names :regexps regexps :modes modes))
+
 (provide 'window-purpose-configuration-2)
