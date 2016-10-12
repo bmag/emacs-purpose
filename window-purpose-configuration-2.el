@@ -226,7 +226,8 @@ CONFIGURATION is valid if it is a list of valid purpose
 configuration entries, as determined by `purpose-validate-entry'.
 
 CONFIGURATION defaults to the value `purpose-configuration'."
-  (cl-check-type configuration listp)
+  (unless (listp configuration)
+    (error "Purpose configuration must be a list"))
   (mapc #'purpose-validate-entry configuration))
 
 (defun purpose-validate-entry (entry)
