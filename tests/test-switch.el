@@ -219,13 +219,15 @@
   (before-each
     (create-buffers "xxx-p0-0" "xxx-p0-1" "xxx-p1-0"))
 
-  (it "doesn't display a buffer when `display-buffer-no-window' is used"
-    (build-one-window '(:name "xxx-p0-0"))
-    (display-buffer "xxx-p0-1" '(display-buffer-no-window (allow-no-window . t)))
-    (expect '(:name "xxx-p0-0") :to-match-window-tree)
-    (display-buffer "xxx-p0-1" '((display-buffer-no-window purpose-display-maybe-other-window)
-                                 (allow-no-window . t)))
-    (expect '(:name "xxx-p0-0") :to-match-window-tree))
+  ;; `display-buffer-no-window' is not defined in Emacs 24.3
+  (when (version<= "24.4" emacs-version)
+    (it "doesn't display a buffer when `display-buffer-no-window' is used"
+        (build-one-window '(:name "xxx-p0-0"))
+        (display-buffer "xxx-p0-1" '(display-buffer-no-window (allow-no-window . t)))
+        (expect '(:name "xxx-p0-0") :to-match-window-tree)
+        (display-buffer "xxx-p0-1" '((display-buffer-no-window purpose-display-maybe-other-window)
+                                     (allow-no-window . t)))
+        (expect '(:name "xxx-p0-0") :to-match-window-tree)))
 
   (it "pops a window when `purpose-display-fallback' is `pop-up-window'"
     (build-one-window '(:name "xxx-p0-0" :b-ded t))
