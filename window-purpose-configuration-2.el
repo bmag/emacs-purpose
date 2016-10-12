@@ -1,3 +1,4 @@
+;;; -*- lexical-binding: t -*-
 (require 'cl-lib)
 (require 'seq)
 
@@ -126,6 +127,7 @@ This function sets
 `purpose--compiled-names',`purpose--compiled-regexps',
 `purpose--compiled-modes', and `purpose--compiled-mode-list'
 according to `purpose-configuration'."
+  (purpose-validate-configuration)
   (purpose-sort-configuration)
   (purpose--compile-modes)
   (purpose--compile-regexps)
@@ -217,3 +219,51 @@ Set `purpose--compiled-names' according to
           (push name collected-names)
           (push entry collected-entries))))
     (setq purpose--compiled-names (nreverse collected-entries))))
+
+(cl-defun purpose-validate-configuration (&optional (configuration purpose-configuration))
+  "Throw error if CONFIGURATION is not a valid purpose configuration.
+CONFIGURATION is valid if it is a list of valid purpose
+configuration entries, as determined by `purpose-validate-entry'.
+
+CONFIGURATION defaults to the value `purpose-configuration'."
+  (cl-check-type configuration listp)
+  (mapc #'purpose-validate-entry configuration))
+
+(defun purpose-validate-entry (entry)
+  "Throw error if ENTRY is not a valid entry for `purpose-configuration'.
+See `purpose-configuration' for a description of a valid entry."
+  (unless (listp entry)
+    (error "Entry must be a plist: %S" entry))
+  (unless (plist-get entry :origin)
+    (error "Entry must contain a non-nil `:origin': %S" entry))
+  (unless (symbolp (plist-get entry :origin))
+    (error "`:origin' must be a symbol: %S" entry))
+  (unless (plist-get entry :priority)
+    (error "Entry must contain a non-nil `:priority': %S" entry))
+  (unless (integerp (plist-get entry :priority))
+    (error "`:priority' must be an integer: %S" entry))
+  (unless (<= 0 (plist-get entry :priority) 99)
+    (error "`:priority' must be between 0 and 99: %S" entry))
+  (unless (plist-get entry :purpose)
+    (error "Entry must contain a non-nil `:purpose': %S" entry))
+  (unless (symbolp (plist-get entry :purpose))
+    (error "`:purpose' must be a symbol: %S" entry))
+  (unless (or (plist-get entry :name)
+              (plist-get entry :regexp)
+              (plist-get entry :mode))
+    (error "Entry must contain 1 of `:name', `:regexp' or `:mode'" entry))
+  (unless (= 1 (length (seq-filter (apply-partially #'plist-get entry)
+                                   '(:name :regexp :mode))))
+    (error "Entry must contain only 1 of `:name', `:regexp' or `:mode'" entry))
+  (cond
+   ((plist-get entry :name)
+    (unless (stringp (plist-get entry :name))
+      (error "`:name' must be a string: %S" entry)))
+   ((plist-get entry :regexp)
+    (unless (stringp (plist-get entry :regexp))
+      (error "`:regexp' must be a string: %S" entry)))
+   ((plist-get entry :mode)
+    (unless (symbolp (plist-get entry :mode))
+      (error "`:mode' must be a symbol: %S" entry)))))
+
+(provide 'window-purpose-configuration-2)
