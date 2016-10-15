@@ -93,7 +93,24 @@ if not found."
         (throw 'done regexp))))
     nil))
 
-(defvar purpose-configuration nil
+(defvar purpose-configuration
+  '((:origin default :priority 0 :purpose edit :name ".gitignore")
+    (:origin default :priority 0 :purpose edit :name ".hgignore")
+    ;; the `shell' command displays its buffer before setting its major-mode, so
+    ;; we must detect it by name
+    (:origin default :priority 0 :purpose terminal :name "*shell*")
+    (:origin default :priority 0 :purpose minibuf :regexp "^ \\*Minibuf-[0-9]*\\*$")
+    (:origin default :priority 0 :purpose edit :mode prog-mode)
+    (:origin default :priority 0 :purpose edit :mode text-mode)
+    (:origin default :priority 0 :purpose terminal :mode comint-mode)
+    (:origin default :priority 0 :purpose dired :mode dired-mode)
+    (:origin default :priority 0 :purpose buffers :mode ibuffer-mode)
+    (:origin default :priority 0 :purpose buffers :mode Buffer-menu-mode)
+    (:origin default :priority 0 :purpose search :mode occur-mode)
+    (:origin default :priority 0 :purpose search :mode grep-mode)
+    (:origin default :priority 0 :purpose search :mode compilation-mode)
+    (:origin default :priority 0 :purpose image :mode image-mode)
+    (:origin default :priority 0 :purpose package :mode package-menu-mode))
   "List of all configured purposes.
 Each entry is a plist with 4 keys: `:origin', `:priority',
 `:purpose', and the 4th key is one of `:name', `:regexp' and
@@ -179,13 +196,18 @@ The entries are sorted from highest `:priority' to lowest
 Set `purpose--compiled-modes' and `purpose--compiled-mode-list'
 according to `purpose-configuration'."
   (let (collected-entries collected-modes)
+    ;; `purpose-configuration' is sorted with higher priorities coming before
+    ;; lower ones. for each :mode entry, if it doesn't have a higher priority
+    ;; parent (read: doesn't derive from a mode that was already collected) then
+    ;; add it to the compiled variables
     (dolist (entry purpose-configuration)
       (let ((mode (plist-get entry :mode)))
         (when (and mode
-                   (not (seq-some (apply-partially #'parent-mode-is-derived-p mode)
-                                  collected-modes)))
+                   (let ((major-mode mode))
+                     (not (apply #'derived-mode-p collected-modes))))
+          ;; it's a :mode entry, and doesn't derive from higher prioritized
+          ;; modes
           (push mode collected-modes)
-
           (push (list mode (plist-get entry :priority) (plist-get entry :purpose))
                 collected-entries))))
     (setq purpose--compiled-modes (nreverse collected-entries)
@@ -196,10 +218,16 @@ according to `purpose-configuration'."
 Set `purpose--compiled-regexp' according to
 `purpose-configuration'."
   (let (collected-entries collected-regexps)
+    ;; `purpose-configuration' is sorted with higher priorities coming before
+    ;; lower ones. for each :regexp entry, if the regexp doesn't have a higher
+    ;; prioritized entry (read: wasn't already collected), then add it to the
+    ;; compiled variables
     (dolist (entry purpose-configuration)
       (let ((regexp (plist-get entry :regexp)))
         (when (and regexp
                    (not (member regexp collected-regexps)))
+          ;; it's a :regexp entry, and it's the highest prioritized entry for
+          ;; this regexp
           (push regexp collected-regexps)
           (push (list regexp (plist-get entry :priority) (plist-get entry :purpose))
                 collected-entries))))
@@ -210,16 +238,24 @@ Set `purpose--compiled-regexp' according to
 Set `purpose--compiled-names' according to
 `purpose-configuration' and `purpose--compiled-regexps'."
   (let (collected-entries collected-names)
+    ;; `purpose-configuration' is sorted with higher priorities coming before
+    ;; lower ones. for each :name entry, if the name doesn't have a higher
+    ;; prioritized entry (read: wasn't already collected), and if the name
+    ;; doesn't match a higher prioritized regexp, then add it to the compiled
+    ;; variables. because of this, `purpose--compile-names' should be called
+    ;; after `purpose--compile-regexps'
     (dolist (entry purpose-configuration)
       (let ((name (plist-get entry :name))
-            (priority (plist-get entry :primary)))
+            (priority (plist-get entry :priority)))
         (when (and name
                    (not (member name collected-names))
                    (not (seq-some
                          (lambda (regexp-entry)
-                           (and (> (plist-get regexp-entry :priority) priority)
-                                (string-match-p (plist-get regexp-entry :regexp) name)))
+                           (and (> (cadr regexp-entry) priority)
+                                (string-match-p (car regexp-entry) name)))
                          purpose--compiled-regexps)))
+          ;; it's a :name entry, and it's the highest prioritized entry for this
+          ;; name, and this name isn't matched by a :regexp entry with a higher priority
           (push name collected-names)
           (push (list name (plist-get entry :priority) (plist-get entry :purpose))
                 collected-entries))))
@@ -448,17 +484,18 @@ The purpose configuration is restored after BODY is executed."
   (declare (indent defun) (debug body))
   `(purpose-with-temp-purposes-2 ,@body))
 
+(purpose-compile-configuration)
+
 ;;; TODO:
 ;; - tests
 ;; - convert `defvar's to `defcustom's.
-;; - initial configuration (including default entires)
-;; - `purpose-use-default-configuration'
 ;; - helpers function should compile unless told otherwise
-;; - add default entries to `purpose-configuration' (make it not empty by default)
 ;; - rename all *-2 functions/variables to remove the suffix
 ;;; DONE:
 ;; - equivalents to `purpose-save-purpose-config-2', `purpose-with-temp-purposes-2',
 ;;   `purpose-with-empty-purposes' and `purpose-with-additional-purposes-2'.
+;; - initial configuration (including default entires)
+;; - add default entries to `purpose-configuration' (make it not empty by default)
 
 (provide 'window-purpose-configuration-2)
 
