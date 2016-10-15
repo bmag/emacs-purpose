@@ -124,4 +124,28 @@
       (expect (purpose-get-purpose other-buffer) :to-be 'other)))
   (it "`purpose-with-additional-purposes' doesn't hide old configuration"
     (purpose-with-additional-purposes-2 :names '(("other-buff" . other))
-      (expect (purpose-get-purpose base-buffer) :to-be 'base))))
+      (expect (purpose-get-purpose base-buffer) :to-be 'base)))
+
+  (it "`purpose-get-configuration-state' returns correct state"
+    (setq purpose-configuration '(1)
+          purpose--compiled-names '(2)
+          purpose--compiled-regexps '(3)
+          purpose--compiled-modes '(4)
+          purpose--compiled-mode-list '(5))
+    (expect (purpose-get-configuration-state) :to-equal
+            '((purpose-configuration . (1))
+              (purpose--compiled-names . (2))
+              (purpose--compiled-regexps . (3))
+              (purpose--compiled-modes . (4))
+              (purpose--compiled-mode-list . (5)))))
+  (it "`purpose-set-configuration-state' sets the state correctly"
+    (purpose-set-configuration-state '((purpose-configuration . (6))
+                                       (purpose--compiled-names . (7))
+                                       (purpose--compiled-regexps . (8))
+                                       (purpose--compiled-modes . (9))
+                                       (purpose--compiled-mode-list . (0))))
+    (expect purpose-configuration :to-equal '(6))
+    (expect purpose--compiled-names :to-equal '(7))
+    (expect purpose--compiled-regexps :to-equal '(8))
+    (expect purpose--compiled-modes :to-equal '(9))
+    (expect purpose--compiled-mode-list :to-equal '(0))))
