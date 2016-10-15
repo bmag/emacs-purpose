@@ -221,5 +221,26 @@ attention to case differences."
           (substring string 0 (- (length string) (length suffix)))
         string))))
 
+(defun purpose-pop-keys (keys body)
+  "Pop keyword arguments from BODY.
+Intended for use in macros that want both keyword arguments and a
+body.
+
+Examples:
+  (purpose-pop-keys '(:a :b) '(:a 2 \"foo\" 0))
+  ==> ((:a 2) (\"foo\" 0))
+  (purpose-pop-keys '(:a (:b 8)) '(:a 2 \"foo\" 0))
+  ==> ((:a 2 :b 8) (\"foo\" 0))"
+  (let (pairs key-cars)
+    (dolist (key keys)
+      (if (listp key)
+          (progn
+            (setq pairs (plist-put pairs (car key) (cadr key)))
+            (push (car key) key-cars))
+        (push key key-cars)))
+    (while (memq (car-safe body) key-cars)
+      (setq pairs (plist-put pairs (pop body) (pop body))))
+    (list pairs body)))
+
 (provide 'window-purpose-utils)
 ;;; window-purpose-utils.el ends here

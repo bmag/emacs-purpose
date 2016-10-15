@@ -56,6 +56,16 @@ Gotcha: this will not work when buttercup spies on `insert-file-contents'."
   (purpose-compile-extended-configuration)
   (purpose-compile-default-configuration))
 
+(defun get-purpose-config-2 ()
+  purpose-configuration)
+
+(defun make-purpose-config-2 (configuration)
+  configuration)
+
+(defun load-purpose-config-2 (configuration)
+  (setq purpose-configuration configuration)
+  (purpose-compile-configuration))
+
 ;;; simple frame setters
 (defun build-window (spec window)
   (set-window-buffer window (get-buffer-create (plist-get spec :name)))

@@ -1,6 +1,7 @@
 ;;; -*- lexical-binding: t -*-
 (require 'cl-lib)
 (require 'seq)
+(require 'window-purpose-utils)
 
 (defvar purpose--compiled-names nil
   "Compiled alist of configured names.
@@ -184,7 +185,9 @@ according to `purpose-configuration'."
                    (not (seq-some (apply-partially #'parent-mode-is-derived-p mode)
                                   collected-modes)))
           (push mode collected-modes)
-          (push entry collected-entries))))
+
+          (push (list mode (plist-get entry :priority) (plist-get entry :purpose))
+                collected-entries))))
     (setq purpose--compiled-modes (nreverse collected-entries)
           purpose--compiled-mode-list (nreverse collected-modes))))
 
@@ -198,7 +201,8 @@ Set `purpose--compiled-regexp' according to
         (when (and regexp
                    (not (member regexp collected-regexps)))
           (push regexp collected-regexps)
-          (push entry collected-entries))))
+          (push (list regexp (plist-get entry :priority) (plist-get entry :purpose))
+                collected-entries))))
     (setq purpose--compiled-regexps (nreverse collected-entries))))
 
 (defun purpose--compile-names ()
@@ -217,7 +221,8 @@ Set `purpose--compiled-names' according to
                                 (string-match-p (plist-get regexp-entry :regexp) name)))
                          purpose--compiled-regexps)))
           (push name collected-names)
-          (push entry collected-entries))))
+          (push (list name (plist-get entry :priority) (plist-get entry :purpose))
+                collected-entries))))
     (setq purpose--compiled-names (nreverse collected-entries))))
 
 (cl-defun purpose-validate-configuration (&optional (configuration purpose-configuration))
@@ -316,6 +321,8 @@ modes to purposes, respectively.
 
 If any of the entries is invalid, then `purpose-configuration' is
 not changed."
+  ;; TODO: use a real pair of load/save functions to restore all config
+  ;; variables upon error
   (let ((original-configuration purpose-configuration))
     (condition-case err
         (progn
@@ -370,10 +377,88 @@ A user configuration entry is a regular entry, with an origin of
 for details."
   (purpose-add-configuration-set 'user 99 :names names :regexps regexps :modes modes))
 
-(cl-defun purpose-add-extension-configuration-set (origin purpose &key names regexps modes)
+(cl-defun purpose-add-extension-configuration-set (origin &key names regexps modes)
   "Add several extension configuration entries to `purpose-configuration'.
 A extension configuration entry is a regular entry, with a priority of 50.
 See `purpose-add-configuration-set' for details."
   (purpose-add-configuration-set origin 50 :names names :regexps regexps :modes modes))
 
+;;; change purposes temporarily
+
+(defmacro purpose-save-purpose-config-2 (&rest body)
+  "Save the purpose configuration, execute BODY, restore the configuration."
+  (declare (indent defun) (debug body))
+  `(let ((purpose--compiled-names purpose--compiled-names)
+         (purpose--compiled-regexps purpose--compiled-regexps)
+         (purpose--compiled-modes purpose--compiled-modes)
+         (purpose--compiled-mode-list purpose--compiled-mode-list)
+         (purpose-configuration purpose-configuration))
+     ,@body))
+
+(defmacro purpose-with-temp-purposes-2 (&rest body)
+  "Execute BODY with a temporary purpose configuration.
+ORIGIN, PRIORITY, NAMES, REGEXPS and MODES have the same meaning
+as in `purpose-add-configuration-set'. ORIGIN defaults to `temp'
+and PRIORITY defaults to 99. The purpose configuration is
+restored after BODY is executed.
+
+\(fn &key ORIGIN PRIORITY NAMES REGEXPS MODES &rest BODY)"
+  (declare (indent defun)
+           (debug ([&rest keywordp sexp] body)))
+  (destructuring-bind (keys body)
+      (purpose-pop-keys '((:origin 'temp) (:priority 99)
+                          :names :regexps :modes)
+                        body)
+    `(purpose-save-purpose-config-2
+       (setq purpose-configuration nil)
+       (purpose-add-configuration-set ,(plist-get keys :origin)
+                                      ,(plist-get keys :priority)
+                                      :names ,(plist-get keys :names)
+                                      :regexps ,(plist-get keys :regexps)
+                                      :modes ,(plist-get keys :modes))
+       (purpose-compile-configuration)
+       ,@body)))
+
+(defmacro purpose-with-additional-purposes-2 (&rest body)
+  "Execute BODY with an addiaitional purpose configuration.
+ORIGIN, PRIORITY, NAMES, REGEXPS and MODES have the same meaning
+as in `purpose-add-configuration-set'. ORIGIN defaults to `temp'
+and PRIORITY defaults to 99. The purpose configuration is
+restored after BODY is executed.
+
+\(fn &key ORIGIN PRIORITY NAMES REGEXPS MODES &rest BODY)"
+  (declare (indent defun)
+           (debug ([&rest keywordp sexp] body)))
+  (destructuring-bind (keys body)
+      (purpose-pop-keys '((:origin 'temp) (:priority 99)
+                          :names :regexps :modes)
+                        body)
+    `(purpose-save-purpose-config-2
+       (purpose-add-configuration-set ,(plist-get keys :origin)
+                                      ,(plist-get keys :priority)
+                                      :names ,(plist-get keys :names)
+                                      :regexps ,(plist-get keys :regexps)
+                                      :modes ,(plist-get keys :modes))
+       (purpose-compile-configuration)
+       ,@body)))
+
+(defmacro purpose-with-empty-purposes-2 (&rest body)
+  "Execute BODY with an empty purpose configuration.
+The purpose configuration is restored after BODY is executed."
+  (declare (indent defun) (debug body))
+  `(purpose-with-temp-purposes-2 ,@body))
+
+;;; TODO:
+;; - tests
+;; - convert `defvar's to `defcustom's.
+;; - initial configuration (including default entires)
+;; - `purpose-use-default-configuration'
+;; - helpers function should compile unless told otherwise
+;; - add default entries to `purpose-configuration' (make it not empty by default)
+;; - rename all *-2 functions/variables to remove the suffix
+;;; DONE:
+;; - equivalents to `purpose-save-purpose-config-2', `purpose-with-temp-purposes-2',
+;;   `purpose-with-empty-purposes' and `purpose-with-additional-purposes-2'.
+
 (provide 'window-purpose-configuration-2)
+
