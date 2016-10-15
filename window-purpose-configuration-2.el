@@ -320,20 +320,25 @@ See `purpose-configuration' for a description of a valid entry."
 
 ;;; functions to modify `purpose-configuration'
 
-(cl-defun purpose-add-configuration-entry (origin priority purpose &key name regexp mode)
-  "Add new configuration entry to `purpose-configuration'.
+(cl-defun purpose-add-configuration-entry (origin priority purpose &key name regexp mode (compilep t))
+  "Add new configuration entry to `purpose-configuration', and compile.
 If the given paramters don't make a valid entry, throw an error
 and don't change `purpose-configuration'.
 
 If there already exist an entry with the same ORIGIN, PRIORITY,
-NAME, REGEXP and MODE, then it is replaced."
+NAME, REGEXP and MODE, then it is replaced.
+
+If COMPILEP is non-nil, then also compile the configuration. The
+default is non-nil."
   (let ((new-entry (append (list :origin origin :priority priority :purpose purpose)
                            (and name (list :name name))
                            (and regexp (list :regexp regexp))
                            (and mode (list :mode mode)))))
     (purpose-validate-entry new-entry)
     (purpose-delete-configuration-entry origin priority :name name :regexp regexp :mode mode)
-    (push new-entry purpose-configuration)))
+    (push new-entry purpose-configuration)
+    (when compilep
+      (purpose-compile-configuration))))
 
 (cl-defun purpose-get-configuration-entry (origin priority &key name regexp mode)
   "Return a `purpose-configuration' entry with matching paramters.
@@ -359,24 +364,32 @@ Return nil if no entry was found."
 
 ;;; advanced helper functions for configuring `purpose-configuration'
 
-(cl-defun purpose-add-configuration-set (origin priority &key names regexps modes)
+(cl-defun purpose-add-configuration-set (origin priority &key names regexps modes (compilep t))
   "Add several configuration entries with the same ORIGIN and PRIORITY.
 NAMES, REGEXPS and MODES must be alist mapping names, regexps and
 modes to purposes, respectively.
 
 If any of the entries is invalid, then `purpose-configuration' is
-not changed."
+not changed.
+
+If COMPILEP is non-nil, then also compile the configuration. The
+default is non-nil."
   ;; TODO: use a real pair of load/save functions to restore all config
   ;; variables upon error
   (let ((original-configuration purpose-configuration))
     (condition-case err
         (progn
           (dolist (mode-purpose modes)
-            (purpose-add-configuration-entry origin priority (cdr mode-purpose) :mode (car mode-purpose)))
+            (purpose-add-configuration-entry origin priority (cdr mode-purpose)
+                                             :mode (car mode-purpose) :compilep nil))
           (dolist (regexp-purpose regexps)
-            (purpose-add-configuration-entry origin priority (cdr regexp-purpose) :regexp (car regexp-purpose)))
+            (purpose-add-configuration-entry origin priority (cdr regexp-purpose)
+                                             :regexp (car regexp-purpose) :compilep nil))
           (dolist (name-purpose names)
-            (purpose-add-configuration-entry origin priority (cdr name-purpose) :name (car name-purpose))))
+            (purpose-add-configuration-entry origin priority (cdr name-purpose)
+                                             :name (car name-purpose) :compilep nil))
+          (when compilep
+            (purpose-compile-configuration)))
       (error
        ;; in case of error, restore original `purpose-configuration' and
        ;; re-throw error
@@ -401,32 +414,48 @@ and MODES are lists of names, regexps and modes, respectively."
   (mapc (apply-partially #'purpose-delete-configuration-entry origin priority :regexp) regexps)
   (mapc (apply-partially #'purpose-delete-configuration-entry origin priority :mode) modes))
 
-(cl-defun purpose-add-user-configuration-entry (purpose &key name regexp mode)
+(cl-defun purpose-add-user-configuration-entry (purpose &key name regexp mode (compilep t))
   "Add new user configuration entry to `purpose-configuration'.
 A user configuration entry is a regular entry, with an origin of
 `user' and a priority of 99. See
-`purpose-add-configuration-entry' for details."
-  (purpose-add-configuration-entry 'user 99 :name name :regexp regexp :mode mode))
+`purpose-add-configuration-entry' for details.
 
-(cl-defun purpose-add-extension-configuration-entry (origin purpose &key name regexp mode)
+If COMPILEP is non-nil, then also compile the configuration. The
+default is non-nil."
+  (purpose-add-configuration-entry 'user 99 :name name :regexp regexp
+                                   :mode mode :compilep compilep))
+
+(cl-defun purpose-add-extension-configuration-entry (origin purpose &key name regexp mode (compilep t))
   "Add new extension configuration entry to `purpose-configuration'.
 A extension configuration entry is a regular entry, with a
 priority of 50. See `purpose-add-configuration-entry' for
-details."
-  (purpose-add-configuration-entry origin 50 :name name :regexp regexp :mode mode))
+details.
 
-(cl-defun purpose-add-user-configuration-set (purpose &key names regexps modes)
+If COMPILEP is non-nil, then also compile the configuration. The
+default is non-nil."
+  (purpose-add-configuration-entry origin 50 :name name :regexp regexp
+                                   :mode mode :compilep compilep))
+
+(cl-defun purpose-add-user-configuration-set (purpose &key names regexps modes (compilep t))
   "Add several user configuration entries to `purpose-configuration'.
 A user configuration entry is a regular entry, with an origin of
 `user' and a priority of 99. See `purpose-add-configuration-set'
-for details."
-  (purpose-add-configuration-set 'user 99 :names names :regexps regexps :modes modes))
+for details.
 
-(cl-defun purpose-add-extension-configuration-set (origin &key names regexps modes)
+If COMPILEP is non-nil, then also compile the configuration. The
+default is non-nil."
+  (purpose-add-configuration-set 'user 99 :names names :regexps regexps
+                                 :modes modes :compilep compilep))
+
+(cl-defun purpose-add-extension-configuration-set (origin &key names regexps modes (compilep t))
   "Add several extension configuration entries to `purpose-configuration'.
 A extension configuration entry is a regular entry, with a priority of 50.
-See `purpose-add-configuration-set' for details."
-  (purpose-add-configuration-set origin 50 :names names :regexps regexps :modes modes))
+See `purpose-add-configuration-set' for details.
+
+If COMPILEP is non-nil, then also compile the configuration. The
+default is non-nil."
+  (purpose-add-configuration-set origin 50 :names names :regexps regexps
+                                 :modes modes :compilep compilep))
 
 ;;; change purposes temporarily
 
@@ -461,7 +490,6 @@ restored after BODY is executed.
                                       :names ,(plist-get keys :names)
                                       :regexps ,(plist-get keys :regexps)
                                       :modes ,(plist-get keys :modes))
-       (purpose-compile-configuration)
        ,@body)))
 
 (defmacro purpose-with-additional-purposes-2 (&rest body)
@@ -484,7 +512,6 @@ restored after BODY is executed.
                                       :names ,(plist-get keys :names)
                                       :regexps ,(plist-get keys :regexps)
                                       :modes ,(plist-get keys :modes))
-       (purpose-compile-configuration)
        ,@body)))
 
 (defmacro purpose-with-empty-purposes-2 (&rest body)
@@ -497,14 +524,15 @@ The purpose configuration is restored after BODY is executed."
 
 ;;; TODO:
 ;; - tests
-;; - helpers function should compile unless told otherwise
 ;; - rename all *-2 functions/variables to remove the suffix
+;; - use a real pair of load/save functions to restore all config variables upon error
 ;;; DONE:
 ;; - equivalents to `purpose-save-purpose-config-2', `purpose-with-temp-purposes-2',
 ;;   `purpose-with-empty-purposes' and `purpose-with-additional-purposes-2'.
 ;; - initial configuration (including default entires)
 ;; - add default entries to `purpose-configuration' (make it not empty by default)
 ;; - convert `defvar's to `defcustom's.
+;; - helpers function should compile unless told otherwise
 
 (provide 'window-purpose-configuration-2)
 
