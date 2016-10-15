@@ -93,7 +93,7 @@ if not found."
         (throw 'done regexp))))
     nil))
 
-(defvar purpose-configuration
+(defcustom purpose-configuration
   '((:origin default :priority 0 :purpose edit :name ".gitignore")
     (:origin default :priority 0 :purpose edit :name ".hgignore")
     ;; the `shell' command displays its buffer before setting its major-mode, so
@@ -137,7 +137,16 @@ expression.
 given mode, or derives from it.
 
 Whenever this variable changes, `purpose-compile-configuration'
-needs to be called for the changes to take effect.")
+needs to be called for the changes to take effect."
+  :group 'purpose
+  :type '(repeat (plist :key-type (choice (const :origin)
+                                          (const :priority)
+                                          (const :purpose)
+                                          (const :name)
+                                          (const :regexp)
+                                          (const :mode))
+                        :value-type (choice symbol string integer)))
+  :package-version "2.0")
 
 (defun purpose-compile-configuration ()
   "Compile the purpose configuration.
@@ -488,7 +497,6 @@ The purpose configuration is restored after BODY is executed."
 
 ;;; TODO:
 ;; - tests
-;; - convert `defvar's to `defcustom's.
 ;; - helpers function should compile unless told otherwise
 ;; - rename all *-2 functions/variables to remove the suffix
 ;;; DONE:
@@ -496,6 +504,7 @@ The purpose configuration is restored after BODY is executed."
 ;;   `purpose-with-empty-purposes' and `purpose-with-additional-purposes-2'.
 ;; - initial configuration (including default entires)
 ;; - add default entries to `purpose-configuration' (make it not empty by default)
+;; - convert `defvar's to `defcustom's.
 
 (provide 'window-purpose-configuration-2)
 
