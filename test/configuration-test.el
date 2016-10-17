@@ -95,6 +95,7 @@ correct hash tables."
                      ibuffer-mode
                      dired-mode
                      comint-mode
+                     css-mode
                      text-mode
                      prog-mode)))
     (should (equal (hash-table-values purpose--default-mode-purposes)
@@ -107,6 +108,7 @@ correct hash tables."
                      buffers
                      dired
                      terminal
+                     edit
                      edit
                      edit)))
     (should (equal (hash-table-keys purpose--default-name-purposes)
