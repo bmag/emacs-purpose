@@ -6,7 +6,7 @@
 ;;; variables
 
 (defcustom purpose-configuration
-  '((:origin default :priority 0 :purpose edit :name ".gitignore")
+  `((:origin default :priority 0 :purpose edit :name ".gitignore")
     (:origin default :priority 0 :purpose edit :name ".hgignore")
     ;; the `shell' command displays its buffer before setting its major-mode, so
     ;; we must detect it by name
@@ -14,6 +14,9 @@
     (:origin default :priority 0 :purpose minibuf :regexp "^ \\*Minibuf-[0-9]*\\*$")
     (:origin default :priority 0 :purpose edit :mode prog-mode)
     (:origin default :priority 0 :purpose edit :mode text-mode)
+    ;; in Emacs 24.5-, `css-mode' doesn't derive from `prog-mode'
+    ,@(when (version< emacs-version "25")
+        '((:origin default :priority 0 :purpose edit :mode css-mode)))
     (:origin default :priority 0 :purpose terminal :mode comint-mode)
     (:origin default :priority 0 :purpose dired :mode dired-mode)
     (:origin default :priority 0 :purpose buffers :mode ibuffer-mode)
