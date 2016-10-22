@@ -71,10 +71,9 @@ This function should be advised around
 
 
 ;;; Helm's buffers should be ignored, and they should have their own purpose
-(defvar purpose--helm-conf
-  (purpose-conf "helm"
-                :regexp-purposes '(("^\\*Helm" . helm)
-                                   ("^\\*helm" . helm)))
+(defvar purpose--helm-regexps
+  '(("^\\*Helm" . helm)
+    ("^\\*helm" . helm))
   "Purpose configuration for helm.")
 (defun purpose--fix-helm ()
   "Fix issues with helm.
@@ -85,7 +84,7 @@ Install helm's purpose configuration."
   (eval-after-load 'helm
     '(add-to-list 'purpose-action-function-ignore-buffer-names "^\\*helm"))
   (eval-after-load 'helm
-    '(purpose-set-extension-configuration :helm purpose--helm-conf)))
+    '(purpose-add-extension-configuration-set :origin 'helm :regexps purpose--helm-regexps)))
 
 
 
@@ -154,9 +153,8 @@ When `purpose--active-p' is nil, call original `neo-global--create-window'."
   ;; using purpose 'Neotree, because using 'neotree causes problems with
   ;; `purpose-special-action-sequences' ('neotree is also a function, so
   ;; `purpose--special-action-sequence' will try to call it)
-  (purpose-set-extension-configuration
-   :neotree
-   (purpose-conf "Neotree" :name-purposes `((,neo-buffer-name . Neotree))))
+  (purpose-add-extension-configuration-entry 'neotree 'Neotree
+                                             :name neo-buffer-name)
   (add-to-list 'purpose-special-action-sequences
                '(Neotree purpose-display-reuse-window-buffer
                          purpose-display-reuse-window-purpose
@@ -200,11 +198,8 @@ Don't call this function before `popwin' is loaded."
 (defun purpose--fix-guide-key ()
   "Use a seperate purpose for guide-key window."
   (eval-after-load 'guide-key
-    '(purpose-set-extension-configuration
-      :guide-key
-      (purpose-conf
-       "guide-key"
-       :name-purposes `((,guide-key/guide-buffer-name . guide-key))))))
+    '(purpose-add-extension-configuration-entry 'guide-key 'guide-key
+                                                :name guide-key/guide-buffer-name)))
 
 
 
@@ -215,11 +210,8 @@ Don't call this function before `popwin' is loaded."
   (eval-after-load 'which-key
     '(progn
        (add-to-list 'purpose-action-function-ignore-buffer-names (regexp-quote which-key-buffer-name))
-       (purpose-set-extension-configuration
-        :which-key
-        (purpose-conf
-         "which-key"
-         :name-purposes `((,which-key-buffer-name . which-key)))))))
+       (purpose-add-extension-configuration-entry 'which-key 'which-key
+                                                  :name which-key-buffer-name))))
 
 
 

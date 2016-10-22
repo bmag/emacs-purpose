@@ -16,6 +16,89 @@
     #+END_SRC
 ** Changed test framework to Buttercup
    It is now easier to read, modify and add new tests, thanks to [[https://github.com/jorgenschaefer/emacs-buttercup][Buttercup]].
+** New Configuration System
+   The configuration system (=window-purpose-configuration.el=) has undergone a
+   redesign, and is now easier to understand and and configure.
+
+   The new system uses only one configuration variable, called
+   ~purpose-configuration~. It is a list of configuration entries, where each
+   entry has an ~origin~, a ~priority~, a ~purpose~ and one of ~name~, ~mode~ or
+   ~regexp~. A buffer's purpose is determined by the purpose of the matching
+   entry with the highest priority. If several matching entries are tied for
+   highest priority, the a ~name~ entry is preferred over a ~regexp~ entry, and
+   a ~regexp~ entry is preferred over a ~mode~ entry.
+
+   Like the old system, the new system also has a compilation process. Where the
+   old system had 3 compilation functions, the new system has only one
+   compilation function, aptly named ~purpose-compile-configuration~. It sets
+   the values of ~purpose--compiled-names~, ~purpose--compiled-regexps~,
+   ~purpose--compiled-modes~ and ~purpose--compiled-mode-list~, according to the
+   value ~purpose-configuration~.
+
+   Changes to (user-facing) variables and functions from the old system, are
+   details below.
+*** ~purpose-use-default-configuration~
+    Deprecated, use ~purpose-configuration~ instead.
+*** ~purpose-user-mode-purposes~
+    Deprecated, use ~purpose-configuration~ instead.
+*** ~purpose-user-name-purposes~
+    Deprecated, use ~purpose-configuration~ instead.
+*** ~purpose-user-regexp-purposes~
+    Deprecated, use ~purpose-configuration~ instead.
+*** ~purpose-extended-configuration~
+    Deprecated, use ~purpose-configuration~ instead.
+*** ~purpose-compile-user-configuration~
+    Deprecated, use ~purpose-compile-configuration~ instead.
+*** ~purpose-compile-extended-configuration~
+    Deprecated, use ~purpose-compile-configuration~ instead.
+*** ~purpose-compile-default-configuration~
+    Deprecated, use ~purpose-compile-configuration~ instead.
+*** ~purpose-conf-add-purposes~
+    Deprecated.
+*** ~purpose-conf-remove-purposes~
+    Deprecated.
+*** ~purpose-set-extension-configuration~
+    Deprecated, use ~purpose-add-extension-configuration-set~ or ~purpose-add-configuration-set~ instead.
+*** ~purpose-get-extension-configuration~
+    Deprecated, use ~purpose-get-configuration-set~ instead.
+*** ~purpose-del-extension-configuration~
+    Deprecated, use ~purpose-delete-configuration-set~ instead.
+*** ~purpose-add-extension-purposes~
+    Deprecated, use ~purpose-add-extension-configuration-set~ or ~purpose-add-configuration-set~ instead.
+*** ~purpose-remove-extension-purposes~
+    Deprecated, use ~purpose-delete-configuration-set~ instead.
+*** ~purpose-add-user-purposes~
+    Deprecated, use ~purpose-add-user-configuration-set~ or ~purpose-add-configuration-set~ instead.
+*** ~purpose-remove-user-purposes~
+    Deprecated, use ~purpose-delete-configuration-set~ instead.
+*** ~purpose-with-temp-purposes~
+    Takes optional keyword arguments instead of required positional arguments.
+    In 1.6, it was used like this:
+    #+BEGIN_SRC elisp
+      (purpose-with-temp-purposes names regexp modes
+        ;; ... body ...
+        )
+    #+END_SRC
+    In 2.0, it is used like this:
+    #+BEGIN_SRC elisp
+      (purpose-with-temp-purposes :names names :regexp regexp :modes modes
+        ;; ... body ...
+        )
+    #+END_SRC
+*** ~purpose-with-additional-purposes~
+    Takes optional keyword arguments instead of required positional arguments.
+    In 1.6, it was used like this:
+    #+BEGIN_SRC elisp
+      (purpose-with-additional-purposes names regexp modes
+        ;; ... body ...
+        )
+    #+END_SRC
+    In 2.0, it is used like this:
+    #+BEGIN_SRC elisp
+      (purpose-with-additional-purposes :names names :regexp regexp :modes modes
+        ;; ... body ...
+        )
+    #+END_SRC
 
 * Release 1.6
 ** New Features

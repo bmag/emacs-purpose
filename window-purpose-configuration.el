@@ -24,536 +24,587 @@
 ;; This file contains the "purpose configuration". The "purpose
 ;; configuration" is a set of variables that define what is the purpose
 ;; of each buffer.
-;; The configuration is built from 3 layers: the user's config,
-;; extensions' config (also called "extended config") and the default
-;; config.
-;; Each layer of configuration has 3 parameters for determining a
-;; buffer's purpose: mode, name and regexp.
-;; mode: matches a buffer's major mode
-;; name: matches a buffer's name exactly
-;; regexp: matches a buffer's name
 ;;
-;; Each layer has 2 sets of variables: non-compiled variables, which are
-;; easy to modify, and compiled variables which are used internally when
-;; getting a buffer's purpose.
+;; To customize the purpose configuration, one should customize the variable
+;; `purpose-configuration'. There exist various helper functions for modifying
+;; this variable, such as `purpose-add-configuration-entry' and
+;; `purpose-add-configuration-set'.
 ;;
-;; Extensions that use Purpose and need to define a configuration,
-;; should do so by using `purpose-conf' objects and the functions
-;; `purpose-set-extension-configuration' and
-;; `purpose-del-extension-configuration'.
-;;
-;; Users that want to set their own configuration, should do so by
-;; customizing `purpose-user-mode-purposes',
-;; `purpose-user-name-purposes' and `purpose-user-regexp-purposes'. If a
-;; user changes any of these variables outside of customize, the user
-;; should call `purpose-compile-user-configuration' for the changes to
-;; take effect.
-;; It is possible to use or ignore the default configuration by
-;; customizing `purpose-use-default-configuration'.
+;; Additionally, several functions for saving/loading the configuration and for
+;; temporarily changing the configuration are provided.
 
 ;;; Code:
 
 (require 'cl-lib)
-(require 'eieio)
+(require 'seq)
 (require 'window-purpose-utils)
 
-;;; Types
+;;; variables
 
-;; `purpose-conf' is not an autoload because there is a bug in autoloading
-;; `defclass' in Emacs 24.3. (no problem with Emacs 24.4)
-;; If we decide to drop support for Emacs 24.3, we can make `purpose-conf' an
-;; autoload again.
-(defclass purpose-conf ()
-  ((mode-purposes :initarg :mode-purposes
-                  :initform '()
-                  :type purpose-mode-alist)
-   (name-purposes :initarg :name-purposes
-                  :initform '()
-                  :type purpose-name-alist)
-   (regexp-purposes :initarg :regexp-purposes
-                    :initform '()
-                    :type purpose-regexp-alist)))
+(defcustom purpose-configuration
+  `((:origin default :priority 0 :purpose edit :name ".gitignore")
+    (:origin default :priority 0 :purpose edit :name ".hgignore")
+    ;; the `shell' command displays its buffer before setting its major-mode, so
+    ;; we must detect it by name
+    (:origin default :priority 0 :purpose terminal :name "*shell*")
+    (:origin default :priority 0 :purpose minibuf :regexp "^ \\*Minibuf-[0-9]*\\*$")
+    (:origin default :priority 0 :purpose edit :mode prog-mode)
+    (:origin default :priority 0 :purpose edit :mode text-mode)
+    ;; in Emacs 24.5-, `css-mode' doesn't derive from `prog-mode'
+    ,@(when (version< emacs-version "25")
+        '((:origin default :priority 0 :purpose edit :mode css-mode)))
+    (:origin default :priority 0 :purpose terminal :mode comint-mode)
+    (:origin default :priority 0 :purpose dired :mode dired-mode)
+    (:origin default :priority 0 :purpose buffers :mode ibuffer-mode)
+    (:origin default :priority 0 :purpose buffers :mode Buffer-menu-mode)
+    (:origin default :priority 0 :purpose search :mode occur-mode)
+    (:origin default :priority 0 :purpose search :mode grep-mode)
+    (:origin default :priority 0 :purpose search :mode compilation-mode)
+    (:origin default :priority 0 :purpose image :mode image-mode)
+    (:origin default :priority 0 :purpose package :mode package-menu-mode))
+  "List of all configured purposes.
+Each entry is a plist with 4 keys: `:origin', `:priority',
+`:purpose', and the 4th key is one of `:name', `:regexp' and
+`:mode'.
 
-(defmacro define-purpose-list-checker (name entry-pred)
-  "Create a function named NAME to check the content of a list.
-The generated function receives parameter OBJ, and checks that it is a
-list and each entry in it satisifies ENTRY-PRED."
-  (declare (indent defun) (debug (&define name function-form)))
-  `(defun ,name (obj)
-     ,(format "Check that OBJ is a list, and each entry in it satisifies %s." entry-pred)
-     (and (listp obj)
-          (cl-loop for entry in obj
-                   always (funcall ,entry-pred entry)))))
+`:origin' is used to identify who added the entry, so different
+packages can utilize purpose-mode without overriding one
+another's purposes. The value `user' is reserved for the user's
+purposes, and the value `default' is reserved for the default
+purposes.
 
-(defun purpose-non-nil-symbol-p (obj)
-  "Check that OBJ is a symbol and not nil."
-  (and (symbolp obj) obj))
+`:priority' is a number between 0 and 99 (inclusive). If two
+entries match a buffer, then the entry with the higher priority
+is used.
 
-(defun purpose-mode-alist-entry-p (obj)
-  "Check that OBJ is a pair of mode and purpose.
-OBJ should be a cons cell, whose car and cdr are both
-`purpose-non-nil-symbol-p'."
-  (and (consp obj)
-       (purpose-non-nil-symbol-p (car obj))
-       (purpose-non-nil-symbol-p (cdr obj))))
+`:purpose' is the purpose of matching buffers.
 
-(defun purpose-name-alist-entry-p (obj)
-  "Check that OBJ is a pair of name and purpose.
-OBJ should be a cons cell, whose car is a string and cdr is a
-`purpose-non-nil-symbol-p'."
-  (and (consp obj)
-       (stringp (car obj))
-       (purpose-non-nil-symbol-p (cdr obj))))
+`:name' matches a buffer with exactly the given name.
 
-(defalias 'purpose-regexp-alist-entry-p #'purpose-name-alist-entry-p
-  "Check that OBJ is a pair of regexp and purpose.
-OBJ should be a cons cell, whose car is a string and cdr is a
-`purpose-non-nil-symbol-p'.  Strictly speaking,
-`purpose-regexp-alist-entry-p' doesn't actually check that the car is a
-valid regexp.")
+`:regexp' matches any buffer whose name matches the given regular
+expression.
 
-(define-purpose-list-checker purpose-mode-alist-p
-  #'purpose-mode-alist-entry-p)
+`:mode' matches any buffer whose major-mode is the same as the
+given mode, or derives from it.
 
-(define-purpose-list-checker purpose-name-alist-p
-  #'purpose-name-alist-entry-p)
-
-(define-purpose-list-checker purpose-regexp-alist-p
-  #'purpose-regexp-alist-entry-p)
-
-
-
-;;; Variables
-
-(defcustom purpose-use-default-configuration t
-  "Determine if the default configuration should be used.
-If this is nil, the default configuration is ignored when getting the
-purpose of a buffer.  The user configuration and extended configuration
-are used anyway."
+Whenever this variable changes, `purpose-compile-configuration'
+needs to be called for the changes to take effect."
   :group 'purpose
-  :type 'boolean
-  :package-version "1.2")
-
-(defcustom purpose-user-mode-purposes nil
-  "User configured alist mapping of modes to purposes.
-The alist should match `purpose-mode-alist-p'.
-If you set this variable in elisp-code, you should call the function
-`purpose-compile-user-configuration' immediately afterwards."
-  :group 'purpose
-  :type '(alist :key-type (symbol :tag "major mode")
-                :value-type (symbol :tag "purpose"))
+  :type '(repeat (plist :key-type (choice (const :origin)
+                                          (const :priority)
+                                          (const :purpose)
+                                          (const :name)
+                                          (const :regexp)
+                                          (const :mode))
+                        :value-type (choice symbol string integer)))
   :set #'(lambda (symbol value)
            (prog1 (set-default symbol value)
-             (purpose-compile-user-configuration)))
+             (purpose-compile-configuration)))
   :initialize 'custom-initialize-default
-  :package-version "1.2")
+  :package-version "2.0")
 
-(defcustom purpose-user-name-purposes nil
-  "User configured alist mapping of names to purposes.
-The alist should match `purpose-name-alist-p'.
-If you set this variable in elisp-code, you should call the function
-`purpose-compile-user-configuration' immediately afterwards."
-  :group 'purpose
-  :type '(alist :key-type (string :tag "name")
-                :value-type (symbol :tag "purpose"))
-  :set #'(lambda (symbol value)
-           (prog1 (set-default symbol value)
-             (purpose-compile-user-configuration)))
-  :initialize 'custom-initialize-default
-  :package-version "1.2")
+(defvar purpose--compiled-names nil
+  "Compiled alist of configured names.
+Each entry has the form of (name . (priority purpose)).
+The alist is sorted from heighest priority to lowest priority.
 
-(defcustom purpose-user-regexp-purposes nil
-  "User configured alist mapping of regexps to purposes.
-The alist should match `purpose-regexp-alist-p'.
-If you set this variable in elisp-code, you should call the function
-`purpose-compile-user-configuration' immediately afterwards."
-  :group 'purpose
-  :type '(alist :key-type (string :tag "regexp")
-                :value-type (symbol :tag "purpose"))
-  :set #'(lambda (symbol value)
-           (prog1 (set-default symbol value)
-             (purpose-compile-user-configuration)))
-  :initialize 'custom-initialize-default
-  :package-version "1.2")
+Don't modify this variable directly. It should only be modified
+by `purpose-compile-config'.")
 
-(defvar purpose-extended-configuration nil
-  "A plist containing `purpose-conf' objects.
-An example of `purpose-extended-configuration':
- (list :python (purpose-conf
-                :mode-purposes '((python-mode . python)
-                                (python-inferior-mode . interpreter)))
-       :popups (purpose-conf
-                :mode-purposes '((help-mode . right)
-                                 (occur-mode . bottom)
-                                 (grep-mode . bottom))))")
+(defvar purpose--compiled-regexps nil
+  "Compiled alist of configured regexps.
+Each entry has the form of (regexp . (priority purpose)).
+The alist is sorted from heighest priority to lowest priority.
 
-;;; Compiled variables
+Don't modify this variable directly. It should only be modified
+by `purpose-compile-config'.")
 
-(defvar purpose--user-mode-purposes (make-hash-table)
-  "The compiled user mapping of modes to purposes.
-The contents of this variable are generated by
-`purpose-compile-user-configuration'.")
+(defvar purpose--compiled-modes nil
+  "Compiled alist of configured modes.
+Each entry has the form of (mode . (priority purpose)).
+The alist is sorted from heighest priority to lowest priority.
 
-(defvar purpose--user-name-purposes (make-hash-table :test #'equal)
-  "The compiled user mapping of names to purposes.
-The contents of this variable are generated by
-`purpose-compile-user-configuration'.")
+Don't modify this variable directly. It should only be modified
+by `purpose-compile-config'.")
 
-(defvar purpose--user-regexp-purposes (make-hash-table :test #'equal)
-  "The compiled user mapping of regexps to purposes.
-The contents of this variable are generated by
-`purpose-compile-user-configuration'.")
+(defvar purpose--compiled-mode-list nil
+  "Compiled list of configured modes.
+The entries in this list are exactly the keys of `purpose--compiled-modes'.
 
-(defvar purpose--extended-mode-purposes (make-hash-table)
-  "The combined mapping of modes to purposes, of all extensions.
-The contents of this variable are generated by
-`purpose-compile-extended-configuration'.")
+Don't modify this variable directly. It should only be modified
+by `purpose-compile-config'.")
 
-(defvar purpose--extended-name-purposes (make-hash-table :test #'equal)
-  "The combined mapping of names to purposes, of all extensions.
-The contents of this variable are generated by
-`purpose-compile-extended-configuration'.")
+;;; purpose calculation
+(defun purpose-get-purpose (buffer)
+  (let* ((bname (buffer-name buffer))
+         ;; mode, name, regexp are nil if not found (as well as the respective
+         ;; priorities and purposes)
+         (mode (purpose--get-purpose-by-mode buffer))
+         (m-priority (nth 1 mode))
+         (m-purpose (nth 2 mode))
+         (name (purpose--get-purpose-by-name bname m-priority))
+         (n-priority (nth 1 name))
+         (n-purpose (nth 2 name))
+         (regexp (purpose--get-purpose-by-regexp bname (or n-priority m-priority)))
+         (r-priority (nth 1 regexp))
+         (r-purpose (nth 2 regexp)))
+    ;; r-purpose is nil or larger than n-purpose
+    ;; n-purpose is nil or larger or equal to m-purpose
+    (or r-purpose n-purpose m-purpose)))
 
-(defvar purpose--extended-regexp-purposes (make-hash-table :test #'equal)
-  "The combined mapping of regexps to purposes, of all extensions.
-The contents of this variable are generated by
-`purpose-compile-extended-configuration'.")
+(defun purpose--get-purpose-by-mode (buffer)
+  "Get config mode entry matching BUFFER's major mode.
+Return then matching entry in `purpose--compiled-modes', or nil
+if not found."
+  (with-current-buffer buffer
+    (let ((mode (derived-mode-p purpose--compiled-mode-list)))
+      (assq mode purpose--compiled-modes))))
 
-(defvar purpose--default-mode-purposes (make-hash-table)
-  "The default mapping of modes to purposes.
-The contents of this variable are generated by
-`purpose-compile-default-configuration'.")
+(defun purpose--get-purpose-by-name (buffer-name &optional min-priority)
+  "Get config name entry matching BUFFER-NAME.
+Only search through entries with a priority greater than or equal
+to MIN-PRIORITY. If MIN-PRIORITY is nil, search all entries.
 
-(defvar purpose--default-name-purposes (make-hash-table :test #'equal)
-  "The default mapping of names to purposes.
-The contents of this variable are generated by
-`purpose-compile-default-configuration'.")
+Return the matching entry in `purpose--compiled-names', or nil if
+not found."
+  (catch 'done
+    (dolist (name purpose--compiled-names)
+      (cond
+       ((and min-priority
+             (< (cadr name) min-priority))
+        (throw 'done nil))
+       ((string= (car name) buffer-name)
+        (throw 'done name))))
+    nil))
 
-(defvar purpose--default-regexp-purposes (make-hash-table :test #'equal)
-  "The default mapping of regexps to purposes.
-The contents of this variable are generated by
-`purpose-compile-default-configuration'.")
+(defun purpose--get-purpose-by-regexp (buffer-name &optional min-priority)
+  "Get config regexp entry matching BUFFER-NAME.
+Only search through entries with a priority greater than
+MIN-PRIORITY. If MIN-PRIORITY is nil, search all entries.
 
+Return the matching entry in `purpose--compiled-regexps', or nil
+if not found."
+  (catch 'done
+    (dolist (regexp purpose--compiled-regexps)
+      (cond
+       ((and min-priority
+             (<= (cadr regexp) min-priority))
+        (throw 'done nil))
+       ((string-match-p (car regexp) buffer-name)
+        (throw 'done regexp))))
+    nil))
 
+;;; purpose compilation
 
-;;; Configuration compiler functions
+(defun purpose-compile-configuration ()
+  "Compile the purpose configuration.
+This function sets
+`purpose--compiled-names',`purpose--compiled-regexps',
+`purpose--compiled-modes', and `purpose--compiled-mode-list'
+according to `purpose-configuration'."
+  (purpose-validate-configuration)
+  (purpose-sort-configuration)
+  (purpose--compile-modes)
+  (purpose--compile-regexps)
+  (purpose--compile-names))
 
-(defun purpose--fill-hash (table alist &optional dont-clear)
-  "Fill hash table TABLE with ALIST's entries.
-TABLE is cleared before filling it, unless DONT-CLEAR is non-nil."
-  (unless dont-clear
-    (clrhash table))
-  (mapc #'(lambda (entry)
-            (puthash (car entry) (cdr entry) table))
-        alist))
+(cl-defun purpose-validate-configuration (&optional (configuration purpose-configuration))
+  "Throw error if CONFIGURATION is not a valid purpose configuration.
+CONFIGURATION is valid if it is a list of valid purpose
+configuration entries, as determined by `purpose-validate-entry'.
 
-(defun purpose--set-and-compile-configuration (symbol value)
-  "Set SYMBOL's value to VALUE and recompile user configuration.
-Recompilation is done by calling `purpose-compile-user-configuration'."
-  (prog1
-      (set-default symbol value)
-    (purpose-compile-user-configuration)))
+CONFIGURATION defaults to the value `purpose-configuration'."
+  (unless (listp configuration)
+    (error "Purpose configuration must be a list"))
+  (mapc #'purpose-validate-entry configuration))
 
-(defun purpose-compile-user-configuration ()
-  "Compile the purpose configuration of the user.
-Fill `purpose--user-mode-purposes', `purpose--user-name-purposes' and
-`purpose--user-regexp-purposes' according to
-`purpose-user-mode-purposes', `purpose-user-name-purposes' and
-`purpose-user-regexp-purposes'."
-  (purpose--fill-hash purpose--user-mode-purposes purpose-user-mode-purposes)
-  (purpose--fill-hash purpose--user-name-purposes purpose-user-name-purposes)
-  (purpose--fill-hash purpose--user-regexp-purposes
-                      purpose-user-regexp-purposes))
+(defun purpose-validate-entry (entry)
+  "Throw error if ENTRY is not a valid entry for `purpose-configuration'.
+See `purpose-configuration' for a description of a valid entry."
+  (unless (listp entry)
+    (error "Entry must be a plist: %S" entry))
+  (unless (plist-get entry :origin)
+    (error "Entry must contain a non-nil `:origin': %S" entry))
+  (unless (symbolp (plist-get entry :origin))
+    (error "`:origin' must be a symbol: %S" entry))
+  (unless (plist-get entry :priority)
+    (error "Entry must contain a non-nil `:priority': %S" entry))
+  (unless (integerp (plist-get entry :priority))
+    (error "`:priority' must be an integer: %S" entry))
+  (unless (and (<= 0 (plist-get entry :priority))
+               (<= (plist-get entry :priority) 99))
+    (error "`:priority' must be between 0 and 99: %S" entry))
+  (unless (plist-get entry :purpose)
+    (error "Entry must contain a non-nil `:purpose': %S" entry))
+  (unless (symbolp (plist-get entry :purpose))
+    (error "`:purpose' must be a symbol: %S" entry))
+  (unless (or (plist-get entry :name)
+              (plist-get entry :regexp)
+              (plist-get entry :mode))
+    (error "Entry must contain 1 of `:name', `:regexp' or `:mode'" entry))
+  (unless (= 1 (length (seq-filter (apply-partially #'plist-get entry)
+                                   '(:name :regexp :mode))))
+    (error "Entry must contain only 1 of `:name', `:regexp' or `:mode'" entry))
+  (cond
+   ((plist-get entry :name)
+    (unless (stringp (plist-get entry :name))
+      (error "`:name' must be a string: %S" entry)))
+   ((plist-get entry :regexp)
+    (unless (stringp (plist-get entry :regexp))
+      (error "`:regexp' must be a string: %S" entry)))
+   ((plist-get entry :mode)
+    (unless (symbolp (plist-get entry :mode))
+      (error "`:mode' must be a symbol: %S" entry)))))
 
-(defun purpose-compile-extended-configuration ()
-  "Compile the purpose configuration of extensions.
-Fill `purpose--extended-mode-purposes',
-`purpose--extended-name-purposes' and
-`purpose--extended-regexp-purposes' according to
-`purpose-extended-configuration'."
-  ;; clear compiled purposes
-  (purpose--fill-hash purpose--extended-mode-purposes nil)
-  (purpose--fill-hash purpose--extended-name-purposes nil)
-  (purpose--fill-hash purpose--extended-regexp-purposes nil)
+(defun purpose-sort-configuration ()
+  "Sort `purpose-configuration' according to priority.
+The entries are sorted from highest `:priority' to lowest
+`:priority'. Entries with the same `:priority' are sorted by
+`:name' first, `:regexp' second, and `:mode' last."
+  (setq purpose-configuration
+        (sort purpose-configuration #'purpose-compare-configuration-entries)))
 
-  ;; populate compiled purposes
-  (mapc #'(lambda (extension-config)
-            (purpose--fill-hash purpose--extended-mode-purposes
-                                (oref extension-config :mode-purposes)
-                                t)
-            (purpose--fill-hash purpose--extended-name-purposes
-                                (oref extension-config :name-purposes)
-                                t)
-            (purpose--fill-hash purpose--extended-regexp-purposes
-                                (oref extension-config :regexp-purposes)
-                                t))
-        (delq nil (purpose-plist-values purpose-extended-configuration))))
+(defun purpose-compare-configuration-entries (x y)
+  "Return non-nil if X has higher priority than Y."
+  (cond
+   ((> (plist-get x :priority) (plist-get y :priority))
+    t)
+   ((< (plist-get x :priority) (plist-get y :priority))
+    nil)
+   (t
+    ;; X and Y have the same `:priority'
+    (let ((x-name (plist-get x :name))
+          (x-regexp (plist-get x :regexp))
+          (x-mode (plist-get x :mode))
+          (y-name (plist-get y :name))
+          (y-regexp (plist-get y :regexp))
+          (y-mode (plist-get y :mode)))
+      (cond
+       ;; `:name' first, sorted by `string<'
+       ((and x-name
+             (or (null y-name)
+                 (string< x-name y-name)))
+        t)
+       (y-name nil)
+       ;; `:regexp' second, sorted by `string<'
+       ((and x-regexp
+             (or (null y-regexp)
+                 (string< x-regexp y-regexp)))
+        t)
+       (y-regexp nil)
+       ;; `:mode' last, sorted by `string<' and `symbol-name'
+       (t
+        (string< (symbol-name x-mode) (symbol-name y-mode))))))))
 
-(defun purpose-compile-default-configuration ()
-  "Compile the default purpose configuraion."
-  (purpose--fill-hash purpose--default-mode-purposes
-                      '((prog-mode . edit)
-                        (text-mode . edit)
-                        (comint-mode . terminal)
-                        (dired-mode . dired)
-                        (ibuffer-mode . buffers)
-                        (Buffer-menu-mode . buffers)
-                        (occur-mode . search)
-                        (grep-mode . search)
-                        (compilation-mode . search)
-                        (image-mode . image)
-                        (package-menu-mode . package)))
+(defun purpose--compile-modes ()
+  "Compile configured modes.
+Set `purpose--compiled-modes' and `purpose--compiled-mode-list'
+according to `purpose-configuration'."
+  (let (collected-entries collected-modes)
+    ;; `purpose-configuration' is sorted with higher priorities coming before
+    ;; lower ones. for each :mode entry, if it doesn't have a higher priority
+    ;; parent (read: doesn't derive from a mode that was already collected) then
+    ;; add it to the compiled variables
+    (dolist (entry purpose-configuration)
+      (let ((mode (plist-get entry :mode)))
+        (when (and mode
+                   (let ((major-mode mode))
+                     (not (apply #'derived-mode-p collected-modes))))
+          ;; it's a :mode entry, and doesn't derive from higher prioritized
+          ;; modes
+          (push mode collected-modes)
+          (push (list mode (plist-get entry :priority) (plist-get entry :purpose))
+                collected-entries))))
+    (setq purpose--compiled-modes (nreverse collected-entries)
+          purpose--compiled-mode-list (nreverse collected-modes))))
 
-  (purpose--fill-hash purpose--default-name-purposes
-                      '((".gitignore" . edit)
-                        (".hgignore" . edit)
-                        ;; the `shell' command displays its buffer before
-                        ;; setting its major-mode, so we must detect it by name
-                        ("*shell*" . terminal)))
+(defun purpose--compile-regexps ()
+  "Compile configured regexps.
+Set `purpose--compiled-regexp' according to
+`purpose-configuration'."
+  (let (collected-entries collected-regexps)
+    ;; `purpose-configuration' is sorted with higher priorities coming before
+    ;; lower ones. for each :regexp entry, if the regexp doesn't have a higher
+    ;; prioritized entry (read: wasn't already collected), then add it to the
+    ;; compiled variables
+    (dolist (entry purpose-configuration)
+      (let ((regexp (plist-get entry :regexp)))
+        (when (and regexp
+                   (not (member regexp collected-regexps)))
+          ;; it's a :regexp entry, and it's the highest prioritized entry for
+          ;; this regexp
+          (push regexp collected-regexps)
+          (push (list regexp (plist-get entry :priority) (plist-get entry :purpose))
+                collected-entries))))
+    (setq purpose--compiled-regexps (nreverse collected-entries))))
 
-  (purpose--fill-hash purpose--default-regexp-purposes
-                      '(("^ \\*Minibuf-[0-9]*\\*$" . minibuf))))
+(defun purpose--compile-names ()
+  "Compile configured regexps.
+Set `purpose--compiled-names' according to
+`purpose-configuration' and `purpose--compiled-regexps'."
+  (let (collected-entries collected-names)
+    ;; `purpose-configuration' is sorted with higher priorities coming before
+    ;; lower ones. for each :name entry, if the name doesn't have a higher
+    ;; prioritized entry (read: wasn't already collected), and if the name
+    ;; doesn't match a higher prioritized regexp, then add it to the compiled
+    ;; variables. because of this, `purpose--compile-names' should be called
+    ;; after `purpose--compile-regexps'
+    (dolist (entry purpose-configuration)
+      (let ((name (plist-get entry :name))
+            (priority (plist-get entry :priority)))
+        (when (and name
+                   (not (member name collected-names))
+                   (not (seq-some
+                         (lambda (regexp-entry)
+                           (and (> (cadr regexp-entry) priority)
+                                (string-match-p (car regexp-entry) name)))
+                         purpose--compiled-regexps)))
+          ;; it's a :name entry, and it's the highest prioritized entry for this
+          ;; name, and this name isn't matched by a :regexp entry with a higher priority
+          (push name collected-names)
+          (push (list name (plist-get entry :priority) (plist-get entry :purpose))
+                collected-entries))))
+    (setq purpose--compiled-names (nreverse collected-entries))))
 
+;;; functions to modify `purpose-configuration'
 
+(cl-defun purpose-add-configuration-entry (origin priority purpose &key name regexp mode (compilep t))
+  "Add new configuration entry to `purpose-configuration', and compile.
+If the given paramters don't make a valid entry, throw an error
+and don't change `purpose-configuration'.
 
-;;; convenient API functions
+If there already exist an entry with the same ORIGIN, PRIORITY,
+NAME, REGEXP and MODE, then it is replaced.
 
-(defun purpose-validate-conf (modes names regexps)
-  "Ensure that MODES, NAMES and REGEXPS are valid configuration alists.
-MODES must be a valid alist mapping major modes to purposes.
-NAMES must be a valid alist mapping names to purposes.
-REGEXPS must be a valid alist mapping regexps to purposes.
-If any of the arguments is malformed, a `user-error' is raised."
-  (unless (purpose-mode-alist-p modes)
-    (user-error "Malformed modes alist: %s" modes))
-  (unless (purpose-name-alist-p names)
-    (user-error "Malformed names alist: %s" names))
-  (unless (purpose-regexp-alist-p regexps)
-    (user-error "Malformed regexps alist: %s" regexps)))
+If COMPILEP is non-nil, then also compile the configuration. The
+default is non-nil."
+  (let ((new-entry (append (list :origin origin :priority priority :purpose purpose)
+                           (and name (list :name name))
+                           (and regexp (list :regexp regexp))
+                           (and mode (list :mode mode)))))
+    (purpose-validate-entry new-entry)
+    (purpose-delete-configuration-entry origin priority :name name :regexp regexp :mode mode)
+    (push new-entry purpose-configuration)
+    (when compilep
+      (purpose-compile-configuration))))
 
-(defmethod purpose-conf-add-purposes ((config purpose-conf) modes names regexps)
-  "Add purposes to a `purpose-conf' object.
-MODES, NAMES and REGEXPS must be valid configuration alists as described in
-`purpose-validate-conf'."
-  (purpose-validate-conf modes names regexps)
-  (oset config :mode-purposes
-        (append modes (oref config :mode-purposes)))
-  (oset config :name-purposes
-        (append names (oref config :name-purposes)))
-  (oset config :regexp-purposes
-        (append regexps (oref config :regexp-purposes))))
+(cl-defun purpose-get-configuration-entry (origin priority &key name regexp mode)
+  "Return a `purpose-configuration' entry with matching paramters.
+Return nil if no entry was found."
+  (seq-find (lambda (entry)
+              (and (eq origin (plist-get entry :origin))
+                   (= priority (plist-get entry :priority))
+                   (string= name (plist-get entry :name))
+                   (string= regexp (plist-get entry :regexp))
+                   (eq mode (plist-get entry :mode))))
+            purpose-configuration))
 
-(defmethod purpose-conf-remove-purposes ((config purpose-conf) modes names regexps)
-  "Remove purposes from a `purpose-conf' object.
-MODES must be a list of major modes.
-NAMES must be a list names.
-REGEXPS must be a list regexps."
-  ;; let-bind before setq-ing, so we don't apply partial changes if one
-  ;; of MODES, NAMES or REGEXPS is malformed
-  (let ((new-modes (cl-set-difference (oref config :mode-purposes) modes
-                                      :test (lambda (entry mode)
-                                              (eql (car entry) mode))))
-        (new-names (cl-set-difference (oref config :name-purposes) names
-                                      :test (lambda (entry name)
-                                              (string= (car entry) name))))
-        (new-regexps (cl-set-difference (oref config :regexp-purposes) regexps
-                                        :test (lambda (entry regexp)
-                                                (string= (car entry) regexp)))))
-    (oset config :mode-purposes new-modes)
-    (oset config :name-purposes new-names)
-    (oset config :regexp-purposes new-regexps)))
+(cl-defun purpose-delete-configuration-entry (origin priority &key name regexp mode)
+  "Remove matching configuration entry from `purpose-configuration'."
+  (setq purpose-configuration
+        (seq-remove (lambda (entry)
+                      (and (eq origin (plist-get entry :origin))
+                           (= priority (plist-get entry :priority))
+                           (string= name (plist-get entry :name))
+                           (string= regexp (plist-get entry :regexp))
+                           (eq mode (plist-get entry :mode))))
+                    purpose-configuration)))
 
-;;;###autoload
-(defun purpose-set-extension-configuration (ext-keyword config)
-  "Set an extension's entry in `purpose-extended-configuration'.
-EXT-KEYWORD should be a keyword used to identify the extension.
-CONFIG is a `purpose-conf' object containing the extension's purpose
-configuration.
-Example:
- (purpose-set-extension-configuration
-     :python
-     (purpose-conf \"py\"
-                   :mode-purposes
-                   '((python-mode . python)
-                     (inferior-python-mode . interpreter))))
+;;; advanced helper functions for configuring `purpose-configuration'
 
-This function calls `purpose-compile-extended-configuration' when its
-done."
-  (unless (keywordp ext-keyword)
-    (signal 'wrong-type-argument `(keywordp ,ext-keyword)))
-  (setq purpose-extended-configuration
-        (plist-put purpose-extended-configuration ext-keyword config))
-  (purpose-compile-extended-configuration))
+(cl-defun purpose-add-configuration-set (origin priority &key names regexps modes (compilep t))
+  "Add several configuration entries with the same ORIGIN and PRIORITY.
+NAMES, REGEXPS and MODES must be alist mapping names, regexps and
+modes to purposes, respectively.
 
-(defun purpose-get-extension-configuration (ext-keyword)
-  "Get an extension's entry in `purpose-extended-configuration'.
-EXT-KEYWORD is the same as in `purpose-set-extension-configuration'."
-  (unless (keywordp ext-keyword)
-    (signal 'wrong-type-argument `(keywordp ,ext-keyword)))
-  (plist-get purpose-extended-configuration ext-keyword))
+If any of the entries is invalid, then `purpose-configuration' is
+not changed.
 
-(defun purpose-del-extension-configuration (ext-keyword)
-  "Delete an extension's entry in `purpose-extended-configuration'.
-EXT-KEYWORD is the same as in `purpose-set-extension-configuration'.
-Deletion is actually done by setting the extension's entry to nil.
-This function calls `purpose-compile-extended-configuration' when its
-done."
-  (purpose-set-extension-configuration ext-keyword nil))
+If COMPILEP is non-nil, then also compile the configuration. The
+default is non-nil."
+  (let ((original-configuration (purpose-get-configuration-state)))
+    (condition-case err
+        (progn
+          (dolist (mode-purpose modes)
+            (purpose-add-configuration-entry origin priority (cdr mode-purpose)
+                                             :mode (car mode-purpose) :compilep nil))
+          (dolist (regexp-purpose regexps)
+            (purpose-add-configuration-entry origin priority (cdr regexp-purpose)
+                                             :regexp (car regexp-purpose) :compilep nil))
+          (dolist (name-purpose names)
+            (purpose-add-configuration-entry origin priority (cdr name-purpose)
+                                             :name (car name-purpose) :compilep nil))
+          (when compilep
+            (purpose-compile-configuration)))
+      (error
+       ;; in case of error, restore original `purpose-configuration' and
+       ;; re-throw error
+       (purpose-set-configuration-state)
+       (signal (car err) (cdr err))))))
 
-(cl-defun purpose-add-extension-purposes (ext-keyword &key modes names regexps)
-  "Add purposes to an extension's purpose configuration.
-EXT-KEYWORD is the same as in `purpose-set-extension-configuration'.
-MODES, NAMES and REGEXPS must be valid configuration alists as described in
-`purpose-validate-conf'.
-This function calls `purpose-compile-extended-configuration'.
+(cl-defun purpose-get-configuration-set (origin priority &key names regexps modes)
+  "Get all configuration entries with matching parameters.
+ORIGIN and PRIORITY are the same for all entries. NAMES, REGEXPS
+and MODES are lists of names, regexps and modes, respectively."
+  (delq nil
+        (append
+         (mapcar (apply-partially #'purpose-get-configuration-entry origin priority :name) names)
+         (mapcar (apply-partially #'purpose-get-configuration-entry origin priority :regexp) regexps)
+         (mapcar (apply-partially #'purpose-get-configuration-entry origin priority :mode) modes))))
 
-Example:
- (purpose-add-extension-purposes :python
-                                 :regexps '((\"\\.hy$\" . python)))"
-  (let ((config (purpose-get-extension-configuration ext-keyword)))
-    (unless config
-      (user-error "Missing extension configuration: %s" ext-keyword))
-    (purpose-conf-add-purposes config modes names regexps)
-    (purpose-set-extension-configuration ext-keyword config)))
+(cl-defun purpose-delete-configuration-set (origin priority &key names regexps modes)
+  "Delete all matching configuration entries.
+ORIGIN and PRIORITY are the same for all entries. NAMES, REGEXPS
+and MODES are lists of names, regexps and modes, respectively."
+  (mapc (apply-partially #'purpose-delete-configuration-entry origin priority :name) names)
+  (mapc (apply-partially #'purpose-delete-configuration-entry origin priority :regexp) regexps)
+  (mapc (apply-partially #'purpose-delete-configuration-entry origin priority :mode) modes))
 
-(cl-defun purpose-remove-extension-purposes (ext-keyword &key modes names regexps)
-  "Remove purposes from an extension's purpose configuration.
-EXT-KEYWORD is the same as in `purpose-set-extension-configuration'.
-MODES, NAMES and REGEXPS must be valid configuration alists as described in
-`purpose-validate-conf'.
-This function calls `purpose-compile-extended-configuration'.
+(cl-defun purpose-add-user-configuration-entry (purpose &key name regexp mode (compilep t))
+  "Add new user configuration entry to `purpose-configuration'.
+A user configuration entry is a regular entry, with an origin of
+`user' and a priority of 99. See
+`purpose-add-configuration-entry' for details.
 
-Example:
- (purpose-remove-extension-purposes :python
-                                    :modes '(inferior-python-mode)
-                                    :regexps '(\"\\.hy$\"))"
-  (let ((config (purpose-get-extension-configuration ext-keyword)))
-    (unless config
-      (user-error "Missing extension configuration: %s" ext-keyword))
-    (purpose-conf-remove-purposes config modes names regexps)
-    (purpose-set-extension-configuration ext-keyword config)))
+If COMPILEP is non-nil, then also compile the configuration. The
+default is non-nil."
+  (purpose-add-configuration-entry 'user 99 :name name :regexp regexp
+                                   :mode mode :compilep compilep))
 
-(cl-defun purpose-add-user-purposes (&key modes names regexps)
-  "Add and compile multiple user purposes.
-MODES must be a valid alist mapping major modes to purposes.
-NAMES must be a valid alist mapping names to purposes.
-REGEXPS must be a valid alist mapping regexps to purposes.
+(cl-defun purpose-add-extension-configuration-entry (origin purpose &key name regexp mode (compilep t))
+  "Add new extension configuration entry to `purpose-configuration'.
+A extension configuration entry is a regular entry, with a
+priority of 50. See `purpose-add-configuration-entry' for
+details.
 
-This function calls `purpose-compile-user-configuration' to
-update user purposes.
+If COMPILEP is non-nil, then also compile the configuration. The
+default is non-nil."
+  (purpose-add-configuration-entry origin 50 :name name :regexp regexp
+                                   :mode mode :compilep compilep))
 
-Example:
- (purpose-add-user-purposes :modes '((org-mode . org)
-                                     (help-mode . popup))
-                            :names '((\"*scratch*\" . popup))
-                            :regexps '((\"^\\*foo\" . terminal)))"
-  (purpose-validate-conf modes names regexps)
-  (setq purpose-user-mode-purposes (append modes purpose-user-mode-purposes)
-        purpose-user-name-purposes (append names purpose-user-name-purposes)
-        purpose-user-regexp-purposes (append regexps purpose-user-regexp-purposes))
-  (purpose-compile-user-configuration))
+(cl-defun purpose-add-user-configuration-set (purpose &key names regexps modes (compilep t))
+  "Add several user configuration entries to `purpose-configuration'.
+A user configuration entry is a regular entry, with an origin of
+`user' and a priority of 99. See `purpose-add-configuration-set'
+for details.
 
-(cl-defun purpose-remove-user-purposes (&key modes names regexps)
-  "Remove and compile multiple user purposes.
-MODES must be a list of major modes.
-NAMES must be a list of names.
-REGEXPS must be a list of regexps.
+If COMPILEP is non-nil, then also compile the configuration. The
+default is non-nil."
+  (purpose-add-configuration-set 'user 99 :names names :regexps regexps
+                                 :modes modes :compilep compilep))
 
-This function calls `purpose-compile-user-configuration' to
-update user purposes.
+(cl-defun purpose-add-extension-configuration-set (origin &key names regexps modes (compilep t))
+  "Add several extension configuration entries to `purpose-configuration'.
+A extension configuration entry is a regular entry, with a priority of 50.
+See `purpose-add-configuration-set' for details.
 
-Example:
- (purpose-remove-user-purposes :modes '(org-mode help-mode)
-                               :names '(\"*scratch*\")
-                               :regexps '(\"^\\*foo\"))"
-  ;; let-bind before setq-ing, so we don't apply partial changes if one
-  ;; of MODES, NAMES or REGEXPS is malformed
-  (let ((new-modes (cl-set-difference purpose-user-mode-purposes modes
-                                      :test (lambda (entry mode)
-                                              (eql (car entry) mode))))
-        (new-names (cl-set-difference purpose-user-name-purposes names
-                                      :test (lambda (entry name)
-                                              (string= (car entry) name))))
-        (new-regexps (cl-set-difference purpose-user-regexp-purposes regexps
-                                        :test (lambda (entry regexp)
-                                                (string= (car entry) regexp)))))
-    (setq purpose-user-mode-purposes new-modes
-          purpose-user-name-purposes new-names
-          purpose-user-regexp-purposes new-regexps)
-    (purpose-compile-user-configuration)))
+If COMPILEP is non-nil, then also compile the configuration. The
+default is non-nil."
+  (purpose-add-configuration-set origin 50 :names names :regexps regexps
+                                 :modes modes :compilep compilep))
 
+;;; save/load configuration state
 
+(defconst purpose--configuration-state-vars
+  '(purpose-configuration
+    purpose--compiled-names
+    purpose--compiled-regexps
+    purpose--compiled-modes
+    purpose--compiled-mode-list))
+
+(defun purpose-get-configuration-state ()
+  "Return the state of the current purpose configuration.
+The purpose configuration consists of the variables listed in
+`purpose--configuration-state-vars'."
+  (mapcar (lambda (var)
+            (cons var (seq-copy (symbol-value var))))
+          purpose--configuration-state-vars))
+
+(defun purpose-set-configuration-state (state)
+  "Load state of purpose configuration from STATE.
+This changes the values of the variables listed in
+`purpose--configuration-state-vars'."
+  (dolist (var purpose--configuration-state-vars)
+    (set var (cdr (assq var state)))))
 
 ;;; change purposes temporarily
 
 (defmacro purpose-save-purpose-config (&rest body)
   "Save the purpose configuration, execute BODY, restore the configuration."
   (declare (indent defun) (debug body))
-  `(let ((purpose--user-mode-purposes (copy-hash-table purpose--user-mode-purposes))
-         (purpose--user-name-purposes (copy-hash-table purpose--user-name-purposes))
-         (purpose--user-regexp-purposes (copy-hash-table purpose--user-regexp-purposes))
-         (purpose--extended-mode-purposes (copy-hash-table purpose--extended-mode-purposes))
-         (purpose--extended-name-purposes (copy-hash-table purpose--extended-name-purposes))
-         (purpose--extended-regexp-purposes (copy-hash-table purpose--extended-regexp-purposes))
-         (purpose--default-mode-purposes (copy-hash-table purpose--default-mode-purposes))
-         (purpose--default-name-purposes (copy-hash-table purpose--default-name-purposes))
-         (purpose--default-regexp-purposes (copy-hash-table purpose--default-regexp-purposes))
-         (purpose-use-default-configuration purpose-use-default-configuration)
-         (purpose-user-mode-purposes purpose-user-mode-purposes)
-         (purpose-user-name-purposes purpose-user-name-purposes)
-         (purpose-user-regexp-purposes purpose-user-regexp-purposes)
-         (purpose-extended-configuration purpose-extended-configuration))
+  `(let ((purpose--compiled-names purpose--compiled-names)
+         (purpose--compiled-regexps purpose--compiled-regexps)
+         (purpose--compiled-modes purpose--compiled-modes)
+         (purpose--compiled-mode-list purpose--compiled-mode-list)
+         (purpose-configuration purpose-configuration))
      ,@body))
 
-(defmacro purpose-with-temp-purposes (names regexps modes &rest body)
+(defmacro purpose-with-temp-purposes (&rest body)
   "Execute BODY with a temporary purpose configuration.
-NAMES, REGEXPS and MODES should be alists as described in
-`purpose-user-name-purposes', `purpose-user-regexp-purposes' and
-`purpose-user-mode-purposes'.
-NAMES, REGEXPS and MODES are used instead of the current purpose configuration
-while BODY is executed.  The purpose configuration is restored after BODY
-is executed."
-  (declare (indent 3) (debug (sexp sexp sexp body)))
-  `(purpose-save-purpose-config
-     (let ((purpose-use-default-configuration nil)
-           (purpose-extended-configuration nil)
-           (purpose-user-name-purposes ,names)
-           (purpose-user-regexp-purposes ,regexps)
-           (purpose-user-mode-purposes ,modes))
-       (purpose-compile-user-configuration)
-       (purpose-compile-extended-configuration)
+ORIGIN, PRIORITY, NAMES, REGEXPS and MODES have the same meaning
+as in `purpose-add-configuration-set'. ORIGIN defaults to `temp'
+and PRIORITY defaults to 99. The purpose configuration is
+restored after BODY is executed.
+
+\(fn &key ORIGIN PRIORITY NAMES REGEXPS MODES &rest BODY)"
+  (declare (indent defun)
+           (debug ([&rest keywordp sexp] body)))
+  (destructuring-bind (keys body)
+      (purpose-pop-keys '((:origin 'temp) (:priority 99)
+                          :names :regexps :modes)
+                        body)
+    `(purpose-save-purpose-config
+       (setq purpose-configuration nil)
+       (purpose-add-configuration-set ,(plist-get keys :origin)
+                                      ,(plist-get keys :priority)
+                                      :names ,(plist-get keys :names)
+                                      :regexps ,(plist-get keys :regexps)
+                                      :modes ,(plist-get keys :modes))
+       ,@body)))
+
+(defmacro purpose-with-additional-purposes (&rest body)
+  "Execute BODY with an addiaitional purpose configuration.
+ORIGIN, PRIORITY, NAMES, REGEXPS and MODES have the same meaning
+as in `purpose-add-configuration-set'. ORIGIN defaults to `temp'
+and PRIORITY defaults to 99. The purpose configuration is
+restored after BODY is executed.
+
+\(fn &key ORIGIN PRIORITY NAMES REGEXPS MODES &rest BODY)"
+  (declare (indent defun)
+           (debug ([&rest keywordp sexp] body)))
+  (destructuring-bind (keys body)
+      (purpose-pop-keys '((:origin 'temp) (:priority 99)
+                          :names :regexps :modes)
+                        body)
+    `(purpose-save-purpose-config
+       (purpose-add-configuration-set ,(plist-get keys :origin)
+                                      ,(plist-get keys :priority)
+                                      :names ,(plist-get keys :names)
+                                      :regexps ,(plist-get keys :regexps)
+                                      :modes ,(plist-get keys :modes))
        ,@body)))
 
 (defmacro purpose-with-empty-purposes (&rest body)
   "Execute BODY with an empty purpose configuration.
 The purpose configuration is restored after BODY is executed."
   (declare (indent defun) (debug body))
-  `(purpose-with-temp-purposes nil nil nil ,@body))
+  `(purpose-with-temp-purposes ,@body))
 
-(defmacro purpose-with-additional-purposes (names regexps modes &rest body)
-  "Execute BODY with an additional purpose configuration.
-NAMES, REGEXPS and MODES should be alists as described in
-`purpose-user-name-purposes', `purpose-user-regexp-purposes' and
-`purpose-user-mode-purposes'.
-NAMES, REGEXPS and MODES are used to add purposes to the current purpose
-configuration while BODY is executed.  The purpose configuration is restored
-after BODY is executed."
-  (declare (indent 3) (debug (sexp sexp sexp body)))
-  `(purpose-save-purpose-config
-     (let ((purpose-user-name-purposes (append ,names purpose-user-name-purposes))
-           (purpose-user-regexp-purposes (append ,regexps purpose-user-regexp-purposes))
-           (purpose-user-mode-purposes (append ,modes purpose-user-mode-purposes)))
-       (purpose-compile-user-configuration)
-       ,@body)))
+;; set initial state of compiled variables (`purpose--compiled-*') according to
+;; initial state of `purpose-configuration'
+(purpose-compile-configuration)
 
-
-
-;;; Initial compilation
-
-(purpose-compile-user-configuration)
-(purpose-compile-extended-configuration)
-(purpose-compile-default-configuration)
-
+;;; TODO:
+;; - tests
+;;; DONE:
+;; - equivalents to `purpose-save-purpose-config', `purpose-with-temp-purposes',
+;;   `purpose-with-empty-purposes' and `purpose-with-additional-purposes'.
+;; - initial configuration (including default entires)
+;; - add default entries to `purpose-configuration' (make it not empty by default)
+;; - convert `defvar's to `defcustom's.
+;; - helpers function should compile unless told otherwise
+;; - use a real pair of load/save functions to restore all config variables upon error
+;; - rename all *-2 functions/variables to remove the suffix
 
 (provide 'window-purpose-configuration)
 
