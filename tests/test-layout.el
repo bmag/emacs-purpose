@@ -94,29 +94,29 @@
   :var (config-suite-snapshot config-case-snapshot original-layout-dirs)
   (before-all
     (purpose-mode)
-    (setq config-suite-snapshot (get-purpose-config))
+    (setq config-suite-snapshot (get-purpose-config-2))
     (setq original-layout-dirs purpose-layout-dirs)
     (setq purpose-layout-dirs '("tests/layouts2" "tests/layouts1")))
 
   (after-all
     (setq purpose-layout-dirs original-layout-dirs)
-    (load-purpose-config config-suite-snapshot)
+    (load-purpose-config-2 config-suite-snapshot)
     (purpose-mode -1))
 
   (before-each
-    (setq config-case-snapshot (get-purpose-config))
+    (setq config-case-snapshot (get-purpose-config-2))
     (create-buffers "xxx-p0-0" "xxx-p0-1" "xxx-p1-0")
     (build-one-window '(:name "xxx-p0-0")))
 
   (after-each
-    (load-purpose-config config-suite-snapshot))
+    (load-purpose-config-2 config-suite-snapshot))
 
   (describe "purpose-window-params"
     (before-each
       (when (emacs-version>= "25")
         (spy-on 'frame-width :and-call-fake #'fake-frame-width)
         (spy-on 'frame-height :and-call-fake #'fake-frame-height))
-      (load-purpose-config (make-purpose-config :names '(("xxx-p0-0" . p0))))
+      (load-purpose-config-2 '((:origin test :priority 70 :purpose p0 :name "xxx-p0-0")))
       (build-one-window '(:name "xxx-p0-0" :p-ded t)))
     (it "returns a window-params object"
       (let* ((obj (purpose-window-params))
@@ -150,7 +150,7 @@
     (before-all
       (fset 'my-ignore (lambda (&rest args) nil)))
     (before-each
-      (load-purpose-config (make-purpose-config :names '(("xxx-p0-0" . p0)))))
+      (load-purpose-config-2 '((:origin test :priority 70 :purpose p0 :name "xxx-p0-0"))))
     (it "sets :purpose correctly"
       (purpose-set-window-properties '(:purpose p0))
       (expect '(:purpose p0) :to-match-window-tree))

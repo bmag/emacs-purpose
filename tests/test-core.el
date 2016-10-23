@@ -2,29 +2,43 @@
 (require 'buttercup-init)
 
 (defvar test-core-purpose-config
-  `((purpose-user-name-purposes . (("FOO" . USER1)))
-    (purpose-user-regexp-purposes . (("^FOO2\\'" . USER2)))
-    (purpose-user-mode-purposes . ((text-mode . USER3)))
-    (purpose-extended-configuration . (:test
-                                       ,(purpose-conf "test-conf"
-                                                      :name-purposes '(("BAR" . EXT1))
-                                                      :regexp-purposes '(("^BAR2\\'" . EXT2))
-                                                      :mode-purposes '((sh-mode . EXT3)))))
-    (purpose-use-default-configuration . t)))
+  `((:origin user :priority 99 :purpose USER1 :name "FOO")
+    (:origin user :priority 99 :purpose USER2 :regexp "^FOO2\\'")
+    (:origin user :priority 99 :purpose USER3 :mode text-mode)
+    (:origin test :priority 50 :purpose EXT1 :name "BAR")
+    (:origin test :priority 50 :purpose EXT2 :regexp "^BAR2\\'")
+    (:origin test :priority 50 :purpose EXT3 :mode sh-mode)
+    (:origin default :priority 0 :purpose edit :name ".gitignore")
+    (:origin default :priority 0 :purpose edit :name ".hgignore")
+    ;; the `shell' command displays its buffer before setting its major-mode, so
+    ;; we must detect it by name
+    (:origin default :priority 0 :purpose terminal :name "*shell*")
+    (:origin default :priority 0 :purpose minibuf :regexp "^ \\*Minibuf-[0-9]*\\*$")
+    (:origin default :priority 0 :purpose edit :mode prog-mode)
+    (:origin default :priority 0 :purpose edit :mode text-mode)
+    (:origin default :priority 0 :purpose terminal :mode comint-mode)
+    (:origin default :priority 0 :purpose dired :mode dired-mode)
+    (:origin default :priority 0 :purpose buffers :mode ibuffer-mode)
+    (:origin default :priority 0 :purpose buffers :mode Buffer-menu-mode)
+    (:origin default :priority 0 :purpose search :mode occur-mode)
+    (:origin default :priority 0 :purpose search :mode grep-mode)
+    (:origin default :priority 0 :purpose search :mode compilation-mode)
+    (:origin default :priority 0 :purpose image :mode image-mode)
+    (:origin default :priority 0 :purpose package :mode package-menu-mode)))
 
 (describe "Core Suite"
   :var (config-suite-snapshot config-case-snapshot original-layout-dirs)
   (before-all
     (purpose-mode)
-    (setq config-suite-snapshot (get-purpose-config)))
+    (setq config-suite-snapshot (get-purpose-config-2)))
 
   (after-all
-    (load-purpose-config config-suite-snapshot)
+    (load-purpose-config-2 config-suite-snapshot)
     (purpose-mode -1))
 
   (before-each
-    (setq config-case-snapshot (get-purpose-config))
-    (load-purpose-config test-core-purpose-config)
+    (setq config-case-snapshot (get-purpose-config-2))
+    (load-purpose-config-2 test-core-purpose-config)
     (create-buffers "FOO" "FOO2" "FOO3"
                     "BAR" "BAR2" "BAR3"
                     ".gitignore" " *Minibuf-777*" "TUX"
@@ -36,7 +50,7 @@
     (build-one-window '(:name "xxx")))
 
   (after-each
-    (load-purpose-config config-suite-snapshot))
+    (load-purpose-config-2 config-suite-snapshot))
 
   ;; user/ext/default, name/regexp/mode, dummy, default-purpose
   (describe "purpose-buffer-purpose"

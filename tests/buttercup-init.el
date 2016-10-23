@@ -2,6 +2,9 @@
 (require 'buttercup)
 (require 'seq)
 
+(set-frame-width nil 80)
+(set-frame-height nil 24)
+
 ;; coverage
 ;; based on https://github.com/sviridov/undercover.el-buttercup-integration-example/blob/master/tests/test-multiply.el
 (require 'undercover-init.el)
@@ -30,6 +33,11 @@ Gotcha: this will not work when buttercup spies on `insert-file-contents'."
   (validate-user-input line)
   (setq input-lines-inserted (1+ input-lines-inserted))
   (shell-command (format "echo %s>> %s" line user-input-filename)))
+
+(defmacro purpose-call-with-prefix-arg (arg command)
+  (declare (indent defun) (debug 0))
+  `(let ((current-prefix-arg ,arg))
+     (call-interactively ,command)))
 
 ;;; save/load purpose configurations
 (defun get-purpose-config ()

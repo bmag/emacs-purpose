@@ -90,39 +90,39 @@
     (purpose-compile-configuration))
 
   (it "`purpose-save-purpose-config' restores configuration"
-    (purpose-save-purpose-config-2
+    (purpose-save-purpose-config
       (setq purpose-configuration nil)
       (purpose-compile-configuration))
     (expect (purpose-get-purpose base-buffer) :to-be 'base))
   (it "`purpose-with-temp-purposes' restores configuration"
-    (purpose-with-temp-purposes-2 :names '(("other-buff" . other))
+    (purpose-with-temp-purposes :names '(("other-buff" . other))
       nil)
     (expect (purpose-get-purpose base-buffer) :to-be 'base))
   (it "`purpose-with-temp-purposes' provides new configuration"
-    (purpose-with-temp-purposes-2 :names '(("other-buff" . other))
+    (purpose-with-temp-purposes :names '(("other-buff" . other))
       (expect (purpose-get-purpose other-buffer) :to-be 'other)))
   (it "`purpose-with-temp-purposes' hides old configuration"
-    (purpose-with-temp-purposes-2 :names '(("other-buff" . other))
+    (purpose-with-temp-purposes :names '(("other-buff" . other))
       (expect (purpose-get-purpose base-buffer) :to-be nil)))
   (it "`purpose-with-empty-purposes' restores configuration"
-    (purpose-with-empty-purposes-2 nil)
+    (purpose-with-empty-purposes nil)
     (expect (purpose-get-purpose base-buffer) :to-be 'base))
   (it "`purpose-with-empty-purposes' provides empty configuration"
-    (purpose-with-empty-purposes-2
+    (purpose-with-empty-purposes
       (expect (purpose-get-purpose other-buffer) :to-be nil)))
   (it "`purpose-with-empty-purposes' hides old configuration"
-    (purpose-with-empty-purposes-2
+    (purpose-with-empty-purposes
       (expect (purpose-get-purpose base-buffer) :to-be nil)))
   (it "`purpose-with-additional-purposes' restores configuration"
-    (purpose-with-additional-purposes-2 :names '(("other-buff" . other))
+    (purpose-with-additional-purposes :names '(("other-buff" . other))
                                         nil)
     (expect (purpose-get-purpose base-buffer) :to-be 'base)
     (expect (purpose-get-purpose other-buffer) :to-be nil))
   (it "`purpose-with-additional-purposes' provides additional configuration"
-    (purpose-with-additional-purposes-2 :names '(("other-buff" . other))
+    (purpose-with-additional-purposes :names '(("other-buff" . other))
       (expect (purpose-get-purpose other-buffer) :to-be 'other)))
   (it "`purpose-with-additional-purposes' doesn't hide old configuration"
-    (purpose-with-additional-purposes-2 :names '(("other-buff" . other))
+    (purpose-with-additional-purposes :names '(("other-buff" . other))
       (expect (purpose-get-purpose base-buffer) :to-be 'base)))
 
   (it "`purpose-get-configuration-state' returns correct state"

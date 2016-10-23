@@ -5,12 +5,12 @@
   :var (config-snapshot)
   (before-all
     (purpose-mode)
-    (setq config-snapshot (get-purpose-config))
-    (load-purpose-config
-     (make-purpose-config :regexps '(("^xxx-p0-" . p0)
-                                     ("^xxx-p1-" . p1)))))
+    (setq config-snapshot (get-purpose-config-2))
+    (load-purpose-config-2
+     '((:origin test :priority 70 :purpose p0 :regexp "^xxx-p0-")
+       (:origin test :priority 70 :purpose p1 :regexp "^xxx-p1-"))))
   (after-all
-    (load-purpose-config config-snapshot)
+    (load-purpose-config-2 config-snapshot)
     (purpose-mode -1))
   (before-each
     (create-buffers "xxx-p0-0" "xxx-p0-1" "xxx-p1-0"))
@@ -21,6 +21,7 @@
     (expect '(:name "xxx-p0-1") :to-match-window-tree))
 
   (it "with 2 windows, switching to other purpose reuses other window"
+    (message "DEBUG: configuration state: %S" (purpose-get-configuration-state))
     (build-two-windows '((:name "xxx-p1-0" :selected t) (:name "xxx-p0-0")))
     (switch-to-buffer "xxx-p0-1")
     (expect '(split (:name "xxx-p1-0")
@@ -55,12 +56,12 @@
   :var (config-snapshot)
   (before-all
     (purpose-mode)
-    (setq config-snapshot (get-purpose-config))
-    (load-purpose-config
-     (make-purpose-config :regexps '(("^xxx-p0-" . p0)
-                                     ("^xxx-p1-" . p1)))))
+    (setq config-snapshot (get-purpose-config-2))
+    (load-purpose-config-2
+     '((:origin test :priority 70 :purpose p0 :regexp "^xxx-p0-")
+       (:origin test :priority 70 :purpose p1 :regexp "^xxx-p1-"))))
   (after-all
-    (load-purpose-config config-snapshot)
+    (load-purpose-config-2 config-snapshot)
     (purpose-mode -1))
   (before-each
     (create-buffers "xxx-p0-0" "xxx-p0-1" "xxx-p1-0"))
@@ -99,12 +100,12 @@
   :var (config-snapshot)
   (before-all
     (purpose-mode)
-    (setq config-snapshot (get-purpose-config))
-    (load-purpose-config
-     (make-purpose-config :regexps '(("^xxx-p0-" . p0)
-                                     ("^xxx-p1-" . p1)))))
+    (setq config-snapshot (get-purpose-config-2))
+    (load-purpose-config-2
+     '((:origin test :priority 70 :purpose p0 :regexp "^xxx-p0-")
+       (:origin test :priority 70 :purpose p1 :regexp "^xxx-p1-"))))
   (after-all
-    (load-purpose-config config-snapshot)
+    (load-purpose-config-2 config-snapshot)
     (purpose-mode -1))
   (before-each
     (create-buffers "xxx-p0-0" "xxx-p0-1" "xxx-p1-0"))
@@ -158,12 +159,12 @@
   :var (config-snapshot)
   (before-all
     (purpose-mode)
-    (setq config-snapshot (get-purpose-config))
-    (load-purpose-config
-     (make-purpose-config :regexps '(("^xxx-p0-" . p0)
-                                     ("^xxx-p1-" . p1)))))
+    (setq config-snapshot (get-purpose-config-2))
+    (load-purpose-config-2
+     '((:origin test :priority 70 :purpose p0 :regexp "^xxx-p0-")
+       (:origin test :priority 70 :purpose p1 :regexp "^xxx-p1-"))))
   (after-all
-    (load-purpose-config config-snapshot)
+    (load-purpose-config-2 config-snapshot)
     (purpose-mode -1))
   (before-each
     (create-buffers "xxx-p0-0" "xxx-p0-1" "xxx-p1-0"))
@@ -209,12 +210,12 @@
   :var (config-snapshot)
   (before-all
     (purpose-mode)
-    (setq config-snapshot (get-purpose-config))
-    (load-purpose-config
-     (make-purpose-config :regexps '(("^xxx-p0-" . p0)
-                                     ("^xxx-p1-" . p1)))))
+    (setq config-snapshot (get-purpose-config-2))
+    (load-purpose-config-2
+     '((:origin test :priority 70 :purpose p0 :regexp "^xxx-p0-")
+       (:origin test :priority 70 :purpose p1 :regexp "^xxx-p1-"))))
   (after-all
-    (load-purpose-config config-snapshot)
+    (load-purpose-config-2 config-snapshot)
     (purpose-mode -1))
   (before-each
     (create-buffers "xxx-p0-0" "xxx-p0-1" "xxx-p1-0"))

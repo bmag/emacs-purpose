@@ -157,7 +157,7 @@ by `purpose-compile-config'.")
 Return then matching entry in `purpose--compiled-modes', or nil
 if not found."
   (with-current-buffer buffer
-    (let ((mode (derived-mode-p purpose--compiled-mode-list)))
+    (let ((mode (apply #'derived-mode-p purpose--compiled-mode-list)))
       (assq mode purpose--compiled-modes))))
 
 (defun purpose--get-purpose-by-name (buffer-name &optional min-priority)

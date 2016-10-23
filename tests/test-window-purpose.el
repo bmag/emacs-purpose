@@ -1,18 +1,16 @@
 ;; -*- lexical-binding: t -*-
 
-;; based on https://github.com/sviridov/undercover.el-buttercup-integration-example/blob/master/tests/test-multiply.el
-(require 'undercover-init.el)
-(require 'window-purpose)
+(require 'buttercup-init)
 
 (describe "purpose--modeline-string"
   :var (config-snapshot)
   (before-all
-    (setq config-snapshot (get-purpose-config))
-    (load-purpose-config
-     (make-purpose-config :names '(("xxx-test" . edit))))
+    (setq config-snapshot (get-purpose-config-2))
+    (load-purpose-config-2
+     (make-purpose-config-2  '((:origin test :priority 70 :purpose edit :name "xxx-test"))))
     (create-buffers "xxx-test"))
   (after-all
-    (load-purpose-config config-snapshot))
+    (load-purpose-config-2 config-snapshot))
 
   (it "shows buffer's purpose"
     (build-one-window '(:name "xxx-test" :b-ded nil :p-ded nil))
