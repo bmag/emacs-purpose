@@ -405,8 +405,11 @@ Return nil if no entry was found."
                    (eq mode (plist-get entry :mode))))
             purpose-configuration))
 
-(cl-defun purpose-delete-configuration-entry (origin priority &key name regexp mode)
-  "Remove matching configuration entry from `purpose-configuration'."
+(cl-defun purpose-delete-configuration-entry (origin priority &key name regexp mode (compilep t))
+  "Remove matching configuration entry from `purpose-configuration'.
+
+If COMPILEP is non-nil, then also compile the configuration. The
+default is non-nil."
   (setq purpose-configuration
         (seq-remove (lambda (entry)
                       (and (eq origin (plist-get entry :origin))
@@ -414,7 +417,9 @@ Return nil if no entry was found."
                            (string= name (plist-get entry :name))
                            (string= regexp (plist-get entry :regexp))
                            (eq mode (plist-get entry :mode))))
-                    purpose-configuration)))
+                    purpose-configuration))
+  (when compilep
+    (purpose-compile-configuration)))
 
 ;;; advanced helper functions for configuring `purpose-configuration'
 
@@ -458,13 +463,18 @@ and MODES are lists of names, regexps and modes, respectively."
          (mapcar (apply-partially #'purpose-get-configuration-entry origin priority :regexp) regexps)
          (mapcar (apply-partially #'purpose-get-configuration-entry origin priority :mode) modes))))
 
-(cl-defun purpose-delete-configuration-set (origin priority &key names regexps modes)
+(cl-defun purpose-delete-configuration-set (origin priority &key names regexps modes (compilep t))
   "Delete all matching configuration entries.
 ORIGIN and PRIORITY are the same for all entries. NAMES, REGEXPS
-and MODES are lists of names, regexps and modes, respectively."
-  (mapc (apply-partially #'purpose-delete-configuration-entry origin priority :name) names)
-  (mapc (apply-partially #'purpose-delete-configuration-entry origin priority :regexp) regexps)
-  (mapc (apply-partially #'purpose-delete-configuration-entry origin priority :mode) modes))
+and MODES are lists of names, regexps and modes, respectively.
+
+If COMPILEP is non-nil, then also compile the configuration. The
+default is non-nil."
+  (mapc (apply-partially #'purpose-delete-configuration-entry origin priority :compilep nil :name) names)
+  (mapc (apply-partially #'purpose-delete-configuration-entry origin priority :compilep nil :regexp) regexps)
+  (mapc (apply-partially #'purpose-delete-configuration-entry origin priority :compilep nil :mode) modes)
+  (when compilep
+    (purpose-compile-configuration)))
 
 (cl-defun purpose-add-user-configuration-entry (purpose &key name regexp mode (compilep t))
   "Add new user configuration entry to `purpose-configuration'.
@@ -478,6 +488,17 @@ default is non-nil."
                                    :name name :regexp regexp
                                    :mode mode :compilep compilep))
 
+(cl-defun purpose-get-user-configuration-entry (&key name regexp mode)
+  "Get a user configuration entry."
+  (purpose-get-configuration-entry 'user 99 :name name :regexp regexp :mode mode))
+
+(cl-defun purpose-delete-user-configuration-entry (&key name regexp mode (compilep t))
+  "Delete a user configuration entry.
+
+If COMPILEP is non-nil, then also compile the configuration. The
+default is non-nil."
+  (purpose-delete-configuration-entry 'user 99 :name name :regexp regexp :mode mode :compilep compilep))
+
 (cl-defun purpose-add-extension-configuration-entry (origin purpose &key name regexp mode (compilep t))
   "Add new extension configuration entry to `purpose-configuration'.
 A extension configuration entry is a regular entry, with a
@@ -490,6 +511,17 @@ default is non-nil."
                                    :name name :regexp regexp
                                    :mode mode :compilep compilep))
 
+(cl-defun purpose-get-extension-configuration-entry (origin &key name regexp mode)
+  "Get an extension configuration entry."
+  (purpose-get-configuration-entry origin 50 :name name :regexp regexp :mode mode))
+
+(cl-defun purpose-delete-extension-configuration-entry (origin &key name regexp mode (compilep t))
+  "Delete an extension configuration entry.
+
+If COMPILEP is non-nil, then also compile the configuration. The
+default is non-nil."
+  (purpose-delete-configuration-entry origin 50 :name name :regexp regexp :mode mode :compilep compilep))
+
 (cl-defun purpose-add-user-configuration-set (&key names regexps modes (compilep t))
   "Add several user configuration entries to `purpose-configuration'.
 A user configuration entry is a regular entry, with an origin of
@@ -501,6 +533,17 @@ default is non-nil."
   (purpose-add-configuration-set 'user 99 :names names :regexps regexps
                                  :modes modes :compilep compilep))
 
+(cl-defun purpose-get-user-configuration-set (&key names regexps modes)
+  "Get a user configuration set."
+  (purpose-get-configuration-set 'user 99 :names names :regexps regexps :modes modes))
+
+(cl-defun purpose-delete-user-configuration-set (&key names regexps modes (compilep t))
+  "Delete a user configuration set.
+
+If COMPILEP is non-nil, then also compile the configuration. The
+default is non-nil."
+  (purpose-delete-configuration-set 'user 99 :names names :regexps regexps :modes modes :compilep compilep))
+
 (cl-defun purpose-add-extension-configuration-set (origin &key names regexps modes (compilep t))
   "Add several extension configuration entries to `purpose-configuration'.
 A extension configuration entry is a regular entry, with a priority of 50.
@@ -510,6 +553,17 @@ If COMPILEP is non-nil, then also compile the configuration. The
 default is non-nil."
   (purpose-add-configuration-set origin 50 :names names :regexps regexps
                                  :modes modes :compilep compilep))
+
+(cl-defun purpose-get-extension-configuration-set (origin &key names regexps modes)
+  "Get an extension configuration set."
+  (purpose-get-configuration-set origin 50 :names names :regexps regexps :modes modes))
+
+(cl-defun purpose-delete-extension-configuration-set (origin &key names regexps modes (compilep t))
+  "Delete an extension configuration set.
+
+If COMPILEP is non-nil, then also compile the configuration. The
+default is non-nil."
+  (purpose-delete-configuration-set origin 50 :names names :regexps regexps :modes modes :compilep compilep))
 
 ;;; save/load configuration state
 
@@ -618,6 +672,8 @@ The purpose configuration is restored after BODY is executed."
 ;; - helpers function should compile unless told otherwise
 ;; - use a real pair of load/save functions to restore all config variables upon error
 ;; - rename all *-2 functions/variables to remove the suffix
+;; - deletion helper functions should also compile configuration
+;; - write user/extension helper for get/delete operations
 
 (provide 'window-purpose-configuration)
 

@@ -271,8 +271,14 @@
             regexp-entry '(:origin test :priority 70 :purpose p0 :regexp "baz")
             mode-entry '(:origin test :priority 70 :purpose p0 :mode x-mode)))
     (before-each
-      (setq purpose-configuration
-            (list name-entry regexp-entry mode-entry)))
+      (setq purpose-configuration (list name-entry regexp-entry mode-entry))
+      (purpose-compile-configuration))
+    (it "compiles by default"
+      (purpose-delete-configuration-entry 'test 70 :regexp "baz")
+      (expect purpose--compiled-regexps :to-be nil))
+    (it "doesn't compile when `compilep' is nil"
+      (purpose-delete-configuration-entry 'test 70 :regexp "baz" :compilep nil)
+      (expect purpose--compiled-regexps :to-equal '(("baz" 70 p0))))
     (it "deletes if origin, priority, and name/regexp/mode are correct"
       (purpose-delete-configuration-entry 'test 70 :name "foo")
       (expect purpose-configuration :to-equal (list regexp-entry mode-entry))
@@ -368,15 +374,33 @@
     (before-each
       (setq purpose-configuration
             (list name-entry regexp-entry mode-entry))
-      (spy-on #'purpose-delete-configuration-entry))
+      (spy-on #'purpose-delete-configuration-entry)
+      (spy-on #'purpose-compile-configuration))
     (it "calls `purpose-delete-configuration-entry' for each entry in the set"
       (purpose-delete-configuration-set 'test 70
                                         :names '("foo")
                                         :regexps '("baz")
                                         :modes '(x-mode))
-      (expect #'purpose-delete-configuration-entry :to-have-been-called-with 'test 70 :name "foo")
-      (expect #'purpose-delete-configuration-entry :to-have-been-called-with 'test 70 :regexp "baz")
-      (expect #'purpose-delete-configuration-entry :to-have-been-called-with 'test 70 :mode 'x-mode)))
+      (expect #'purpose-delete-configuration-entry :to-have-been-called-with
+              'test 70 :compilep nil :name "foo")
+      (expect #'purpose-delete-configuration-entry :to-have-been-called-with
+              'test 70 :compilep nil :regexp "baz")
+      (expect #'purpose-delete-configuration-entry :to-have-been-called-with
+              'test 70 :compilep nil :mode 'x-mode))
+    (it "compiles by default"
+      (purpose-delete-configuration-set 'test 70
+                                        :names '("foo")
+                                        :regexps '("baz")
+                                        :modes '(x-mode))
+      (expect #'purpose-compile-configuration :to-have-been-called))
+    (it "doesn't compile when `compilep' is nil"
+      (purpose-delete-configuration-set 'test 70
+                                        :names '("foo")
+                                        :regexps '("baz")
+                                        :modes '(x-mode)
+                                        :compilep nil)
+      (expect #'purpose-compile-configuration :not :to-have-been-called)))
+
   (describe "Helper user/extension functions"
     (it "`purpose-add-user-configuration-entry' calls `purpose-add-configuration-entry'"
       (spy-on #'purpose-add-configuration-entry)
@@ -390,6 +414,29 @@
       (expect #'purpose-add-configuration-entry :to-have-been-called-with
               'user 99 'p2 :name nil :regexp nil :mode 'x-mode :compilep nil))
 
+    (it "`purpose-get-user-configuration-entry' calls `purpose-get-configuration-entry'"
+      (spy-on #'purpose-get-configuration-entry :and-call-through)
+      (purpose-save-purpose-config
+        (setq purpose-configuration
+              '((:origin test :priority 70 :purpose p0 :name "foo")
+                (:origin user :priority 99 :purpose p0 :regexp "baz")
+                (:origin test :priority 70 :purpose p0 :mode x-mode)))
+        (expect (purpose-get-user-configuration-entry :regexp "baz"))
+        (expect #'purpose-get-configuration-entry :to-have-been-called-with
+                'user 99 :name nil :regexp "baz" :mode nil)))
+
+    (it "`purpose-delete-user-configuration-entry' calls `purpose-delete-configuration-entry'"
+      (spy-on #'purpose-delete-configuration-entry)
+      (purpose-delete-user-configuration-entry :name "foo" :compilep nil)
+      (expect #'purpose-delete-configuration-entry :to-have-been-called-with
+              'user 99 :name "foo" :regexp nil :mode nil :compilep nil)
+      (purpose-delete-user-configuration-entry :regexp "baz" :compilep nil)
+      (expect #'purpose-delete-configuration-entry :to-have-been-called-with
+              'user 99 :name nil :regexp "baz" :mode nil :compilep nil)
+      (purpose-delete-user-configuration-entry :mode 'x-mode :compilep nil)
+      (expect #'purpose-delete-configuration-entry :to-have-been-called-with
+              'user 99 :name nil :regexp nil :mode 'x-mode :compilep nil))
+
     (it "`purpose-add-user-configuration-set' calls `purpose-add-configuration-set'"
       (spy-on #'purpose-add-configuration-set)
       (purpose-add-user-configuration-set :names '(("foo" . p0)) :regexps '(("baz" . p1))
@@ -397,6 +444,24 @@
       (expect #'purpose-add-configuration-set :to-have-been-called-with
               'user 99 :names '(("foo" . p0)) :regexps '(("baz" . p1))
               :modes '((x-mode . p2)) :compilep nil))
+
+    (it "`purpose-get-user-configuration-set' calls `purpose-get-configuration-set'"
+      (spy-on #'purpose-get-configuration-set :and-call-through)
+      (purpose-save-purpose-config
+        (setq purpose-configuration
+              '((:origin test :priority 70 :purpose p0 :name "foo")
+                (:origin user :priority 99 :purpose p0 :regexp "baz")
+                (:origin test :priority 70 :purpose p0 :mode x-mode)))
+        (expect (purpose-get-user-configuration-set :regexps '("baz")))
+        (expect #'purpose-get-configuration-set :to-have-been-called-with
+                'user 99 :names nil :regexps '("baz") :modes nil)))
+
+    (it "`purpose-delete-user-configuration-set' calls `purpose-delete-configuration-set'"
+      (spy-on #'purpose-delete-configuration-set)
+      (purpose-delete-user-configuration-set :names '("foo") :regexps '("baz")
+                                             :modes '(x-mode) :compilep nil)
+      (expect #'purpose-delete-configuration-set :to-have-been-called-with
+              'user 99 :names '("foo") :regexps '("baz") :modes '(x-mode) :compilep nil))
 
     (it "`purpose-add-extension-configuration-entry' calls `purpose-add-configuration-entry'"
       (spy-on #'purpose-add-configuration-entry)
@@ -410,6 +475,29 @@
       (expect #'purpose-add-configuration-entry :to-have-been-called-with
               'ext 50 'p2 :name nil :regexp nil :mode 'x-mode :compilep nil))
 
+    (it "`purpose-get-extension-configuration-entry' calls `purpose-get-configuration-entry'"
+      (spy-on #'purpose-get-configuration-entry :and-call-through)
+      (purpose-save-purpose-config
+        (setq purpose-configuration
+              '((:origin test :priority 70 :purpose p0 :name "foo")
+                (:origin ext :priority 50 :purpose p0 :regexp "baz")
+                (:origin test :priority 70 :purpose p0 :mode x-mode)))
+        (expect (purpose-get-extension-configuration-entry 'ext :regexp "baz"))
+        (expect #'purpose-get-configuration-entry :to-have-been-called-with
+                'ext 50 :name nil :regexp "baz" :mode nil)))
+
+    (it "`purpose-delete-extension-configuration-entry' calls `purpose-delete-configuration-entry'"
+      (spy-on #'purpose-delete-configuration-entry)
+      (purpose-delete-extension-configuration-entry 'ext :name "foo" :compilep nil)
+      (expect #'purpose-delete-configuration-entry :to-have-been-called-with
+              'ext 50 :name "foo" :regexp nil :mode nil :compilep nil)
+      (purpose-delete-extension-configuration-entry 'ext :regexp "baz" :compilep nil)
+      (expect #'purpose-delete-configuration-entry :to-have-been-called-with
+              'ext 50 :name nil :regexp "baz" :mode nil :compilep nil)
+      (purpose-delete-extension-configuration-entry 'ext :mode 'x-mode :compilep nil)
+      (expect #'purpose-delete-configuration-entry :to-have-been-called-with
+              'ext 50 :name nil :regexp nil :mode 'x-mode :compilep nil))
+
     (it "`purpose-add-extension-configuration-set' calls `purpose-add-configuration-set'"
       (spy-on #'purpose-add-configuration-set)
       (purpose-add-extension-configuration-set 'ext
@@ -417,7 +505,26 @@
                                                :modes '((x-mode . p2)) :compilep nil)
       (expect #'purpose-add-configuration-set :to-have-been-called-with
               'ext 50 :names '(("foo" . p0)) :regexps '(("baz" . p1))
-              :modes '((x-mode . p2)) :compilep nil))))
+              :modes '((x-mode . p2)) :compilep nil))
+
+    (it "`purpose-get-extension-configuration-set' calls `purpose-get-configuration-set'"
+      (spy-on #'purpose-get-configuration-set :and-call-through)
+      (purpose-save-purpose-config
+        (setq purpose-configuration
+              '((:origin test :priority 70 :purpose p0 :name "foo")
+                (:origin ext :priority 50 :purpose p0 :regexp "baz")
+                (:origin test :priority 70 :purpose p0 :mode x-mode)))
+        (expect (purpose-get-extension-configuration-set 'ext :regexps '("baz")))
+        (expect #'purpose-get-configuration-set :to-have-been-called-with
+                'ext 50 :names nil :regexps '("baz") :modes nil)))
+
+    (it "`purpose-delete-extension-configuration-set' calls `purpose-delete-configuration-set'"
+      (spy-on #'purpose-delete-configuration-set)
+      (purpose-delete-extension-configuration-set 'ext
+                                                  :names '("foo") :regexps '("baz")
+                                                  :modes '(x-mode) :compilep nil)
+      (expect #'purpose-delete-configuration-set :to-have-been-called-with
+              'ext 50 :names '("foo") :regexps '("baz") :modes '(x-mode) :compilep nil))))
 
 ;;; TODO:
 ;; purpose compilation
