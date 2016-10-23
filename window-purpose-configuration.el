@@ -41,6 +41,12 @@
 
 ;;; variables
 
+(defcustom default-purpose 'general
+  "The default purpose for buffers that don't have another purpose."
+  :group 'purpose
+  :type 'symbol
+  :package-version "1.2")
+
 (defcustom purpose-configuration
   `((:origin default :priority 0 :purpose edit :name ".gitignore")
     (:origin default :priority 0 :purpose edit :name ".hgignore")
@@ -506,7 +512,8 @@ default is non-nil."
 ;;; save/load configuration state
 
 (defconst purpose--configuration-state-vars
-  '(purpose-configuration
+  '(default-purpose
+    purpose-configuration
     purpose--compiled-names
     purpose--compiled-regexps
     purpose--compiled-modes

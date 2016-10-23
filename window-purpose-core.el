@@ -34,12 +34,6 @@
   :prefix "purpose-"
   :package-version "1.2")
 
-(defcustom default-purpose 'general
-  "The default purpose for buffers which didn't get another purpose."
-  :group 'purpose
-  :type 'symbol
-  :package-version "1.2")
-
 (defcustom purpose-preferred-prompt 'auto
   "Which interface should Purpose use when prompting the user.
 Available options are: 'auto - use IDO when `ido-mode' is enabled,

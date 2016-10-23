@@ -35,70 +35,80 @@
    ~purpose--compiled-modes~ and ~purpose--compiled-mode-list~, according to the
    value ~purpose-configuration~.
 
-   Changes to (user-facing) variables and functions from the old system, are
-   details below.
-*** ~purpose-use-default-configuration~
-    Deprecated, use ~purpose-configuration~ instead.
-*** ~purpose-user-mode-purposes~
-    Deprecated, use ~purpose-configuration~ instead.
-*** ~purpose-user-name-purposes~
-    Deprecated, use ~purpose-configuration~ instead.
-*** ~purpose-user-regexp-purposes~
-    Deprecated, use ~purpose-configuration~ instead.
-*** ~purpose-extended-configuration~
-    Deprecated, use ~purpose-configuration~ instead.
-*** ~purpose-compile-user-configuration~
-    Deprecated, use ~purpose-compile-configuration~ instead.
-*** ~purpose-compile-extended-configuration~
-    Deprecated, use ~purpose-compile-configuration~ instead.
-*** ~purpose-compile-default-configuration~
-    Deprecated, use ~purpose-compile-configuration~ instead.
-*** ~purpose-conf-add-purposes~
-    Deprecated.
-*** ~purpose-conf-remove-purposes~
-    Deprecated.
-*** ~purpose-set-extension-configuration~
-    Deprecated, use ~purpose-add-extension-configuration-set~ or ~purpose-add-configuration-set~ instead.
-*** ~purpose-get-extension-configuration~
-    Deprecated, use ~purpose-get-configuration-set~ instead.
-*** ~purpose-del-extension-configuration~
-    Deprecated, use ~purpose-delete-configuration-set~ instead.
-*** ~purpose-add-extension-purposes~
-    Deprecated, use ~purpose-add-extension-configuration-set~ or ~purpose-add-configuration-set~ instead.
-*** ~purpose-remove-extension-purposes~
-    Deprecated, use ~purpose-delete-configuration-set~ instead.
-*** ~purpose-add-user-purposes~
-    Deprecated, use ~purpose-add-user-configuration-set~ or ~purpose-add-configuration-set~ instead.
-*** ~purpose-remove-user-purposes~
-    Deprecated, use ~purpose-delete-configuration-set~ instead.
-*** ~purpose-with-temp-purposes~
-    Takes optional keyword arguments instead of required positional arguments.
-    In 1.6, it was used like this:
-    #+BEGIN_SRC elisp
-      (purpose-with-temp-purposes names regexp modes
-        ;; ... body ...
-        )
-    #+END_SRC
-    In 2.0, it is used like this:
-    #+BEGIN_SRC elisp
-      (purpose-with-temp-purposes :names names :regexp regexp :modes modes
-        ;; ... body ...
-        )
-    #+END_SRC
-*** ~purpose-with-additional-purposes~
-    Takes optional keyword arguments instead of required positional arguments.
-    In 1.6, it was used like this:
-    #+BEGIN_SRC elisp
-      (purpose-with-additional-purposes names regexp modes
-        ;; ... body ...
-        )
-    #+END_SRC
-    In 2.0, it is used like this:
-    #+BEGIN_SRC elisp
-      (purpose-with-additional-purposes :names names :regexp regexp :modes modes
-        ;; ... body ...
-        )
-    #+END_SRC
+*** Changes to user-facing variables and functions
+**** ~purpose-use-default-configuration~
+     Deprecated, use ~purpose-configuration~ instead.
+**** ~purpose-user-mode-purposes~
+     Deprecated, use ~purpose-configuration~ instead.
+**** ~purpose-user-name-purposes~
+     Deprecated, use ~purpose-configuration~ instead.
+**** ~purpose-user-regexp-purposes~
+     Deprecated, use ~purpose-configuration~ instead.
+**** ~purpose-extended-configuration~
+     Deprecated, use ~purpose-configuration~ instead.
+**** ~purpose-compile-user-configuration~
+     Deprecated, use ~purpose-compile-configuration~ instead.
+**** ~purpose-compile-extended-configuration~
+     Deprecated, use ~purpose-compile-configuration~ instead.
+**** ~purpose-compile-default-configuration~
+     Deprecated, use ~purpose-compile-configuration~ instead.
+**** ~purpose-conf-add-purposes~
+     Deprecated.
+**** ~purpose-conf-remove-purposes~
+     Deprecated.
+**** ~purpose-set-extension-configuration~
+     Deprecated, use ~purpose-add-extension-configuration-set~ or ~purpose-add-configuration-set~ instead.
+**** ~purpose-get-extension-configuration~
+     Deprecated, use ~purpose-get-configuration-set~ instead.
+**** ~purpose-del-extension-configuration~
+     Deprecated, use ~purpose-delete-configuration-set~ instead.
+**** ~purpose-add-extension-purposes~
+     Deprecated, use ~purpose-add-extension-configuration-set~ or ~purpose-add-configuration-set~ instead.
+**** ~purpose-remove-extension-purposes~
+     Deprecated, use ~purpose-delete-configuration-set~ instead.
+**** ~purpose-add-user-purposes~
+     Deprecated, use ~purpose-add-user-configuration-set~ or ~purpose-add-configuration-set~ instead.
+**** ~purpose-remove-user-purposes~
+     Deprecated, use ~purpose-delete-configuration-set~ instead.
+**** ~purpose-with-temp-purposes~
+     Takes optional keyword arguments instead of required positional arguments.
+     In 1.6, it was used like this:
+     #+BEGIN_SRC elisp
+       (purpose-with-temp-purposes names regexp modes
+         ;; ... body ...
+         )
+     #+END_SRC
+     In 2.0, it is used like this:
+     #+BEGIN_SRC elisp
+       (purpose-with-temp-purposes :names names :regexp regexp :modes modes
+         ;; ... body ...
+         )
+     #+END_SRC
+**** ~purpose-with-additional-purposes~
+     Takes optional keyword arguments instead of required positional arguments.
+     In 1.6, it was used like this:
+     #+BEGIN_SRC elisp
+       (purpose-with-additional-purposes names regexp modes
+         ;; ... body ...
+         )
+     #+END_SRC
+     In 2.0, it is used like this:
+     #+BEGIN_SRC elisp
+       (purpose-with-additional-purposes :names names :regexp regexp :modes modes
+         ;; ... body ...
+         )
+     #+END_SRC
+*** New Feature: Persisting Configuration State
+    The state of the configuration can now be saved with
+    ~purpose-get-configuration-state~ and loaded with
+    ~purpose-set-configuration-state~. The state configuration consists of the
+    customizable variable ~purpose-configuration~ and the four compiled
+    variables ~purpose--compiled-names~, ~purpose--compiled-regexps~,
+    ~purpose--compiled-modes~ and ~purpose--compiled-mode-list~.
+
+    One instance where this is useful, is if you use perspectives or desktops,
+    and want an easy way to save and load purpose configurations together with
+    different perspectives or desktops.
 
 * Release 1.6
 ** New Features
