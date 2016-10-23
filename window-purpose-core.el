@@ -51,11 +51,6 @@ prompts."
 
 ;;; utilities
 
-(defun purpose--buffer-major-mode (buffer-or-name)
-  "Return the major mode of BUFFER-OR-NAME."
-  (with-current-buffer buffer-or-name
-    major-mode))
-
 (defun purpose--dummy-buffer-name (purpose)
   "Create the name for a dummy buffer with purpose PURPOSE.
 The name created is \"*pu-dummy-PURPOSE-*\".  e.g. for purpose 'edit,
@@ -119,48 +114,6 @@ vanilla method: `read-file-name'"
 
 
 
-;;; simple purpose-finding operations for `purpose-buffer-purpose'
-(defun purpose--buffer-purpose-mode (buffer-or-name mode-conf)
-  "Return the purpose of buffer BUFFER-OR-NAME, as determined by its
-mode and MODE-CONF.
-MODE-CONF is a hash table mapping modes to purposes."
-  (when (get-buffer buffer-or-name)     ; check if buffer exists
-    (let* ((major-mode (purpose--buffer-major-mode buffer-or-name))
-           (derived-modes (purpose--iter-hash #'(lambda (mode _purpose) mode)
-                                              mode-conf))
-           (derived-mode (apply #'derived-mode-p derived-modes)))
-      (when derived-mode
-        (gethash derived-mode mode-conf)))))
-
-(defun purpose--buffer-purpose-name (buffer-or-name name-conf)
-  "Return the purpose of buffer BUFFER-OR-NAME, as determined by its
-exact name and NAME-CONF.
-NAME-CONF is a hash table mapping names to purposes."
-  (gethash (if (stringp buffer-or-name)
-               buffer-or-name
-             (buffer-name buffer-or-name))
-           name-conf))
-
-(defun purpose--buffer-purpose-name-regexp-1 (buffer-or-name regexp purpose)
-  "Return purpose PURPOSE if buffer BUFFER-OR-NAME's name matches
-regexp REGEXP."
-  (when (string-match-p regexp (or (and (bufferp buffer-or-name)
-                                        (buffer-name buffer-or-name))
-                                   buffer-or-name))
-    purpose))
-
-(defun purpose--buffer-purpose-name-regexp (buffer-or-name regexp-conf)
-  "Return the purpose of buffer BUFFER-OR-NAME, as determined by the
-regexps matched by its name.
-REGEXP-CONF is a hash table mapping name regexps to purposes."
-  (car (remove nil
-               (purpose--iter-hash
-                #'(lambda (regexp purpose)
-                    (purpose--buffer-purpose-name-regexp-1 buffer-or-name
-                                                           regexp
-                                                           purpose))
-                regexp-conf))))
-
 (defun purpose-buffer-purpose (buffer-or-name)
   "Get the purpose of buffer BUFFER-OR-NAME.
 The purpose is determined by consulting these functions in this order:
@@ -218,6 +171,7 @@ REQUIRE-MATCH and INITIAL-OUTPUT have the same meaning as in
                      nil
                      require-match
                      initial-output))))
+
 
 
 ;;; purpose-aware buffer low-level functions
