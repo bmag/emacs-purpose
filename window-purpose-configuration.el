@@ -524,7 +524,10 @@ default is non-nil."
 The purpose configuration consists of the variables listed in
 `purpose--configuration-state-vars'."
   (mapcar (lambda (var)
-            (cons var (seq-copy (symbol-value var))))
+            (let ((value (symbol-value var)))
+              (cons var (if (sequencep value)
+                            (copy-sequence value)
+                          value))))
           purpose--configuration-state-vars))
 
 (defun purpose-set-configuration-state (state)
@@ -539,7 +542,8 @@ This changes the values of the variables listed in
 (defmacro purpose-save-purpose-config (&rest body)
   "Save the purpose configuration, execute BODY, restore the configuration."
   (declare (indent defun) (debug body))
-  `(let ((purpose--compiled-names purpose--compiled-names)
+  `(let ((default-purpose default-purpose)
+         (purpose--compiled-names purpose--compiled-names)
          (purpose--compiled-regexps purpose--compiled-regexps)
          (purpose--compiled-modes purpose--compiled-modes)
          (purpose--compiled-mode-list purpose--compiled-mode-list)

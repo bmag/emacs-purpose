@@ -102,9 +102,10 @@
     The state of the configuration can now be saved with
     ~purpose-get-configuration-state~ and loaded with
     ~purpose-set-configuration-state~. The state configuration consists of the
-    customizable variable ~purpose-configuration~ and the four compiled
-    variables ~purpose--compiled-names~, ~purpose--compiled-regexps~,
-    ~purpose--compiled-modes~ and ~purpose--compiled-mode-list~.
+    customizable variables ~purpose-configuration~ and ~default-purpose~, and
+    the four compiled variables ~purpose--compiled-names~,
+    ~purpose--compiled-regexps~, ~purpose--compiled-modes~ and
+    ~purpose--compiled-mode-list~.
 
     One instance where this is useful, is if you use perspectives or desktops,
     and want an easy way to save and load purpose configurations together with

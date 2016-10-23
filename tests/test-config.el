@@ -77,23 +77,28 @@
             :not :to-throw)))
 
 (describe "Temporary Purpose Configuration"
-  :var (config-snapshot base-config temp-config base-buffer other-buffer)
+  :var (config-snapshot default-purpose-copy base-config temp-config base-buffer other-buffer)
   (before-all
     (setq config-snapshot (get-purpose-config-2))
+    (setq default-purpose-copy default-purpose)
     (setq base-config '((:origin obase :priority 80 :purpose base :name "base-buff")))
     (setq base-buffer (get-buffer-create "base-buff"))
     (setq other-buffer (get-buffer-create "other-buff")))
   (after-all
+    (setq default-purpose default-purpose-copy)
     (load-purpose-config-2 config-snapshot))
   (before-each
+    (setq default-purpose default-purpose-copy)
     (setq purpose-configuration base-config)
     (purpose-compile-configuration))
 
   (it "`purpose-save-purpose-config' restores configuration"
     (purpose-save-purpose-config
+      (setq default-purpose 'not-general)
       (setq purpose-configuration nil)
       (purpose-compile-configuration))
-    (expect (purpose-get-purpose base-buffer) :to-be 'base))
+    (expect (purpose-get-purpose base-buffer) :to-be 'base)
+    (expect default-purpose :to-be 'general))
   (it "`purpose-with-temp-purposes' restores configuration"
     (purpose-with-temp-purposes :names '(("other-buff" . other))
       nil)
@@ -126,13 +131,15 @@
       (expect (purpose-get-purpose base-buffer) :to-be 'base)))
 
   (it "`purpose-get-configuration-state' returns correct state"
-    (setq purpose-configuration '(1)
+    (setq default-purpose 'a
+          purpose-configuration '(1)
           purpose--compiled-names '(2)
           purpose--compiled-regexps '(3)
           purpose--compiled-modes '(4)
           purpose--compiled-mode-list '(5))
     (expect (purpose-get-configuration-state) :to-equal
-            '((purpose-configuration . (1))
+            '((default-purpose . a)
+              (purpose-configuration . (1))
               (purpose--compiled-names . (2))
               (purpose--compiled-regexps . (3))
               (purpose--compiled-modes . (4))
