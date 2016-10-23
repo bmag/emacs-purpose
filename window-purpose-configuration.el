@@ -474,7 +474,8 @@ A user configuration entry is a regular entry, with an origin of
 
 If COMPILEP is non-nil, then also compile the configuration. The
 default is non-nil."
-  (purpose-add-configuration-entry 'user 99 :name name :regexp regexp
+  (purpose-add-configuration-entry 'user 99 purpose
+                                   :name name :regexp regexp
                                    :mode mode :compilep compilep))
 
 (cl-defun purpose-add-extension-configuration-entry (origin purpose &key name regexp mode (compilep t))
@@ -485,10 +486,11 @@ details.
 
 If COMPILEP is non-nil, then also compile the configuration. The
 default is non-nil."
-  (purpose-add-configuration-entry origin 50 :name name :regexp regexp
+  (purpose-add-configuration-entry origin 50 purpose
+                                   :name name :regexp regexp
                                    :mode mode :compilep compilep))
 
-(cl-defun purpose-add-user-configuration-set (purpose &key names regexps modes (compilep t))
+(cl-defun purpose-add-user-configuration-set (&key names regexps modes (compilep t))
   "Add several user configuration entries to `purpose-configuration'.
 A user configuration entry is a regular entry, with an origin of
 `user' and a priority of 99. See `purpose-add-configuration-set'
