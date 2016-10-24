@@ -384,15 +384,22 @@ NAME, REGEXP and MODE, then it is replaced.
 
 If COMPILEP is non-nil, then also compile the configuration. The
 default is non-nil."
-  (let ((new-entry (append (list :origin origin :priority priority :purpose purpose)
-                           (and name (list :name name))
-                           (and regexp (list :regexp regexp))
-                           (and mode (list :mode mode)))))
-    (purpose-validate-entry new-entry)
-    (purpose-delete-configuration-entry origin priority :name name :regexp regexp :mode mode)
-    (push new-entry purpose-configuration)
-    (when compilep
-      (purpose-compile-configuration))))
+  (let ((original-configuration (purpose-get-configuration-state)))
+    (condition-case err
+        (let ((new-entry (append (list :origin origin :priority priority :purpose purpose)
+                                 (and name (list :name name))
+                                 (and regexp (list :regexp regexp))
+                                 (and mode (list :mode mode)))))
+          (purpose-validate-entry new-entry)
+          (purpose-delete-configuration-entry origin priority :name name :regexp regexp :mode mode)
+          (push new-entry purpose-configuration)
+          (when compilep
+            (purpose-compile-configuration)))
+      (error
+       ;; in case of error, restore original `purpose-configuration' and
+       ;; re-throw error
+       (purpose-set-configuration-state original-configuration)
+       (signal (car err) (cdr err))))))
 
 (cl-defun purpose-get-configuration-entry (origin priority &key name regexp mode)
   "Return a `purpose-configuration' entry with matching paramters.
@@ -450,7 +457,7 @@ default is non-nil."
       (error
        ;; in case of error, restore original `purpose-configuration' and
        ;; re-throw error
-       (purpose-set-configuration-state)
+       (purpose-set-configuration-state original-configuration)
        (signal (car err) (cdr err))))))
 
 (cl-defun purpose-get-configuration-set (origin priority &key names regexps modes)
@@ -660,20 +667,6 @@ The purpose configuration is restored after BODY is executed."
 ;; set initial state of compiled variables (`purpose--compiled-*') according to
 ;; initial state of `purpose-configuration'
 (purpose-compile-configuration)
-
-;;; TODO:
-;; - tests
-;;; DONE:
-;; - equivalents to `purpose-save-purpose-config', `purpose-with-temp-purposes',
-;;   `purpose-with-empty-purposes' and `purpose-with-additional-purposes'.
-;; - initial configuration (including default entires)
-;; - add default entries to `purpose-configuration' (make it not empty by default)
-;; - convert `defvar's to `defcustom's.
-;; - helpers function should compile unless told otherwise
-;; - use a real pair of load/save functions to restore all config variables upon error
-;; - rename all *-2 functions/variables to remove the suffix
-;; - deletion helper functions should also compile configuration
-;; - write user/extension helper for get/delete operations
 
 (provide 'window-purpose-configuration)
 

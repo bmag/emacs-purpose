@@ -227,7 +227,8 @@
   (describe "`purpose-add-configuration-entry'"
     (before-each
       (setq purpose-configuration nil)
-      (setq purpose--compiled-names nil))
+      (setq purpose--compiled-names nil)
+      (setq purpose--compiled-modes nil))
     (it "adds entry"
       (purpose-add-configuration-entry 'test 70 'p0 :name "foo")
       (expect purpose-configuration :to-contain
@@ -237,7 +238,14 @@
       (expect purpose--compiled-names :to-contain '("foo" 70 p0)))
     (it "does not compile when `compilep' is nil"
       (purpose-add-configuration-entry 'test 70 'p0 :name "foo" :compilep nil)
-      (expect purpose--compiled-names :not :to-contain'("foo" 70 p0))))
+      (expect purpose--compiled-names :not :to-contain'("foo" 70 p0)))
+    (it "throws error on invalid entry and restores configuration"
+      (expect (apply-partially #'purpose-add-configuration-entry 'test 70 'p0
+                               :name "foo" :mode 'x-mode)
+              :to-throw)
+      (expect purpose-configuration :to-be nil)
+      (expect purpose--compiled-names :to-be nil)
+      (expect purpose--compiled-modes :to-be nil)))
 
   (describe "`purpose-get-configuration-entry'"
     (before-each
@@ -308,10 +316,10 @@
   (describe "`purpose-add-configuration-set'"
     (before-each
       (setq purpose-configuration nil)
-      (setq purpose--compiled-names nil)
-      (spy-on #'purpose-add-configuration-entry)
-      (spy-on #'purpose-compile-configuration))
+      (setq purpose--compiled-names nil))
     (it "calls `purpose-add-configuration-entry' for each entry in the set"
+      (spy-on #'purpose-add-configuration-entry)
+      (spy-on #'purpose-compile-configuration)
       (purpose-add-configuration-set 'test 70
                                      :names '(("foo" . p0) ("foo2" . p1))
                                      :regexps '(("baz" . p2))
@@ -327,18 +335,35 @@
       (expect #'purpose-add-configuration-entry :to-have-been-called-with
               'test 70 'p4 :mode 'y-mode :compilep nil))
     (it "compiles by default"
+      (spy-on #'purpose-add-configuration-entry)
+      (spy-on #'purpose-compile-configuration)
       (purpose-add-configuration-set 'test 70
                                      :names '(("foo" . p0) ("foo2" . p1))
                                      :regexps '(("baz" . p2))
                                      :modes '((x-mode . p3) (y-mode . p4)))
       (expect #'purpose-compile-configuration :to-have-been-called))
     (it  "does not compile when `compilep' is nil"
+      (spy-on #'purpose-add-configuration-entry)
+      (spy-on #'purpose-compile-configuration)
       (purpose-add-configuration-set 'test 70
                                      :names '(("foo" . p0) ("foo2" . p1))
                                      :regexps '(("baz" . p2))
                                      :modes '((x-mode . p3) (y-mode . p4))
                                      :compilep nil)
-      (expect #'purpose-compile-configuration :not :to-have-been-called)))
+      (expect #'purpose-compile-configuration :not :to-have-been-called))
+    (it "throws error on invalid entry and restores configuration"
+      (spy-on #'purpose-add-configuration-entry :and-call-fake
+              (lambda (&rest _args)
+                (setq purpose-compile-configuration 'something)
+                (setq purpose--compiled-names 'something-else)
+                (error "Test error")))
+      (spy-on #'purpose-compile-configuration)
+      (expect (apply-partially #'purpose-add-configuration-set 'test 70
+                               :names '((not-a-string . p0)))
+              :to-throw)
+      (expect purpose-configuration :to-be nil)
+      (expect purpose--compiled-names :to-be nil))
+    )
 
   (describe "`purpose-get-configuration-set'"
     :var (name-entry regexp-entry mode-entry)
@@ -526,17 +551,104 @@
       (expect #'purpose-delete-configuration-set :to-have-been-called-with
               'ext 50 :names '("foo") :regexps '("baz") :modes '(x-mode) :compilep nil))))
 
-;;; TODO:
-;; purpose compilation
-;;; DONE:
-;; purpose-compare-configuration-entries
-;; purpose-add-configuration-entry
-;; purpose-get-configuration-entry
-;; purpose-delete-configuration-entry
-;; purpose-add-configuration-set
-;; purpose-get-configuration-set
-;; purpose-delete-configuration-set
-;; purpose-add-user-configuration-entry
-;; purpose-add-extension-configuration-entry
-;; purpose-add-user-configuration-set
-;; purpose-add-extension-configuration-set
+(describe "`purpose-compile-configuration'"
+  :var (config-snapshot n1 n2 n3 n4 r1 r2 r3 r4 m1 m2 m3 m4)
+  (before-all
+    (setq config-snapshot (get-purpose-config-2))
+    ;; n1: prio' before n2; n1: prio' above n5 n1: lexic' above n4
+    (setq n1 '(:origin a :priority 80 :purpose pn1 :name "NAME1"))
+    (setq n2 '(:origin a :priority 70 :purpose pn2 :name "NAME2"))
+    (setq n3 '(:origin a :priority 40 :purpose pn3 :name "NAME3"))
+    (setq n4 '(:origin a :priority 80 :purpose pn4 :name "NAME4"))
+    (setq n5 '(:origin a :priority 30 :purpose pn5 :name "NAME1"))
+    ;; r1: doesn't hide n1; r1: prio' before r2; r1: prio' above r5
+    ;; r3: hide n3; r3: lexic' before r4
+    (setq r1 '(:origin a :priority 80 :purpose pr1 :regexp "^NAME1"))
+    (setq r2 '(:origin a :priority 50 :purpose pr2 :regexp "^NAME2"))
+    (setq r3 '(:origin a :priority 60 :purpose pr3 :regexp "^NAME3"))
+    (setq r4 '(:origin a :priority 60 :purpose pr4 :regexp "^NAME4"))
+    (setq r5 '(:origin a :priority 30 :purpose pr5 :regexp "^NAME1"))
+    ;; m1: parent of m3; m2: lexic' before m4; m2: prio' above m5
+    ;; m6: derived from m1, but higher prio'
+    (setq m1 '(:origin a :priority 90 :purpose pm1 :mode prog-mode))
+    (setq m2 '(:origin a :priority 70 :purpose pm2 :mode mode-2))
+    (setq m3 '(:origin a :priority 40 :purpose pm3 :mode emacs-lisp-mode))
+    (setq m4 '(:origin a :priority 70 :purpose pm4 :mode mode-4))
+    (setq m5 '(:origin a :priority 30 :purpose pm5 :mode mode-2))
+    (setq m6 '(:origin a :priority 95 :purpose pm6 :mode lisp-mode)))
+  (after-all
+    (load-purpose-config-2 config-snapshot))
+  (before-each
+    (load-purpose-config-2 nil))
+  (after-each
+    (load-purpose-config-2 config-snapshot))
+
+  (it "high priority hides lower (names)"
+    (setq purpose-configuration (list n1 n5))
+    (purpose-compile-configuration)
+    (expect purpose--compiled-names :to-equal '(("NAME1" 80 pn1))))
+  (it "high priority hides lower (regexps)"
+    (setq purpose-configuration (list r1 r5))
+    (purpose-compile-configuration)
+    (expect purpose--compiled-regexps :to-equal '(("^NAME1" 80 pr1))))
+  (it "high priority hides lower (modes)"
+    (setq purpose-configuration (list m2 m5))
+    (purpose-compile-configuration)
+    (expect purpose--compiled-modes :to-equal '((mode-2 70 pm2)))
+    (expect purpose--compiled-mode-list :to-equal '(mode-2)))
+
+  (it "high lexicographic value comes before lower (names)"
+    (setq purpose-configuration (list n1 n4))
+    (purpose-compile-configuration)
+    (expect purpose--compiled-names :to-equal
+            '(("NAME1" 80 pn1) ("NAME4" 80 pn4))))
+  (it "high lexicographic value comes before lower (regexps)"
+    (setq purpose-configuration (list r3 r4))
+    (purpose-compile-configuration)
+    (expect purpose--compiled-regexps :to-equal
+            '(("^NAME3" 60 pr3) ("^NAME4" 60 pr4))))
+  (it "high lexicographic value comes before lower (modes)"
+    (setq purpose-configuration (list m2 m4))
+    (purpose-compile-configuration)
+    (expect purpose--compiled-modes :to-equal
+            '((mode-2 70 pm2) (mode-4 70 pm4)))
+    (expect purpose--compiled-mode-list :to-equal '(mode-2 mode-4)))
+
+  (it "regexp hides name with lower priority"
+    (setq purpose-configuration (list n3 r3))
+    (purpose-compile-configuration)
+    (expect purpose--compiled-names :to-equal nil)
+    (expect purpose--compiled-regexps :to-equal '(("^NAME3" 60 pr3))))
+  (it "regexp doesn't hide name with same priority"
+    (setq purpose-configuration (list n1 r1))
+    (purpose-compile-configuration)
+    (expect purpose--compiled-names :to-equal '(("NAME1" 80 pn1)))
+    (expect purpose--compiled-regexps :to-equal '(("^NAME1" 80 pr1))))
+
+  (it "parent mode hides derived mode with lower priority"
+    (setq purpose-configuration (list m1 m3))
+    (purpose-compile-configuration)
+    (expect purpose--compiled-modes :to-equal '((prog-mode 90 pm1)))
+    (expect purpose--compiled-mode-list :to-equal '(prog-mode)))
+  (it "derived mode doesn't hide parent mode with lower priority"
+    (setq purpose-configuration (list m1 m6))
+    (purpose-compile-configuration)
+    (expect purpose--compiled-modes :to-equal '((lisp-mode 95 pm6) (prog-mode 90 pm1)))
+    (expect purpose--compiled-mode-list :to-equal '(lisp-mode prog-mode)))
+
+  (it "compiles complex configuration correctly"
+    (setq purpose-configuration (list n1 n2 n3 n4 n5 r1 r2 r3 r4 r5 m1 m2 m3 m4 m5 m6))
+    (purpose-compile-configuration)
+    (expect purpose--compiled-names :to-equal
+            '(("NAME1" 80 pn1) ("NAME4" 80 pn4) ("NAME2" 70 pn2)))
+    (expect purpose--compiled-regexps :to-equal
+            '(("^NAME1" 80 pr1) ("^NAME3" 60 pr3) ("^NAME4" 60 pr4) ("^NAME2" 50 pr2)))
+    (expect purpose--compiled-modes :to-equal
+            '((lisp-mode 95 pm6) (prog-mode 90 pm1) (mode-2 70 pm2) (mode-4 70 pm4)))
+    (expect purpose--compiled-mode-list :to-equal
+            '(lisp-mode prog-mode mode-2 mode-4)))
+
+  (it "throws an error when the configuration is invalid"
+    (setq purpose-configuration
+          '((:origin a :priority 70 :purpose b :name "foo" :mode 'x-mode)))
+    (expect (apply-partially #'purpose-compile-configuration) :to-throw)))
