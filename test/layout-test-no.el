@@ -102,10 +102,10 @@
 
 (ert-deftest purpose-test-load-layout ()
   "Test that `purpose-load-window-layout' and `purpose-load-frame-layout-file' load a layout correctly."
-  (let ((layout-in-dir1 "dired2")
-        (layout-in-dir2 "dired-edit-general")
-        (layout-in-both-dirs "edit-terminal")
-        (frame-layout "edit-terminal"))
+  (let ((layout-in-dir1 "test-dired2")
+        (layout-in-dir2 "test-dired-edit-general")
+        (layout-in-both-dirs "test-edit-terminal")
+        (frame-layout "test-edit-terminal"))
     (message "loading window layout from lower priority directory ...")
     (purpose-load-window-layout layout-in-dir1)
     (should (equal (mapcar #'purpose-window-purpose (window-list))
@@ -124,6 +124,27 @@
     (purpose-load-frame-layout frame-layout)
     (should (equal (mapcar #'purpose-window-purpose (window-list))
                    '(edit edit terminal terminal)))))
+
+(ert-deftest purpose-test-find-built-in-layout ()
+  "Test that layouts from `purpose--built-in-layouts-dir' can be found."
+  (message "Testing built-in layouts ...")
+  (message "Use built-in: %S" purpose-use-built-in-layouts)
+  (message "Built-in dir: %S" purpose--built-in-layouts-dir)
+  (message "Normalized dirs: %S" (purpose-normalize-layout-directories nil t))
+  (should (purpose-find-window-layout "edit-terminal"))
+  (should (purpose-find-window-layout "edit-terminal-general")))
+
+(ert-deftest purpose-test-list-layouts ()
+  "Test that `purpose-all-window/frame-layouts' find all layouts."
+  (let ((frame-layouts (purpose-all-frame-layouts nil nil)))
+    (should (= (length frame-layouts) 1))
+    ;; frame-layouts should contain only strings
+    (should-not (cl-remove-if #'stringp frame-layouts)))
+  (let ((window-layouts (purpose-all-window-layouts nil nil)))
+    (should (= (length window-layouts) 3))
+    ;; window-layouts should contain only strings
+    (should-not (cl-remove-if #'stringp window-layouts)))
+  )
 
 (ert-deftest purpose-test-interactive-save-window-layout ()
   "Test interactive saving and loading of window layout."
@@ -177,6 +198,29 @@
   (purpose-set-frame-layout (purpose-get-frame-layout))
   (message "resetting frame layout ...")
   (purpose-reset-frame-layout))
+
+(ert-deftest purpose-test-set-layout ()
+  "Test that `purpose-set-window-layout' sets correct buffers."
+  (unwind-protect
+      (purpose-with-temp-config
+          nil
+          '(("p0" . purp1) ("p1" . purp1))
+          nil
+        (get-buffer-create "p0")
+        (get-buffer-create "p1")
+        (delete-other-windows)
+        (set-window-dedicated-p nil nil)
+        (set-window-buffer nil "p0")
+        (set-window-buffer nil "p1")
+        (split-window)
+        (let ((layout (purpose-get-window-layout)))
+          (delete-other-windows)
+          (purpose-set-window-layout layout)
+          (purpose-check-displayed-buffers '("p0" "p1"))))
+    (delete-other-windows)
+    (set-window-dedicated-p nil nil)
+    (purpose-set-window-purpose-dedicated-p nil nil)
+    (purpose-kill-buffers-safely "p0" "p1")))
 
 (ert-deftest purpose-test-set-window-purpose ()
   "Test that `purpose-set-window-purpose' does set the purpose."

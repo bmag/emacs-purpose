@@ -161,6 +161,70 @@ This one tests `purpose-with-additional-purposes'."
     (should (equal (purpose-test-sort-symbols (purpose-get-all-purposes))
                    original-purposes))))
 
+(ert-deftest purpose-test-ext-convenience ()
+  "Test convenience funcions for changing extension purposese."
+  (purpose-with-empty-purposes
+    (message "Testing add/remove extension configuration with non-existent extension ...")
+    (should-error (purpose-add-extension-configuration :none '((org-mode . org))))
+    (should-error (purpose-remove-extension-purposes :none '((org-mode . org))))
+
+    (message "Testing purpose-set-extension-configuration ...")
+    (purpose-set-extension-configuration
+     :python
+     (purpose-conf "py"
+                   :mode-purposes '((python-mode . python)
+                                    (inferior-python-mode . interpreter))))
+    (should (equal (hash-table-keys purpose--extended-mode-purposes) '(inferior-python-mode python-mode)))
+    (should (equal (hash-table-values purpose--extended-mode-purposes) '(interpreter python)))
+    (should (equal (hash-table-keys purpose--extended-name-purposes) nil))
+    (should (equal (hash-table-values purpose--extended-name-purposes) nil))
+    (should (equal (hash-table-keys purpose--extended-regexp-purposes) nil))
+    (should (equal (hash-table-values purpose--extended-regexp-purposes) nil))
+
+    (message "Testing purpose-add-extension-purposes with malformed arguments ...")
+    (should-error (purpose-add-extension-purposes :python :modes '((1 . python2))))
+    (should-error (purpose-add-extension-purposes :python :names '((1 . python2))))
+    (should-error (purpose-add-extension-purposes :python :regexps '((1 . python2))))
+
+    (message "Testing purpose-add-extension-purposes ...")
+    (purpose-add-extension-purposes :python
+                                    :regexps '(("\\.hy$" . python)))
+    (should (equal (hash-table-keys purpose--extended-mode-purposes) '(inferior-python-mode python-mode)))
+    (should (equal (hash-table-values purpose--extended-mode-purposes) '(interpreter python)))
+    (should (equal (hash-table-keys purpose--extended-name-purposes) nil))
+    (should (equal (hash-table-values purpose--extended-name-purposes) nil))
+    (should (equal (hash-table-keys purpose--extended-regexp-purposes) '("\\.hy$")))
+    (should (equal (hash-table-values purpose--extended-regexp-purposes) '(python)))
+
+    (message "Testing purpose-remove-extension-purposes ...")
+    (purpose-remove-extension-purposes :python
+                                       :modes '(inferior-python-mode)
+                                       :regexps '("\\.hy$"))
+    (should (equal (hash-table-keys purpose--extended-mode-purposes) '(python-mode)))
+    (should (equal (hash-table-values purpose--extended-mode-purposes) '(python)))
+    (should (equal (hash-table-keys purpose--extended-name-purposes) nil))
+    (should (equal (hash-table-values purpose--extended-name-purposes) nil))
+    (should (equal (hash-table-keys purpose--extended-regexp-purposes) nil))
+    (should (equal (hash-table-values purpose--extended-regexp-purposes) nil))))
+
+(ert-deftest purpose-test-user-convenience ()
+  "Test `purpose-add-user-purposes' and `purpose-remove-user-purposes'."
+  (let ((original-purposes (purpose-test-sort-symbols (purpose-get-all-purposes))))
+    "Testing purpose-add-user-purposes ..."
+    (purpose-add-user-purposes :modes '((org-mode . org)
+                                        (help-mode . popup))
+                               :names '(("*scratch*" . scratch))
+                               :regexps '(("^\\*foo" . foo)))
+    (should (equal (purpose-test-sort-symbols (purpose-get-all-purposes))
+                   (purpose-test-sort-symbols
+                    (delete-dups (append original-purposes '(org popup scratch foo))))))
+    "Testing purpose-remove-user-purposes ..."
+    (purpose-remove-user-purposes :modes '(org-mode help-mode)
+                                  :names '("*scratch*")
+                                  :regexps '("^\\*foo"))
+    (should (equal (purpose-test-sort-symbols (purpose-get-all-purposes))
+                   original-purposes))))
+
 (provide 'configuration-test)
 
 ;;; configuration-test.el ends here

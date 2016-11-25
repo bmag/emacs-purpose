@@ -34,12 +34,6 @@
   :prefix "purpose-"
   :package-version "1.2")
 
-(defcustom default-purpose 'general
-  "The default purpose for buffers which didn't get another purpose."
-  :group 'purpose
-  :type 'symbol
-  :package-version "1.2")
-
 (defcustom purpose-preferred-prompt 'auto
   "Which interface should Purpose use when prompting the user.
 Available options are: 'auto - use IDO when `ido-mode' is enabled,
@@ -56,11 +50,6 @@ prompts."
 
 
 ;;; utilities
-
-(defun purpose--buffer-major-mode (buffer-or-name)
-  "Return the major mode of BUFFER-OR-NAME."
-  (with-current-buffer buffer-or-name
-    major-mode))
 
 (defun purpose--dummy-buffer-name (purpose)
   "Create the name for a dummy buffer with purpose PURPOSE.
@@ -125,95 +114,18 @@ vanilla method: `read-file-name'"
 
 
 
-;;; simple purpose-finding operations for `purpose-buffer-purpose'
-(defun purpose--buffer-purpose-mode (buffer-or-name mode-conf)
-  "Return the purpose of buffer BUFFER-OR-NAME, as determined by its
-mode and MODE-CONF.
-MODE-CONF is a hash table mapping modes to purposes."
-  (when (get-buffer buffer-or-name)     ; check if buffer exists
-    (let* ((major-mode (purpose--buffer-major-mode buffer-or-name))
-           (derived-modes (purpose--iter-hash #'(lambda (mode _purpose) mode)
-                                              mode-conf))
-           (derived-mode (apply #'derived-mode-p derived-modes)))
-      (when derived-mode
-        (gethash derived-mode mode-conf)))))
-
-(defun purpose--buffer-purpose-name (buffer-or-name name-conf)
-  "Return the purpose of buffer BUFFER-OR-NAME, as determined by its
-exact name and NAME-CONF.
-NAME-CONF is a hash table mapping names to purposes."
-  (gethash (if (stringp buffer-or-name)
-               buffer-or-name
-             (buffer-name buffer-or-name))
-           name-conf))
-
-(defun purpose--buffer-purpose-name-regexp-1 (buffer-or-name regexp purpose)
-  "Return purpose PURPOSE if buffer BUFFER-OR-NAME's name matches
-regexp REGEXP."
-  (when (string-match-p regexp (or (and (bufferp buffer-or-name)
-                                        (buffer-name buffer-or-name))
-                                   buffer-or-name))
-    purpose))
-
-(defun purpose--buffer-purpose-name-regexp (buffer-or-name regexp-conf)
-  "Return the purpose of buffer BUFFER-OR-NAME, as determined by the
-regexps matched by its name.
-REGEXP-CONF is a hash table mapping name regexps to purposes."
-  (car (remove nil
-               (purpose--iter-hash
-                #'(lambda (regexp purpose)
-                    (purpose--buffer-purpose-name-regexp-1 buffer-or-name
-                                                           regexp
-                                                           purpose))
-                regexp-conf))))
-
 (defun purpose-buffer-purpose (buffer-or-name)
   "Get the purpose of buffer BUFFER-OR-NAME.
 The purpose is determined by consulting these functions in this order:
 1. `purpose--dummy-buffer-purpose'
-2. `purpose--buffer-purpose-name' with the user configuration
-3. `purpose--buffer-purpose-name-regexp' with the user configuration
-4. `purpose--buffer-purpose-mode' with the user configuration
-5. `purpose--buffer-purpose-name' with the extended configuration
-6. `purpose--buffer-purpose-name-regexp' with the extended configuration
-7. `purpose--buffer-purpose-mode' with the extended configuration
-And if `purpose-use-default-configuration' is non-nil, consult also:
-8. `purpose--buffer-purpose-name' with the default configuration
-9. `purpose--buffer-purpose-name-regexp' with the default configuration
-10. `purpose--buffer-purpose-mode' with the default configuration
-
+2. `purpose-get-purpose'
 If no purpose was determined, return `default-purpose'."
-  (or
-   ;; check dummy buffer
-   (purpose--dummy-buffer-purpose buffer-or-name)
-
-   ;; check user config
-   (purpose--buffer-purpose-name buffer-or-name purpose--user-name-purposes)
-   (purpose--buffer-purpose-name-regexp buffer-or-name
-                                        purpose--user-regexp-purposes)
-   (purpose--buffer-purpose-mode buffer-or-name purpose--user-mode-purposes)
-
-   ;; check extensions' config
-   (purpose--buffer-purpose-name buffer-or-name
-                                 purpose--extended-name-purposes)
-   (purpose--buffer-purpose-name-regexp buffer-or-name
-                                        purpose--extended-regexp-purposes)
-   (purpose--buffer-purpose-mode buffer-or-name
-                                 purpose--extended-mode-purposes)
-
-   ;; check default config
-   (and
-    purpose-use-default-configuration
-    (or
-     (purpose--buffer-purpose-name buffer-or-name
-                                   purpose--default-name-purposes)
-     (purpose--buffer-purpose-name-regexp buffer-or-name
-                                          purpose--default-regexp-purposes)
-     (purpose--buffer-purpose-mode buffer-or-name
-                                   purpose--default-mode-purposes)))
-
-   ;; fallback to default purpose
-   default-purpose))
+  (let ((buffer (get-buffer buffer-or-name)))
+    (unless buffer
+      (error "No such buffer: %S" buffer-or-name))
+    (or (purpose--dummy-buffer-purpose buffer)
+        (purpose-get-purpose buffer)
+        default-purpose)))
 
 (defun purpose-buffers-with-purpose (purpose)
   "Return a list of all existing buffers with purpose PURPOSE."
@@ -228,28 +140,20 @@ The window's purpose is determined by its buffer's purpose.
 WINDOW defaults to the selected window."
   (purpose-buffer-purpose (window-buffer window)))
 
-(defun purpose-windows-with-purpose (purpose)
-  "Return a list of all live windows with purpose PURPOSE."
+(defun purpose-windows-with-purpose (purpose &optional frame)
+  "Return a list of all live windows with purpose PURPOSE in FRAME.
+FRAME defaults to the selected frame."
   (cl-remove-if-not #'(lambda (window)
                         (eql purpose (purpose-window-purpose window)))
-                    (window-list)))
+                    (window-list frame)))
 
 (defun purpose-get-all-purposes ()
   "Return a list of all known purposes."
   (delete-dups
    (append (list default-purpose)
-           (purpose-flatten
-            (mapcar #'purpose-hash-table-values
-                    (append (when purpose-use-default-configuration
-                              (list purpose--default-name-purposes
-                                    purpose--default-mode-purposes
-                                    purpose--default-regexp-purposes))
-                            (list purpose--extended-name-purposes
-                                  purpose--extended-mode-purposes
-                                  purpose--extended-regexp-purposes
-                                  purpose--user-mode-purposes
-                                  purpose--user-name-purposes
-                                  purpose--user-regexp-purposes)))))))
+           (mapcar (apply-partially #'nth 2) purpose--compiled-names)
+           (mapcar (apply-partially #'nth 2) purpose--compiled-regexps)
+           (mapcar (apply-partially #'nth 2) purpose--compiled-modes))))
 
 (defun purpose-read-purpose (prompt &optional purposes require-match initial-output)
   "Read a purpose from the user.
@@ -267,6 +171,7 @@ REQUIRE-MATCH and INITIAL-OUTPUT have the same meaning as in
                      nil
                      require-match
                      initial-output))))
+
 
 
 ;;; purpose-aware buffer low-level functions
@@ -312,6 +217,7 @@ WINDOW defaults to the selected window."
     flag))
 
 ;; not really purpose-related, but helpful for the user
+;;;###autoload
 (defun purpose-toggle-window-buffer-dedicated (&optional window)
   "Toggle window WINDOW's dedication to its current buffer on or off.
 WINDOW defaults to the selected window."

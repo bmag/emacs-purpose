@@ -1,28 +1,166 @@
-* base-action branch
-** HOOK INTO ~display-buffer-base-action~ INSTEAD OF ~display-buffer-overriding-action~
-   MAJOR MAJOR MAJOR!!! This is a major change in implementation details. It is
-   inteded to simplify the configuration of display rules by using the original
-   ~display-buffer-alist~, which isn't shadowed by Purpose anymore.
-** get rid a ~purpose-display-fallback~
-   No longer necessary, use regular ~display-buffer~ fallback mechanism via
-   ~display-buffer-fallback-action~
-** ~purpose-special-action-sequences~ is deprecated and replaced by ~display-buffer-alist~
-   Example of configuration migration:
-   
-   Old:
-   #+BEGIN_SRC emacs-lisp
-   (push '(Neotree purpose-display-reuse-window-buffer
-           purpose-display-reuse-window-purpose
-           purpose--fix-display-neotree)
-         purpose-special-action-sequences)
-   #+END_SRC
+#+TITLE: Changelog
 
-   New:
-   #+BEGIN_SRC emacs-lisp
-   (push '((lambda (buffer)
-             (eq (purpose-buffer-purpose buffer) 'Neotree))
-           (purpose-display-reuse-window-buffer
+* next release (2.0)
+** Bug Fixes
+*** ~purpose-load-recent-frame-layout~ now loads the correct layout
+    Previous it would always load the most recent layout (index 0), disregarding
+    the function's ~index~ argument.
+*** [[https://github.com/bmag/emacs-purpose/issues/96][#96]]: ~purpose-set-window-purpose~ now receives an optional ~window~ argument
+    Function signature has changed from:
+    #+BEGIN_SRC elisp
+      purpose-set-window-purpose (purpose &optional dont-dedicate)
+    #+END_SRC
+    To:
+    #+BEGIN_SRC elisp
+      purpose-set-window-purpose (purpose &optional window dont-dedicate)
+    #+END_SRC
+** Changed test framework to Buttercup
+   It is now easier to read, modify and add new tests, thanks to [[https://github.com/jorgenschaefer/emacs-buttercup][Buttercup]].
+** New Configuration System
+   The configuration system (=window-purpose-configuration.el=) has undergone a
+   redesign, and is now easier to understand and and configure.
+
+   The new system uses only one configuration variable, called
+   ~purpose-configuration~. It is a list of configuration entries, where each
+   entry has an ~origin~, a ~priority~, a ~purpose~ and one of ~name~, ~mode~ or
+   ~regexp~. A buffer's purpose is determined by the purpose of the matching
+   entry with the highest priority. If several matching entries are tied for
+   highest priority, the a ~name~ entry is preferred over a ~regexp~ entry, and
+   a ~regexp~ entry is preferred over a ~mode~ entry.
+
+   Like the old system, the new system also has a compilation process. Where the
+   old system had 3 compilation functions, the new system has only one
+   compilation function, aptly named ~purpose-compile-configuration~. It sets
+   the values of ~purpose--compiled-names~, ~purpose--compiled-regexps~,
+   ~purpose--compiled-modes~ and ~purpose--compiled-mode-list~, according to the
+   value ~purpose-configuration~.
+
+*** Changes to user-facing variables and functions
+**** ~purpose-use-default-configuration~
+     Deprecated, use ~purpose-configuration~ instead.
+**** ~purpose-user-mode-purposes~
+     Deprecated, use ~purpose-configuration~ instead.
+**** ~purpose-user-name-purposes~
+     Deprecated, use ~purpose-configuration~ instead.
+**** ~purpose-user-regexp-purposes~
+     Deprecated, use ~purpose-configuration~ instead.
+**** ~purpose-extended-configuration~
+     Deprecated, use ~purpose-configuration~ instead.
+**** ~purpose-compile-user-configuration~
+     Deprecated, use ~purpose-compile-configuration~ instead.
+**** ~purpose-compile-extended-configuration~
+     Deprecated, use ~purpose-compile-configuration~ instead.
+**** ~purpose-compile-default-configuration~
+     Deprecated, use ~purpose-compile-configuration~ instead.
+**** ~purpose-conf-add-purposes~
+     Deprecated.
+**** ~purpose-conf-remove-purposes~
+     Deprecated.
+**** ~purpose-set-extension-configuration~
+     Deprecated, use ~purpose-add-extension-configuration-set~ or ~purpose-add-configuration-set~ instead.
+**** ~purpose-get-extension-configuration~
+     Deprecated, use ~purpose-get-configuration-set~ instead.
+**** ~purpose-del-extension-configuration~
+     Deprecated, use ~purpose-delete-configuration-set~ instead.
+**** ~purpose-add-extension-purposes~
+     Deprecated, use ~purpose-add-extension-configuration-set~ or ~purpose-add-configuration-set~ instead.
+**** ~purpose-remove-extension-purposes~
+     Deprecated, use ~purpose-delete-configuration-set~ instead.
+**** ~purpose-add-user-purposes~
+     Deprecated, use ~purpose-add-user-configuration-set~ or ~purpose-add-configuration-set~ instead.
+**** ~purpose-remove-user-purposes~
+     Deprecated, use ~purpose-delete-configuration-set~ instead.
+**** ~purpose-with-temp-purposes~
+     Takes optional keyword arguments instead of required positional arguments.
+     In 1.6, it was used like this:
+     #+BEGIN_SRC elisp
+       (purpose-with-temp-purposes names regexp modes
+         ;; ... body ...
+         )
+     #+END_SRC
+     In 2.0, it is used like this:
+     #+BEGIN_SRC elisp
+       (purpose-with-temp-purposes :names names :regexp regexp :modes modes
+         ;; ... body ...
+         )
+     #+END_SRC
+**** ~purpose-with-additional-purposes~
+     Takes optional keyword arguments instead of required positional arguments.
+     In 1.6, it was used like this:
+     #+BEGIN_SRC elisp
+       (purpose-with-additional-purposes names regexp modes
+         ;; ... body ...
+         )
+     #+END_SRC
+     In 2.0, it is used like this:
+     #+BEGIN_SRC elisp
+       (purpose-with-additional-purposes :names names :regexp regexp :modes modes
+         ;; ... body ...
+         )
+     #+END_SRC
+*** New Feature: Persisting Configuration State
+    The state of the configuration can now be saved with
+    ~purpose-get-configuration-state~ and loaded with
+    ~purpose-set-configuration-state~. The state configuration consists of the
+    customizable variables ~purpose-configuration~ and ~default-purpose~, and
+    the four compiled variables ~purpose--compiled-names~,
+    ~purpose--compiled-regexps~, ~purpose--compiled-modes~ and
+    ~purpose--compiled-mode-list~.
+
+    One instance where this is useful, is if you use perspectives or desktops,
+    and want an easy way to save and load purpose configurations together with
+    different perspectives or desktops.
+** Changes to Window-Choice System
+*** HOOK INTO ~display-buffer-base-action~ INSTEAD OF ~display-buffer-overriding-action~
+    MAJOR MAJOR MAJOR!!! This is a major change in implementation details. It is
+    inteded to simplify the configuration of display rules by using the original
+    ~display-buffer-alist~, which isn't shadowed by Purpose anymore.
+*** get rid a ~purpose-display-fallback~
+    No longer necessary, use regular ~display-buffer~ fallback mechanism via
+    ~display-buffer-fallback-action~
+*** ~purpose-special-action-sequences~ is deprecated and replaced by ~display-buffer-alist~
+    Example of configuration migration:
+   
+    Old:
+    #+BEGIN_SRC emacs-lisp
+    (push '(Neotree purpose-display-reuse-window-buffer
             purpose-display-reuse-window-purpose
-            purpose--fix-display-neotree))
-         display-buffer-alist)
-   #+END_SRC
+            purpose--fix-display-neotree)
+          purpose-special-action-sequences)
+    #+END_SRC
+
+    New:
+    #+BEGIN_SRC emacs-lisp
+    (push '((lambda (buffer)
+              (eq (purpose-buffer-purpose buffer) 'Neotree))
+            (purpose-display-reuse-window-buffer
+             purpose-display-reuse-window-purpose
+             purpose--fix-display-neotree))
+          display-buffer-alist)
+    #+END_SRC
+
+* Release 1.6
+** New Features
+*** New functions for easier purpose configuration
+    User purposes: ~purpose-add-user-purposes~, ~purpose-remove-user-purposes~
+    Extension purposes: ~purpose-add-extension-purposes~, ~purpose-remove-extension-purposes~
+*** Added Purpose menu to the menu-bar
+** Enhancements
+*** Purpose ships with preinstalled layouts
+    Subdirectory ~layouts~ contains preinstalled layouts. Customizable variable
+    ~purpose-use-built-in-layouts~ controls if those layouts are available to
+    the user (available by default).
+*** ~purpose-window-with-purpose~ now takes optional ~frame~ argument
+** Bug Fixes
+*** [[https://github.com/bmag/emacs-purpose/issues/79][#79]]: nil buffer means ~other-buffer~ for some buffer switching commands
+    These commands are: ~purpose-switch-buffer~,
+    ~purpose-switch-buffer-other-window~, ~purpose-pop-buffer~ and
+    ~purpose-pop-buffer-same-window~.
+*** dislpay function returning ~fail~ means don't display buffer at all
+*** [[https://github.com/bmag/emacs-purpose/issues/80][#80]]: added autoloads to some commands outside of window-purpose.el
+*** fixed argument order for ~purpose--remove-suffix~ in Emacs 24.3 and 24.4
+*** [[https://github.com/bmag/emacs-purpose/issues/95][#95]]: loading layouts to show different buffers
+    ~purpose-set-window-layout~ places different buffers of the same purpose, if
+    the layout has multiple windows with same purpose. Previously, all windows
+    with the purpose would show the same buffer after loading a layout. This
+    affects all layout-loading commands.

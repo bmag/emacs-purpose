@@ -646,6 +646,7 @@ This function runs hook `purpose-select-buffer-hook' when its done."
 
 ;;; Level3 actions
 
+;;;###autoload
 (defun purpose-switch-buffer (buffer-or-name
                               &optional norecord force-same-window)
   "Select buffer BUFFER-OR-NAME, preferably in the selected window.
@@ -662,6 +663,7 @@ If BUFFER-OR-NAME is nil, select the buffer returned by `other-buffer'."
                            'switch-to-buffer)
                          norecord))
 
+;;;###autoload
 (defun purpose-switch-buffer-other-window (buffer-or-name &optional norecord)
   "Select buffer BUFFER-OR-NAME in another window.
 Never selects the currently selected window.
@@ -675,6 +677,7 @@ If BUFFER-OR-NAME is nil, select the buffer returned by `other-buffer'."
                            'prefer-other-window
                            norecord)))
 
+;;;###autoload
 (defun purpose-switch-buffer-other-frame (buffer-or-name &optional norecord)
   "Select buffer BUFFER-OR-NAME, preferably in another frame.
 If BUFFER-OR-NAME is nil, select the buffer returned by `other-buffer'."
@@ -687,6 +690,7 @@ If BUFFER-OR-NAME is nil, select the buffer returned by `other-buffer'."
                            'prefer-other-frame
                            norecord)))
 
+;;;###autoload
 (defun purpose-pop-buffer (buffer-or-name &optional norecord)
   "Select buffer BUFFER-OR-NAME, preferably in another window.
 If BUFFER-OR-NAME is nil, select the buffer returned by `other-buffer'."
@@ -695,6 +699,7 @@ If BUFFER-OR-NAME is nil, select the buffer returned by `other-buffer'."
                          'prefer-other-window
                          norecord))
 
+;;;###autoload
 (defun purpose-pop-buffer-same-window (buffer-or-name &optional norecord)
   "Select buffer BUFFER-OR-NAME, preferably in the selected window.
 If BUFFER-OR-NAME is nil, select the buffer returned by `other-buffer'."
@@ -915,6 +920,7 @@ This works internally by using `without-purpose' and
                    (delq (current-buffer)
                          (purpose-buffers-with-purpose purpose)))))
 
+;;;###autoload
 (defun purpose-switch-buffer-with-purpose (&optional purpose)
   "Prompt the user and switch to a buffer with purpose PURPOSE.
 If called interactively, or with PURPOSE nil, PURPOSE defaults to the
@@ -924,6 +930,7 @@ current buffer's purpose."
    (purpose-read-buffers-with-purpose
     (or purpose (purpose-buffer-purpose (current-buffer))))))
 
+;;;###autoload
 (defun purpose-switch-buffer-with-some-purpose (purpose)
   "Like `purpose-switch-buffer-with-purpose', but first choose a PURPOSE."
   (interactive
@@ -933,6 +940,7 @@ current buffer's purpose."
                                t)))
   (purpose-switch-buffer-with-purpose purpose))
 
+;;;###autoload
 (defun purpose-switch-buffer-with-purpose-other-window (&optional purpose)
   "Prompt the user and switch to a buffer with purpose PURPOSE.
 The buffer is display in another window.
@@ -943,6 +951,7 @@ current buffer's purpose."
    (purpose-read-buffers-with-purpose
     (or purpose (purpose-buffer-purpose (current-buffer))))))
 
+;;;###autoload
 (defun purpose-switch-buffer-with-purpose-other-frame (&optional purpose)
   "Prompt the user and switch to a buffer with purpose PURPOSE.
 The buffer is display in another frame.

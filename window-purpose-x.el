@@ -70,13 +70,10 @@
 Has a main 'edit window, and two side windows - 'dired and 'buffers.
 All windows are purpose-dedicated.")
 
-;; the name arg ("purpose-x-code1") is necessary for Emacs 24.3 and older
-(defvar purpose-x-code1-purpose-config
-  (purpose-conf "purpose-x-code1"
-                :mode-purposes
-                '((ibuffer-mode . buffers)
-                  (dired-mode . dired)
-                  (imenu-list-major-mode . ilist))))
+(defvar purpose-x-code1-modes
+  '((ibuffer-mode . buffers)
+    (dired-mode . dired)
+    (imenu-list-major-mode . ilist)))
 
 (defvar purpose-x-code1-buffers-changed nil
   "Internal variable for use with `frame-or-buffer-changed-p'.")
@@ -157,7 +154,7 @@ files, using `ibuffer'.
 4. dedicated 'ilist window.  This window shows the current buffer's
 imenu."
   (interactive)
-  (purpose-set-extension-configuration :purpose-x-code1 purpose-x-code1-purpose-config)
+  (purpose-add-extension-configuration-set 'purpose-x-code1 :modes purpose-x-code1-modes)
   (purpose-x-code1--setup-ibuffer)
   (purpose-x-code1-update-dired)
   (imenu-list-minor-mode)
@@ -168,7 +165,8 @@ imenu."
 (defun purpose-x-code1-unset ()
   "Unset purpose-x-code1."
   (interactive)
-  (purpose-del-extension-configuration :purpose-x-code1)
+  (purpose-delete-configuration-set 'purpose-x-code1 50
+                                    :modes (mapcar #'car purpose-x-code1-modes))
   (purpose-x-code1--unset-ibuffer)
   (imenu-list-minor-mode -1)
   (remove-hook 'post-command-hook #'purpose-x-code1-update-changed))
@@ -189,41 +187,39 @@ imenu."
 ;;; - `purpose-x-magit-multi-on'
 ;;; - `purpose-x-magit-off'
 
-(defvar purpose-x-magit-single-conf
-  (purpose-conf "magit-single"
-                :regexp-purposes '(("^\\*magit" . magit)))
+(defvar purpose-x-magit-single-conf '(("^\\*magit" . magit))
   "Configuration that gives each magit major mode the same purpose.")
 
 (defvar purpose-x-magit-multi-conf
-  (purpose-conf
-   "magit-multi"
-   :mode-purposes '((magit-diff-mode . magit-diff)
-                    (magit-status-mode . magit-status)
-                    (magit-log-mode . magit-log)
-                    (magit-commit-mode . magit-commit)
-                    (magit-cherry-mode . magit-cherry)
-                    (magit-branch-manager-mode . magit-branch-manager)
-                    (magit-process-mode . magit-process)
-                    (magit-reflog-mode . magit-reflog)
-                    (magit-wazzup-mode . magit-wazzup)))
+  '((magit-diff-mode . magit-diff)
+    (magit-status-mode . magit-status)
+    (magit-log-mode . magit-log)
+    (magit-commit-mode . magit-commit)
+    (magit-cherry-mode . magit-cherry)
+    (magit-branch-manager-mode . magit-branch-manager)
+    (magit-process-mode . magit-process)
+    (magit-reflog-mode . magit-reflog)
+    (magit-wazzup-mode . magit-wazzup))
   "Configuration that gives each magit major mode its own purpose.")
 
 ;;;###autoload
 (defun purpose-x-magit-single-on ()
   "Turn on magit-single purpose configuration."
   (interactive)
-  (purpose-set-extension-configuration :magit purpose-x-magit-single-conf))
+  (purpose-add-extension-configuration-set 'magit :regexps purpose-x-magit-single-conf))
 
 ;;;###autoload
 (defun purpose-x-magit-multi-on ()
   "Turn on magit-multi purpose configuration."
   (interactive)
-  (purpose-set-extension-configuration :magit purpose-x-magit-multi-conf))
+  (purpose-add-extension-configuration-set 'magit :modes purpose-x-magit-multi-conf))
 
 (defun purpose-x-magit-off ()
   "Turn off magit purpose configuration (single or multi)."
   (interactive)
-  (purpose-del-extension-configuration :magit))
+  (purpose-delete-configuration-set 'magit 50
+                                    :regexp (mapcar #'car purpose-x-magit-single-conf)
+                                    :modes (mapcar #'car purpose-x-magit-multi-conf)))
 
 ;;; --- purpose-x-magit ends here ---
 
@@ -393,13 +389,11 @@ The configuration is updated according to
 `purpose-x-popwin-buffer-name-regexps'."
   (interactive)
   (cl-flet ((joiner (x) (cons x 'popup)))
-    (let ((conf (purpose-conf
-                 "popwin"
-                 :mode-purposes (mapcar #'joiner purpose-x-popwin-major-modes)
-                 :name-purposes (mapcar #'joiner purpose-x-popwin-buffer-names)
-                 :regexp-purposes (mapcar #'joiner
-                                          purpose-x-popwin-buffer-name-regexps))))
-      (purpose-set-extension-configuration :popwin conf))))
+    (purpose-add-extension-configuration-set
+     'popwin
+     :names (mapcar #'joiner purpose-x-popwin-buffer-names)
+     :regexps (mapcar #'joiner purpose-x-popwin-buffer-name-regexps)
+     :modes (mapcar #'joiner purpose-x-popwin-buffer-names))))
 
 (defun purpose-x-popwin-display-buffer (buffer alist)
   "Display BUFFER in a popup window.
@@ -492,7 +486,11 @@ Look at `purpose-x-popwin-*' variables and functions to learn more."
 (defun purpose-x-popwin-unset ()
   "Deactivate `popwin' emulation."
   (interactive)
-  (purpose-del-extension-configuration :popwin)
+  (purpose-delete-extension-configuration-set
+   'popwin 50
+   :names purpose-x-popwin-buffer-names
+   :regexps purpose-x-popwin-buffer-name-regexps
+   :modes purpose-x-popwin-major-modes)
   (purpose-x-unpopupify-purpose 'popup)
   (purpose-x-popwin-remove-hooks))
 
@@ -500,6 +498,7 @@ Look at `purpose-x-popwin-*' variables and functions to learn more."
 
 
 
+;;; FIXME: adapt purpose-x-persp for new configuration system
 ;;; --- purpose-x-persp ---
 ;;; An extension for associating purpose configurations with perspectives.
 ;;; It activates and deactivates a :perspective purpose-conf extension
@@ -683,6 +682,7 @@ cancel the override of `replace-buffer-in-windows'."
       (purpose-advice-add 'replace-buffer-in-windows :override 'purpose-x-replace-buffer-in-windows)
     (purpose-advice-remove 'replace-buffer-in-windows :override 'purpose-x-replace-buffer-in-windows)))
 
+;;;###autoload
 (defun purpose-x-kill-setup ()
   "Activate purpose-x-kill extension.
 This extension makes `kill-buffer' aware of the purpose-dedicated window
