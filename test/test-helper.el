@@ -212,5 +212,5 @@ This is a destructive function; it reuses SYMBOLS' storage if possible."
   (cl-sort symbols #'string< :key #'symbol-name))
 
 (message "done defining helpers")
-(provide 'test-helper)
+;; (provide 'test-helper) ; https://github.com/rejeep/ert-runner.el/issues/38
 ;;; test-helper.el ends here
