@@ -212,5 +212,4 @@ This is a destructive function; it reuses SYMBOLS' storage if possible."
   (cl-sort symbols #'string< :key #'symbol-name))
 
 (message "done defining helpers")
-(provide 'test-helper)
 ;;; test-helper.el ends here
