@@ -60,10 +60,15 @@
                (0.0 0.0 0.19333333333333333 0.5))
      (:purpose buffers :purpose-dedicated t :width 0.16 :height 0.4722222222222222 :edges
                (0.0 0.5 0.19333333333333333 0.9722222222222222)))
-    (:purpose edit :purpose-dedicated t :width 0.6 :height 0.9722222222222222 :edges
-              (0.19333333333333333 0.0 0.8266666666666667 0.9722222222222222))
+    (t
+     (29 0 125 35)
+    (:purpose edit :purpose-dedicated t :width 0.6 :height 0.85 :edges
+              (0.19333333333333333 0.0 0.8266666666666667 0.85))
+    (:purpose misc :purpose-dedicated t :width 0.6 :height 0.1 :edges
+              (0.19333333333333333 0.8722222222222222 0.8266666666666667 0.9722222222222222))
+     )
     (:purpose ilist :purpose-dedicated t :width 0.15333333333333332 :height 0.9722222222222222 :edges
-              (0.8266666666666667 0.0 1.0133333333333334 0.9722222222222222)))
+              (0.8266n666666666667 0.0 1.0133333333333334 0.9722222222222222)))
   "Window layout for purpose-x-code1-dired-ibuffer.
 Has a main 'edit window, and two side windows - 'dired and 'buffers.
 All windows are purpose-dedicated.")
@@ -74,7 +79,10 @@ All windows are purpose-dedicated.")
                 :mode-purposes
                 '((ibuffer-mode . buffers)
                   (dired-mode . dired)
-                  (imenu-list-major-mode . ilist))))
+                  (imenu-list-major-mode . ilist)
+                  (inferior-python-mode . misc)
+                  (python-inferior-mode . misc)
+                  )))
 
 (defvar purpose-x-code1-buffers-changed nil
   "Internal variable for use with `frame-or-buffer-changed-p'.")
@@ -142,7 +150,11 @@ buffer had changed."
     (purpose-x-code1-update-dired)
     (imenu-list-update-safe)))
 
-;;;###autoload
+(defun my-shell-mode-setup-imenu ()
+  (setq imenu-generic-expression (append '((nil "^\\([A-Z_]+\\)=.*" 1))
+                                         (nthcdr 1 (car sh-imenu-generic-expression)))))
+
+;;###AUTOLOAD
 (defun purpose-x-code1-setup ()
   "Setup purpose-x-code1.
 This setup includes 4 windows:
@@ -155,20 +167,23 @@ files, using `ibuffer'.
 4. dedicated 'ilist window.  This window shows the current buffer's
 imenu."
   (interactive)
+  (add-hook 'sh-mode-hook 'my-shell-mode-setup-imenu)
   (purpose-set-extension-configuration :purpose-x-code1 purpose-x-code1-purpose-config)
   (purpose-x-code1--setup-ibuffer)
   (purpose-x-code1-update-dired)
-  (imenu-list-minor-mode)
+  (ignore-errors (imenu-list-minor-mode))
   (frame-or-buffer-changed-p 'purpose-x-code1-buffers-changed)
   (add-hook 'post-command-hook #'purpose-x-code1-update-changed)
-  (purpose-set-window-layout purpose-x-code1--window-layout))
+  (purpose-set-window-layout purpose-x-code1--window-layout)
+)
 
 (defun purpose-x-code1-unset ()
   "Unset purpose-x-code1."
   (interactive)
+  (remove-hook 'sh-mode-hook 'my-shell-mode-setup-imenu)
   (purpose-del-extension-configuration :purpose-x-code1)
   (purpose-x-code1--unset-ibuffer)
-  (imenu-list-minor-mode -1)
+  (ignore-errors (imenu-list-minor-mode -1))
   (remove-hook 'post-command-hook #'purpose-x-code1-update-changed))
 
 ;;; --- purpose-x-code1 ends here ---
