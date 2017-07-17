@@ -1,8 +1,8 @@
 ;;; window-purpose-x.el --- Extensions for Purpose -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015 Bar Magal
+;; Copyright (C) 2015, 2016 Bar Magal
 
-;; Author: Bar Magal (2015)
+;; Author: Bar Magal
 ;; Package: purpose
 
 ;; This file is not part of GNU Emacs.
@@ -86,18 +86,7 @@ All windows are purpose-dedicated.")
                 :mode-purposes
                 '((ibuffer-mode . buffers)
                   (dired-mode . dired)
-                  (imenu-list-major-mode . ilist)
-                  (inferior-python-mode . misc)
-                  (python-inferior-mode . misc)
-                  (org-mode . todo)
-                  (grep-mode . misc)
-                  (css-mode . edit)
-                  (shell-mode . misc)
-                  (eshell-mode . misc)
-                  (term-mode . misc)
-                  (yaml-mode . edit)
-                  (conf-unix-mode . edit)
-                  )))
+                  (imenu-list-major-mode . ilist))))
 
 (defvar purpose-x-code1-buffers-changed nil
   "Internal variable for use with `frame-or-buffer-changed-p'.")
@@ -150,14 +139,13 @@ If there is no window available, do nothing.
 If current buffer doesn't have a filename, do nothing."
   (when (not (string= (purpose--buffer-major-mode (current-buffer)) "org-mode"))
     (when (and (buffer-file-name)
-               (cl-delete-if #'window-dedicated-p
-                             (purpose-windows-with-purpose 'dired)))
-      (save-selected-window
-        (dired (file-name-directory (buffer-file-name)))
-        (when (fboundp 'dired-hide-details-mode)
-          (dired-hide-details-mode))
-        (bury-buffer (current-buffer)))))
-  )
+             (cl-delete-if #'window-dedicated-p
+                           (purpose-windows-with-purpose 'dired)))
+    (save-selected-window
+      (dired (file-name-directory (buffer-file-name)))
+      (when (fboundp 'dired-hide-details-mode)
+        (dired-hide-details-mode))
+      (bury-buffer (current-buffer))))))
 
 (defun purpose-x-code1-update-changed ()
   "Update auxiliary buffers if frame/buffer had changed.
@@ -167,11 +155,7 @@ buffer had changed."
     (purpose-x-code1-update-dired)
     (imenu-list-update-safe)))
 
-(defun my-shell-mode-setup-imenu ()
-  (setq imenu-generic-expression (append '((nil "^\\([A-Z_]+\\)=.*" 1))
-                                         (nthcdr 1 (car sh-imenu-generic-expression)))))
-
-;;###AUTOLOAD
+;;;###autoload
 (defun purpose-x-code1-setup ()
   "Setup purpose-x-code1.
 This setup includes 4 windows:
@@ -184,20 +168,17 @@ files, using `ibuffer'.
 4. dedicated 'ilist window.  This window shows the current buffer's
 imenu."
   (interactive)
-  (add-hook 'sh-mode-hook 'my-shell-mode-setup-imenu)
   (purpose-set-extension-configuration :purpose-x-code1 purpose-x-code1-purpose-config)
   (purpose-x-code1--setup-ibuffer)
   (purpose-x-code1-update-dired)
   (ignore-errors (imenu-list-minor-mode))
   (frame-or-buffer-changed-p 'purpose-x-code1-buffers-changed)
   (add-hook 'post-command-hook #'purpose-x-code1-update-changed)
-  (purpose-set-window-layout purpose-x-code1--window-layout)
-)
+  (purpose-set-window-layout purpose-x-code1--window-layout))
 
 (defun purpose-x-code1-unset ()
   "Unset purpose-x-code1."
   (interactive)
-  (remove-hook 'sh-mode-hook 'my-shell-mode-setup-imenu)
   (purpose-del-extension-configuration :purpose-x-code1)
   (purpose-x-code1--unset-ibuffer)
   (ignore-errors (imenu-list-minor-mode -1))
@@ -648,6 +629,9 @@ The relation between `purpose-x-persp-switch-buffer-other-frame' and
   (switch-to-buffer-other-frame buffer norecord))
 
 ;;; --- purpose-x-persp ends here ---
+
+
+
 ;;; --- purpose-x-kill ---
 ;;; an extensions that makes emacs respect purpose-dedicated window parameter
 ;;; when killing a buffer that is visible in a window.
@@ -716,6 +700,7 @@ cancel the override of `replace-buffer-in-windows'."
       (purpose-advice-add 'replace-buffer-in-windows :override 'purpose-x-replace-buffer-in-windows)
     (purpose-advice-remove 'replace-buffer-in-windows :override 'purpose-x-replace-buffer-in-windows)))
 
+;;;###autoload
 (defun purpose-x-kill-setup ()
   "Activate purpose-x-kill extension.
 This extension makes `kill-buffer' aware of the purpose-dedicated window
