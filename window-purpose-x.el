@@ -688,7 +688,6 @@ cancel the override of `replace-buffer-in-windows'."
       (purpose-advice-add 'replace-buffer-in-windows :override 'purpose-x-replace-buffer-in-windows)
     (purpose-advice-remove 'replace-buffer-in-windows :override 'purpose-x-replace-buffer-in-windows)))
 
-;;;###autoload
 (defun purpose-x-kill-setup ()
   "Activate purpose-x-kill extension.
 This extension makes `kill-buffer' aware of the purpose-dedicated window
