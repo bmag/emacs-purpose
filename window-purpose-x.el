@@ -1,8 +1,8 @@
 ;;; window-purpose-x.el --- Extensions for Purpose -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015, 2016 Bar Magal
+;; Copyright (C) 2015 Bar Magal
 
-;; Author: Bar Magal
+;; Author: Bar Magal (2015)
 ;; Package: purpose
 
 ;; This file is not part of GNU Emacs.
@@ -60,22 +60,10 @@
                (0.0 0.0 0.19333333333333333 0.5))
      (:purpose buffers :purpose-dedicated t :width 0.16 :height 0.4722222222222222 :edges
                (0.0 0.5 0.19333333333333333 0.9722222222222222)))
-    (t
-     (29 0 125 35)
-    (:purpose edit :purpose-dedicated t :width 0.6 :height 0.85 :edges
-              (0.19333333333333333 0.0 0.8266666666666667 0.85))
-    (:purpose misc :purpose-dedicated t :width 0.6 :height 0.1 :edges
-              (0.19333333333333333 0.8722222222222222 0.8266666666666667 0.9722222222222222))
-    )
-    (t
-     (125 0 152 35)
-    (:purpose ilist :purpose-dedicated t :width 0.15333333333333332 :height 0.6 :edges
-              (0.82666666666666667 0.0 0.9722222222222222 0.6))
-    (:purpose todo :purpose-dedicated t :width 0.15333333333333332 :height 0.372222222 :edges
-              (0.8266666666666667 0.6 0.9722222222222222 0.9722222222222222))
-
-     )
-    )
+    (:purpose edit :purpose-dedicated t :width 0.6 :height 0.9722222222222222 :edges
+              (0.19333333333333333 0.0 0.8266666666666667 0.9722222222222222))
+    (:purpose ilist :purpose-dedicated t :width 0.15333333333333332 :height 0.9722222222222222 :edges
+              (0.8266666666666667 0.0 1.0133333333333334 0.9722222222222222)))
   "Window layout for purpose-x-code1-dired-ibuffer.
 Has a main 'edit window, and two side windows - 'dired and 'buffers.
 All windows are purpose-dedicated.")
@@ -137,7 +125,7 @@ If a non-buffer-dedicated window with purpose 'dired exists, display
 the directory of the current buffer in that window, using `dired'.
 If there is no window available, do nothing.
 If current buffer doesn't have a filename, do nothing."
-  (when (not (string= (purpose--buffer-major-mode (current-buffer)) "org-mode"))
+  (unless (eq major-mode 'org-mode)
     (when (and (buffer-file-name)
              (cl-delete-if #'window-dedicated-p
                            (purpose-windows-with-purpose 'dired)))
@@ -171,7 +159,7 @@ imenu."
   (purpose-set-extension-configuration :purpose-x-code1 purpose-x-code1-purpose-config)
   (purpose-x-code1--setup-ibuffer)
   (purpose-x-code1-update-dired)
-  (ignore-errors (imenu-list-minor-mode))
+  (imenu-list-minor-mode)
   (frame-or-buffer-changed-p 'purpose-x-code1-buffers-changed)
   (add-hook 'post-command-hook #'purpose-x-code1-update-changed)
   (purpose-set-window-layout purpose-x-code1--window-layout))
@@ -181,7 +169,7 @@ imenu."
   (interactive)
   (purpose-del-extension-configuration :purpose-x-code1)
   (purpose-x-code1--unset-ibuffer)
-  (ignore-errors (imenu-list-minor-mode -1))
+  (imenu-list-minor-mode -1)
   (remove-hook 'post-command-hook #'purpose-x-code1-update-changed))
 
 ;;; --- purpose-x-code1 ends here ---
