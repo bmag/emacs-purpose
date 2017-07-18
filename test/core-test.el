@@ -1,8 +1,8 @@
 ;;; core-test.el --- Tests for window-purpose-core.el -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015 Bar Magal
+;; Copyright (C) 2015, 2016 Bar Magal
 
-;; Author: Bar Magal (2015)
+;; Author: Bar Magal
 ;; Package: purpose
 
 ;; This file is not part of GNU Emacs.
@@ -203,7 +203,7 @@ Functions tested are:
       (should-not (purpose-get-bottom-window)))))
 
 (defmacro purpose-test-preferred-prompt-checker (expected)
-  (declare (indent defun) (debug t))
+  (declare (indent defun) (debug symbolp))
   (cl-case expected
     ('ido '(equal (purpose-get-read-function 'ido-meth 'helm-meth 'vanilla-meth) 'ido-meth))
     ('helm '(equal (purpose-get-read-function 'ido-meth 'helm-meth 'vanilla-meth) 'helm-meth))

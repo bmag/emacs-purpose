@@ -1,8 +1,8 @@
 ;;; window-purpose-prefix-overload.el --- Bind several commands to the same key -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015 Bar Magal
+;; Copyright (C) 2015, 2016 Bar Magal
 
-;; Author: Bar Magal (2015)
+;; Author: Bar Magal
 ;; Package: purpose
 
 ;; This file is not part of GNU Emacs.
@@ -92,7 +92,7 @@ C-u C-u or C-u 2: third command;
 and so on.
 Use it like this:
    (define-purpose-prefix-overload hello '(command1 command2 command3))"
-  (declare (indent defun) (debug t))
+  (declare (indent defun) (debug (&define name (&rest sexp))))
   (unless (eval commands)
     (error "Argument COMMANDS cannot be empty"))
   `(defun ,name (&optional arg)

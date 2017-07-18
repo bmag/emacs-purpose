@@ -1,8 +1,8 @@
 ;;; test-helper --- Test helper for window-purpose -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015 Bar Magal
+;; Copyright (C) 2015, 2016 Bar Magal
 
-;; Author: Bar Magal (2015)
+;; Author: Bar Magal
 ;; Package: purpose
 
 ;; This file is not part of GNU Emacs.
@@ -26,6 +26,7 @@
 
 ;;; Code:
 
+(require 'cl-lib)
 (require 'f)
 
 (defvar cpt-path
@@ -57,18 +58,19 @@
 (set-frame-width nil 80)
 (set-frame-height nil 24)
 
-;; In 24.4 and 24.5, setting `undercover' causes an error when requiring `window-purpose'
-(when (version< emacs-version "24.4")
-  (message "setting undercover")
-  (condition-case err
-      (progn
-        (require 'undercover)
-        (undercover "*.el"))
-    (error (message "error setting undercover: %s" err))))
+(message "setting undercover")
+(condition-case err
+    (progn
+      (require 'undercover)
+      (undercover "*.el"))
+  (error (message "error setting undercover: %s" err)))
 
 (message "loading purpose")
 (require 'window-purpose)
 (require 'window-purpose-x)
+(setq purpose-layout-dirs
+      '("test/layouts2/"
+        "test/layouts1/"))
 
 ;; (message "loading other packages")
 
@@ -127,7 +129,7 @@ it.")
       result)))
 
 (defmacro purpose-with-empty-config (&rest body)
-  (declare (indent defun) (debug t))
+  (declare (indent defun) (debug body))
   `(let ((purpose--user-mode-purposes (make-hash-table))
          (purpose--user-name-purposes (make-hash-table :test #'equal))
          (purpose--user-regexp-purposes (make-hash-table :test #'equal))
@@ -145,7 +147,7 @@ it.")
      ,@body))
 
 (defmacro purpose-with-temp-config (modes names regexps &rest body)
-  (declare (indent 3) (debug t))
+  (declare (indent 3) (debug (sexp sexp sexp body)))
   `(purpose-with-empty-config
      (let ((purpose-user-mode-purposes ,modes)
            (purpose-user-name-purposes ,names)
@@ -161,7 +163,7 @@ Each item in BUFFERS is either a buffer or a buffer's name."
     (mapc #'(lambda (buf) (ignore-errors (kill-buffer buf))) buffers)))
 
 (defmacro purpose-call-with-prefix-arg (arg command)
-  (declare (indent defun) (debug t))
+  (declare (indent defun) (debug 0))
   `(let ((current-prefix-arg ,arg))
      (call-interactively ,command)))
 
@@ -188,7 +190,7 @@ The buffers created have the names \"xxx-p0-0\", \"xxx-p0-1\",
   (mapcar #'buffer-name (purpose-displayed-buffers frame)))
 
 (defmacro purpose-check-displayed-buffers (buffer-names)
-  (declare (indent defun) (debug t))
+  (declare (indent defun) (debug (&rest stringp)))
   `(should (equal (sort (purpose-displayed-buffer-names) #'string-lessp)
                   (sort ,buffer-names #'string-lessp))))
 
@@ -210,5 +212,5 @@ This is a destructive function; it reuses SYMBOLS' storage if possible."
   (cl-sort symbols #'string< :key #'symbol-name))
 
 (message "done defining helpers")
-(provide 'test-helper)
+;; (provide 'test-helper) ; https://github.com/rejeep/ert-runner.el/issues/38
 ;;; test-helper.el ends here

@@ -1,10 +1,10 @@
 ;;; window-purpose.el --- Purpose-based window management for Emacs -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015 Bar Magal
+;; Copyright (C) 2015, 2016 Bar Magal
 
-;; Author: Bar Magal (2015)
+;; Author: Bar Magal
 ;; Package: purpose
-;; Version: 1.4
+;; Version: 1.6
 ;; Keywords: frames
 ;; Homepage: https://github.com/bmag/emacs-purpose
 ;; Package-Requires: ((emacs "24") (cl-lib "0.5") (let-alist "1.0.3") (imenu-list "0.1"))
@@ -63,6 +63,7 @@
 
 ;;; Code:
 
+(require 'easymenu)
 (require 'window-purpose-utils)
 (require 'window-purpose-configuration)
 (require 'window-purpose-core)
@@ -71,7 +72,7 @@
 (require 'window-purpose-prefix-overload)
 (require 'window-purpose-fixes)
 
-(defconst purpose-version "1.4"
+(defconst purpose-version "1.6"
   "Purpose's version.")
 
 
@@ -88,7 +89,7 @@ The lambda calls IDO-FN interactively when `ido-mode' is on, otherwise
 it calls OTHER-FN interactively.
 Example:
   (purpose-ido-caller #'ido-find-file #'find-file)"
-  (declare (indent nil) (debug t))
+  (declare (indent nil) (debug (function-form function-form)))
   `(lambda (&rest _args)
      (interactive)
      (call-interactively (if ido-mode ,ido-fn ,other-fn))))
@@ -233,6 +234,21 @@ This allows Purpose to work well with both `ido' and `helm'.")
              do (define-key purpose-mode-prefix-map key def))
     map)
   "Keymap for Purpose mode.")
+
+(easy-menu-define purpose-menu purpose-mode-map "Purpose Mode"
+  '("Purpose"
+    ["Toggle Buffer Dedication" purpose-toggle-window-buffer-dedicated
+     :help "Toggle current window's dedication to its current buffer"]
+    ["Toggle Purpose Dedication" purpose-toggle-window-purpose-dedicated
+     :help "Toggle current window's dedication to its current purpose"]
+    ["Change Window Purpose" purpose-set-window-purpose
+     :help "Select a purpose for the current window and change its buffer accordingly"]
+    ["Delete Non-Dedicated Windows" purpose-delete-non-dedicated-windows
+     :help "Delete all windows that aren't dedicated to their buffer or purpose"]
+    ["Load Window Layout" purpose-load-window-layout t]
+    ["Save Window Layout" purpose-save-window-layout t]
+    ["Load Frame Layout" purpose-load-frame-layout t]
+    ["Save Frame Layout" purpose-save-frame-layout t]))
 
 ;; https://www.gnu.org/software/emacs/manual/html_node/elisp/Menu-Keymaps.html#Menu-Keymaps
 ;; (defvar purpose-menu-bar-map (make-sparse-keymap "Purpose"))

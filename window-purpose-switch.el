@@ -1,8 +1,8 @@
 ;;; window-purpose-switch.el --- Purpose-aware display handling -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015 Bar Magal
+;; Copyright (C) 2015, 2016 Bar Magal
 
-;; Author: Bar Magal (2015)
+;; Author: Bar Magal
 ;; Package: purpose
 
 ;; This file is not part of GNU Emacs.
@@ -753,20 +753,22 @@ If ALIST is nil, it is ignored and `purpose--alist' is used instead."
   (purpose-message "Purpose display: Buffer: %S; Alist: %S" buffer alist)
   (when (purpose--use-action-function-p buffer alist)
     (let-alist alist
-      (let* ((special-action-sequence (purpose--special-action-sequence buffer
+      (let* ((user-action-sequence .user-action-sequence)
+             (special-action-sequence (purpose--special-action-sequence buffer
                                                                         alist))
              (normal-action-sequence (purpose-alist-get
                                       (or .action-order
                                           purpose-default-action-order)
                                       purpose-action-sequences))
-             (action-sequence (append special-action-sequence
+             (action-sequence (append user-action-sequence
+                                      special-action-sequence
                                       normal-action-sequence))
              (new-window
               ;; call all display actions in action-sequence until one of them
               ;; succeeds, and return the window used for display (action's
               ;; return value)
               (cl-do ((action-sequence action-sequence (cdr action-sequence))
-                      (window nil 
+                      (window nil
                               (progn
                                 (purpose-message "trying: %S"
                                                  (car action-sequence))
@@ -798,7 +800,10 @@ If ALIST is nil, it is ignored and `purpose--alist' is used instead."
                           (purpose-message
                            "falling back to regular display-buffer")
                           nil)))))
-          (when window
+          ;; window can be a non-nil non-window object. e.g.
+          ;; `display-buffer-no-window' returns 'fail (`display-buffer' treats
+          ;; 'fail specially)
+          (when (windowp window)
             (prog1 window
               (run-hook-with-args 'purpose-display-buffer-functions
                                   window))))))))
@@ -827,82 +832,116 @@ This function runs hook `purpose-select-buffer-hook' when its done."
 
 ;;; Level3 actions
 
+;;;###autoload
 (defun purpose-switch-buffer (buffer-or-name
                               &optional norecord force-same-window)
   "Select buffer BUFFER-OR-NAME, preferably in the selected window.
 If FORCE-SAME-WINDOW is non-nil, don't select a different window if the
-currently selected window is not available."
+currently selected window is not available.
+If BUFFER-OR-NAME is nil, select the buffer returned by `other-buffer'."
   (interactive (list (read-buffer-to-switch "[PU] Switch to buffer: ")))
   ;; `display-buffer' should call `purpose--action-function', and
   ;; `purpose--action-function' should try to switch buffer in current window,
   ;; and if that's impossible - display buffer in another window.
-  (purpose-select-buffer buffer-or-name
+  (purpose-select-buffer (window-normalize-buffer-to-switch-to buffer-or-name)
                          (if force-same-window
                              'force-same-window
                            'switch-to-buffer)
                          norecord))
 
+;;;###autoload
 (defun purpose-switch-buffer-other-window (buffer-or-name &optional norecord)
   "Select buffer BUFFER-OR-NAME in another window.
-Never selects the currently selected window."
+Never selects the currently selected window.
+If BUFFER-OR-NAME is nil, select the buffer returned by `other-buffer'."
   (interactive (list (read-buffer-to-switch "[PU] Switch to buffer: ")))
   (let ((pop-up-windows t)
         (purpose--alist (purpose-alist-set 'inhibit-same-window
                                            t
                                            purpose--alist)))
-    (purpose-select-buffer buffer-or-name
+    (purpose-select-buffer (window-normalize-buffer-to-switch-to buffer-or-name)
                            'prefer-other-window
                            norecord)))
 
+;;;###autoload
 (defun purpose-switch-buffer-other-frame (buffer-or-name &optional norecord)
-  "Select buffer BUFFER-OR-NAME, preferably in another frame."
+  "Select buffer BUFFER-OR-NAME, preferably in another frame.
+If BUFFER-OR-NAME is nil, select the buffer returned by `other-buffer'."
   (interactive (list (read-buffer-to-switch "[PU] Switch to buffer: ")))
   (let ((pop-up-frames t)
         (purpose--alist (purpose-alist-set 'inhibit-same-window
                                            t
                                            purpose--alist)))
-    (purpose-select-buffer buffer-or-name 'prefer-other-frame norecord)))
+    (purpose-select-buffer (window-normalize-buffer-to-switch-to buffer-or-name)
+                           'prefer-other-frame
+                           norecord)))
 
+;;;###autoload
 (defun purpose-pop-buffer (buffer-or-name &optional norecord)
-  "Select buffer BUFFER-OR-NAME, preferably in another window."
+  "Select buffer BUFFER-OR-NAME, preferably in another window.
+If BUFFER-OR-NAME is nil, select the buffer returned by `other-buffer'."
   (interactive (list (read-buffer-to-switch "[PU] Switch to buffer: ")))
-  (purpose-select-buffer buffer-or-name 'prefer-other-window norecord))
+  (purpose-select-buffer (window-normalize-buffer-to-switch-to buffer-or-name)
+                         'prefer-other-window
+                         norecord))
 
+;;;###autoload
 (defun purpose-pop-buffer-same-window (buffer-or-name &optional norecord)
-  "Select buffer BUFFER-OR-NAME, preferably in the selected window."
+  "Select buffer BUFFER-OR-NAME, preferably in the selected window.
+If BUFFER-OR-NAME is nil, select the buffer returned by `other-buffer'."
   (interactive (list (read-buffer-to-switch "[PU] Switch to buffer: ")))
-  (purpose-select-buffer buffer-or-name 'prefer-same-window norecord))
+  (purpose-select-buffer (window-normalize-buffer-to-switch-to buffer-or-name)
+                         'prefer-same-window
+                         norecord))
 
 
 
 ;;; Overrides (advices)
 
-;; TODO: maybe recognize some more actions
 (defun purpose-display--action-to-order (action)
   "Return appropriate `action-order' value for ACTION."
-  (when (not (listp action))            ; non-nil, non-list
+  (unless (listp action)            ; non-nil, non-list
     'prefer-other-window))
+
+(defun purpose-display--action-to-sequence (action)
+  "Return appropriate action sequence for ACTION.
+If ACTION is not t, it should be a list whose car is a function or a
+list of functions, as described in `display-buffer'.  In such case,
+treat the funcion(s) as an action sequence."
+  (when (listp action)
+    (let ((fn (car action)))
+      (if (listp fn)
+          fn
+        (list fn)))))
 
 (define-purpose-compatible-advice 'display-buffer
     :around purpose-display-buffer-advice
     (buffer-or-name &optional action frame)
     "Update `purpose--alist' when calling `display-buffer'."
   ;; new style advice
-  ((let* ((action-order (purpose-display--action-to-order action))
-          (purpose--alist (if action-order
-                              (purpose-alist-set 'action-order
-                                                 action-order
-                                                 purpose--alist)
-                            purpose--alist)))
+  ((let ((action-order (purpose-display--action-to-order action))
+         (user-action-sequence (purpose-display--action-to-sequence action))
+         (purpose--alist purpose--alist))
+     (when action-order
+       (setq purpose--alist
+             (purpose-alist-set 'action-order action-order purpose--alist)))
+     (when user-action-sequence
+       (setq purpose--alist (purpose-alist-set 'user-action-sequence
+                                               user-action-sequence
+                                               purpose--alist)))
      (funcall oldfun buffer-or-name action frame)))
 
   ;; old style advice
   ((let* ((action-order (purpose-display--action-to-order action))
-          (purpose--alist (if action-order
-                              (purpose-alist-set 'action-order
-                                                 action-order
-                                                 purpose--alist)
-                            purpose--alist)))
+          (user-action-sequence (purpose-display--action-to-sequence action))
+          (purpose--alist purpose--alist))
+     (when action-order
+       (setq purpose--alist
+             (purpose-alist-set 'action-order action-order purpose--alist)))
+     (when user-action-sequence
+       (setq purpose--alist (purpose-alist-set 'user-action-sequence
+                                               user-action-sequence
+                                               purpose--alist)))
      ad-do-it)))
 
 (define-purpose-compatible-advice 'switch-to-buffer
@@ -928,7 +967,12 @@ If Purpose is active (`purpose--active-p' is non-nil), call
                               ;; but want it to be nil, so we check
                               ;; `called-interactively-p' as well
                               (and force-same-window
-                                   (not (called-interactively-p 'interactive))))
+                                   (not (called-interactively-p 'interactive))
+                                   ;; `ivy--switch-buffer-action' replicates the
+                                   ;; interactive behavior, so handle the same as
+                                   ;; an interactive call
+                                   (not (member 'ivy--switch-buffer-action
+                                                (purpose--function-stack)))))
      (funcall oldfun buffer-or-name norecord force-same-window)))
 
   ;; old style advice
@@ -943,7 +987,12 @@ If Purpose is active (`purpose--active-p' is non-nil), call
                                     ;; but want it to be nil, so we check
                                     ;; `called-interactively-p' as well
                                     (and force-same-window
-                                         (not (called-interactively-p 'interactive)))))
+                                         (not (called-interactively-p 'interactive))
+                                         ;; `ivy--switch-buffer-action' replicates the
+                                         ;; interactive behavior, so handle the same as
+                                         ;; an interactive call
+                                         (not (member 'ivy--switch-buffer-action
+                                                      (purpose--function-stack))))))
      ad-do-it)))
 
 (define-purpose-compatible-advice 'switch-to-buffer-other-window
@@ -1031,7 +1080,7 @@ If Purpose is active (`purpose--active-p' is non-nil), call
 (defmacro without-purpose (&rest body)
   "Make Purpose inactive while executing BODY.
 This works internally by temporarily setting `purpose--active-p'."
-  (declare (indent defun) (debug t))
+  (declare (indent defun) (debug body))
   `(let ((purpose--active-p nil))
      ,@body))
 
@@ -1039,7 +1088,7 @@ This works internally by temporarily setting `purpose--active-p'."
   "Create a command that runs COMMAND with purpose inactive.
 This works internally by using `without-purpose' and
 `call-interactively'."
-  (declare (indent defun) (debug t))
+  (declare (indent defun) (debug function-form))
   `(lambda ()
      (interactive)
      (without-purpose
@@ -1057,6 +1106,7 @@ This works internally by using `without-purpose' and
                    (delq (current-buffer)
                          (purpose-buffers-with-purpose purpose)))))
 
+;;;###autoload
 (defun purpose-switch-buffer-with-purpose (&optional purpose)
   "Prompt the user and switch to a buffer with purpose PURPOSE.
 If called interactively, or with PURPOSE nil, PURPOSE defaults to the
@@ -1066,6 +1116,7 @@ current buffer's purpose."
    (purpose-read-buffers-with-purpose
     (or purpose (purpose-buffer-purpose (current-buffer))))))
 
+;;;###autoload
 (defun purpose-switch-buffer-with-some-purpose (purpose)
   "Like `purpose-switch-buffer-with-purpose', but first choose a PURPOSE."
   (interactive
@@ -1075,6 +1126,7 @@ current buffer's purpose."
                                t)))
   (purpose-switch-buffer-with-purpose purpose))
 
+;;;###autoload
 (defun purpose-switch-buffer-with-purpose-other-window (&optional purpose)
   "Prompt the user and switch to a buffer with purpose PURPOSE.
 The buffer is display in another window.
@@ -1085,6 +1137,7 @@ current buffer's purpose."
    (purpose-read-buffers-with-purpose
     (or purpose (purpose-buffer-purpose (current-buffer))))))
 
+;;;###autoload
 (defun purpose-switch-buffer-with-purpose-other-frame (&optional purpose)
   "Prompt the user and switch to a buffer with purpose PURPOSE.
 The buffer is display in another frame.
@@ -1116,7 +1169,7 @@ Another example:
   (add-to-list purpose-special-action-sequences
                `(terminal ,(purpose-generate-display-and-dedicate
                             purpose-display-at-bottom 6)))"
-  (declare (indent defun) (debug t))
+  (declare (indent defun) (debug (function-form &rest sexp)))
   `(lambda (buffer alist)
      (let ((window (apply ,display-fn buffer alist (list,@extra-args))))
        (when window
@@ -1139,7 +1192,7 @@ Possible usage:
             (purpose-generate-display-and-do
               'purpose-display-at-left
               (lambda (window) (message \"Let's do stuff!!\"))))"
-  (declare (indent defun) (debug t))
+  (declare (indent defun) (debug (function-form function-form)))
   `(lambda (buffer alist)
      (let ((window (funcall ,display-fn buffer alist)))
        (when window
@@ -1154,7 +1207,7 @@ Possible usage:
   "Override `purpose-special-action-sequences' temporarily.
 Set ACTIONS as `purpose-special-action-sequences' while BODY is executed.
 `purpose-special-action-sequences' is restored after BODY is executed."
-  (declare (indent 1) (debug t))
+  (declare (indent 1) (debug (sexp body)))
   `(let ((purpose-special-action-sequences ,actions))
      ,@body))
 
@@ -1163,7 +1216,7 @@ Set ACTIONS as `purpose-special-action-sequences' while BODY is executed.
 Shortcut for using `purpose-with-temp-display-actions' with only one action.
 ACTION should be an entry suitable for `purpose-special-action-sequences'.
 BODY has the same meaning as in `purpose-with-temp-display-actions'."
-  (declare (indent 1) (debug t))
+  (declare (indent 1) (debug (sexp body)))
   `(purpose-with-temp-display-actions (list ,action) ,@body))
 
 (defmacro purpose-with-additional-display-actions (actions &rest body)
@@ -1171,7 +1224,7 @@ BODY has the same meaning as in `purpose-with-temp-display-actions'."
 ACTIONS is a list of actions that are added to
 `purpose-special-action-sequences' while BODY is executed.
 `purpose-special-action-sequences' is restored after BODY is executed."
-  (declare (indent 1) (debug t))
+  (declare (indent 1) (debug (sexp body)))
   `(let ((purpose-special-action-sequences
           (append ,actions purpose-special-action-sequences)))
      ,@body))
@@ -1182,7 +1235,7 @@ Shortcut for using `purpose-with-additional-display-actions' with only one
 action.
 ACTION should be an entry suitable for `purpose-special-action-sequences'.
 BODY has the same meaning as in `purpose-with-additional-display-actions'."
-  (declare (indent 1) (debug t))
+  (declare (indent 1) (debug (sexp body)))
   `(purpose-with-additional-display-actions (list ,action) ,@body))
 
 

@@ -1,8 +1,8 @@
 ;;; window-purpose-configuration.el --- Configuration handling for Purpose -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015 Bar Magal
+;; Copyright (C) 2015, 2016 Bar Magal
 
-;; Author: Bar Magal (2015)
+;; Author: Bar Magal
 ;; Package: purpose
 
 ;; This file is not part of GNU Emacs.
@@ -78,9 +78,9 @@
   "Create a function named NAME to check the content of a list.
 The generated function receives parameter OBJ, and checks that it is a
 list and each entry in it satisifies ENTRY-PRED."
-  (declare (indent defun) (debug t))
+  (declare (indent defun) (debug (&define name function-form)))
   `(defun ,name (obj)
-     "Check that OBJ is a list, and each entry in it satisifies ,entry-pred."
+     ,(format "Check that OBJ is a list, and each entry in it satisifies %s." entry-pred)
      (and (listp obj)
           (cl-loop for entry in obj
                    always (funcall ,entry-pred entry)))))
@@ -291,10 +291,11 @@ Fill `purpose--extended-mode-purposes',
 
 (defun purpose-compile-default-configuration ()
   "Compile the default purpose configuraion."
-
   (purpose--fill-hash purpose--default-mode-purposes
                       '((prog-mode . edit)
                         (text-mode . edit)
+                        ;; in Emacs 24.5-, `css-mode' doesn't derive from `prog-mode'
+                        (css-mode . edit)
                         (comint-mode . terminal)
                         (dired-mode . dired)
                         (ibuffer-mode . buffers)
@@ -317,36 +318,171 @@ Fill `purpose--extended-mode-purposes',
 
 
 
-;;; API functions for extensions
+;;; convenient API functions
+
+(defun purpose-validate-conf (modes names regexps)
+  "Ensure that MODES, NAMES and REGEXPS are valid configuration alists.
+MODES must be a valid alist mapping major modes to purposes.
+NAMES must be a valid alist mapping names to purposes.
+REGEXPS must be a valid alist mapping regexps to purposes.
+If any of the arguments is malformed, a `user-error' is raised."
+  (unless (purpose-mode-alist-p modes)
+    (user-error "Malformed modes alist: %s" modes))
+  (unless (purpose-name-alist-p names)
+    (user-error "Malformed names alist: %s" names))
+  (unless (purpose-regexp-alist-p regexps)
+    (user-error "Malformed regexps alist: %s" regexps)))
+
+(defmethod purpose-conf-add-purposes ((config purpose-conf) modes names regexps)
+  "Add purposes to a `purpose-conf' object.
+MODES, NAMES and REGEXPS must be valid configuration alists as described in
+`purpose-validate-conf'."
+  (purpose-validate-conf modes names regexps)
+  (oset config :mode-purposes
+        (append modes (oref config :mode-purposes)))
+  (oset config :name-purposes
+        (append names (oref config :name-purposes)))
+  (oset config :regexp-purposes
+        (append regexps (oref config :regexp-purposes))))
+
+(defmethod purpose-conf-remove-purposes ((config purpose-conf) modes names regexps)
+  "Remove purposes from a `purpose-conf' object.
+MODES must be a list of major modes.
+NAMES must be a list names.
+REGEXPS must be a list regexps."
+  ;; let-bind before setq-ing, so we don't apply partial changes if one
+  ;; of MODES, NAMES or REGEXPS is malformed
+  (let ((new-modes (cl-set-difference (oref config :mode-purposes) modes
+                                      :test (lambda (entry mode)
+                                              (eql (car entry) mode))))
+        (new-names (cl-set-difference (oref config :name-purposes) names
+                                      :test (lambda (entry name)
+                                              (string= (car entry) name))))
+        (new-regexps (cl-set-difference (oref config :regexp-purposes) regexps
+                                        :test (lambda (entry regexp)
+                                                (string= (car entry) regexp)))))
+    (oset config :mode-purposes new-modes)
+    (oset config :name-purposes new-names)
+    (oset config :regexp-purposes new-regexps)))
 
 ;;;###autoload
-(defun purpose-set-extension-configuration (keyword config)
+(defun purpose-set-extension-configuration (ext-keyword config)
   "Set an extension's entry in `purpose-extended-configuration'.
-KEYWORD should be a keyword used to identify the extension.
+EXT-KEYWORD should be a keyword used to identify the extension.
 CONFIG is a `purpose-conf' object containing the extension's purpose
 configuration.
 Example:
  (purpose-set-extension-configuration
      :python
-     (purpose-conf :mode-purposes
+     (purpose-conf \"py\"
+                   :mode-purposes
                    '((python-mode . python)
-                     (python-inferior-mode . interpreter))))
+                     (inferior-python-mode . interpreter))))
 
 This function calls `purpose-compile-extended-configuration' when its
 done."
-  (unless (keywordp keyword)
-    (signal 'wrong-type-argument `(keywordp ,keyword)))
+  (unless (keywordp ext-keyword)
+    (signal 'wrong-type-argument `(keywordp ,ext-keyword)))
   (setq purpose-extended-configuration
-        (plist-put purpose-extended-configuration keyword config))
+        (plist-put purpose-extended-configuration ext-keyword config))
   (purpose-compile-extended-configuration))
 
-(defun purpose-del-extension-configuration (keyword)
+(defun purpose-get-extension-configuration (ext-keyword)
+  "Get an extension's entry in `purpose-extended-configuration'.
+EXT-KEYWORD is the same as in `purpose-set-extension-configuration'."
+  (unless (keywordp ext-keyword)
+    (signal 'wrong-type-argument `(keywordp ,ext-keyword)))
+  (plist-get purpose-extended-configuration ext-keyword))
+
+(defun purpose-del-extension-configuration (ext-keyword)
   "Delete an extension's entry in `purpose-extended-configuration'.
-KEYWORD is the same as in `purpose-set-extension-configuration'.
+EXT-KEYWORD is the same as in `purpose-set-extension-configuration'.
 Deletion is actually done by setting the extension's entry to nil.
 This function calls `purpose-compile-extended-configuration' when its
 done."
-  (purpose-set-extension-configuration keyword nil))
+  (purpose-set-extension-configuration ext-keyword nil))
+
+(cl-defun purpose-add-extension-purposes (ext-keyword &key modes names regexps)
+  "Add purposes to an extension's purpose configuration.
+EXT-KEYWORD is the same as in `purpose-set-extension-configuration'.
+MODES, NAMES and REGEXPS must be valid configuration alists as described in
+`purpose-validate-conf'.
+This function calls `purpose-compile-extended-configuration'.
+
+Example:
+ (purpose-add-extension-purposes :python
+                                 :regexps '((\"\\.hy$\" . python)))"
+  (let ((config (purpose-get-extension-configuration ext-keyword)))
+    (unless config
+      (user-error "Missing extension configuration: %s" ext-keyword))
+    (purpose-conf-add-purposes config modes names regexps)
+    (purpose-set-extension-configuration ext-keyword config)))
+
+(cl-defun purpose-remove-extension-purposes (ext-keyword &key modes names regexps)
+  "Remove purposes from an extension's purpose configuration.
+EXT-KEYWORD is the same as in `purpose-set-extension-configuration'.
+MODES, NAMES and REGEXPS must be valid configuration alists as described in
+`purpose-validate-conf'.
+This function calls `purpose-compile-extended-configuration'.
+
+Example:
+ (purpose-remove-extension-purposes :python
+                                    :modes '(inferior-python-mode)
+                                    :regexps '(\"\\.hy$\"))"
+  (let ((config (purpose-get-extension-configuration ext-keyword)))
+    (unless config
+      (user-error "Missing extension configuration: %s" ext-keyword))
+    (purpose-conf-remove-purposes config modes names regexps)
+    (purpose-set-extension-configuration ext-keyword config)))
+
+(cl-defun purpose-add-user-purposes (&key modes names regexps)
+  "Add and compile multiple user purposes.
+MODES must be a valid alist mapping major modes to purposes.
+NAMES must be a valid alist mapping names to purposes.
+REGEXPS must be a valid alist mapping regexps to purposes.
+
+This function calls `purpose-compile-user-configuration' to
+update user purposes.
+
+Example:
+ (purpose-add-user-purposes :modes '((org-mode . org)
+                                     (help-mode . popup))
+                            :names '((\"*scratch*\" . popup))
+                            :regexps '((\"^\\*foo\" . terminal)))"
+  (purpose-validate-conf modes names regexps)
+  (setq purpose-user-mode-purposes (append modes purpose-user-mode-purposes)
+        purpose-user-name-purposes (append names purpose-user-name-purposes)
+        purpose-user-regexp-purposes (append regexps purpose-user-regexp-purposes))
+  (purpose-compile-user-configuration))
+
+(cl-defun purpose-remove-user-purposes (&key modes names regexps)
+  "Remove and compile multiple user purposes.
+MODES must be a list of major modes.
+NAMES must be a list of names.
+REGEXPS must be a list of regexps.
+
+This function calls `purpose-compile-user-configuration' to
+update user purposes.
+
+Example:
+ (purpose-remove-user-purposes :modes '(org-mode help-mode)
+                               :names '(\"*scratch*\")
+                               :regexps '(\"^\\*foo\"))"
+  ;; let-bind before setq-ing, so we don't apply partial changes if one
+  ;; of MODES, NAMES or REGEXPS is malformed
+  (let ((new-modes (cl-set-difference purpose-user-mode-purposes modes
+                                      :test (lambda (entry mode)
+                                              (eql (car entry) mode))))
+        (new-names (cl-set-difference purpose-user-name-purposes names
+                                      :test (lambda (entry name)
+                                              (string= (car entry) name))))
+        (new-regexps (cl-set-difference purpose-user-regexp-purposes regexps
+                                        :test (lambda (entry regexp)
+                                                (string= (car entry) regexp)))))
+    (setq purpose-user-mode-purposes new-modes
+          purpose-user-name-purposes new-names
+          purpose-user-regexp-purposes new-regexps)
+    (purpose-compile-user-configuration)))
 
 
 
@@ -354,7 +490,7 @@ done."
 
 (defmacro purpose-save-purpose-config (&rest body)
   "Save the purpose configuration, execute BODY, restore the configuration."
-  (declare (indent defun) (debug t))
+  (declare (indent defun) (debug body))
   `(let ((purpose--user-mode-purposes (copy-hash-table purpose--user-mode-purposes))
          (purpose--user-name-purposes (copy-hash-table purpose--user-name-purposes))
          (purpose--user-regexp-purposes (copy-hash-table purpose--user-regexp-purposes))
@@ -379,7 +515,7 @@ NAMES, REGEXPS and MODES should be alists as described in
 NAMES, REGEXPS and MODES are used instead of the current purpose configuration
 while BODY is executed.  The purpose configuration is restored after BODY
 is executed."
-  (declare (indent 3) (debug t))
+  (declare (indent 3) (debug (sexp sexp sexp body)))
   `(purpose-save-purpose-config
      (let ((purpose-use-default-configuration nil)
            (purpose-extended-configuration nil)
@@ -393,7 +529,7 @@ is executed."
 (defmacro purpose-with-empty-purposes (&rest body)
   "Execute BODY with an empty purpose configuration.
 The purpose configuration is restored after BODY is executed."
-  (declare (indent defun) (debug t))
+  (declare (indent defun) (debug body))
   `(purpose-with-temp-purposes nil nil nil ,@body))
 
 (defmacro purpose-with-additional-purposes (names regexps modes &rest body)
@@ -404,7 +540,7 @@ NAMES, REGEXPS and MODES should be alists as described in
 NAMES, REGEXPS and MODES are used to add purposes to the current purpose
 configuration while BODY is executed.  The purpose configuration is restored
 after BODY is executed."
-  (declare (indent 3) (debug t))
+  (declare (indent 3) (debug (sexp sexp sexp body)))
   `(purpose-save-purpose-config
      (let ((purpose-user-name-purposes (append ,names purpose-user-name-purposes))
            (purpose-user-regexp-purposes (append ,regexps purpose-user-regexp-purposes))

@@ -1,8 +1,8 @@
 ;;; window-purpose-fixes.el --- fix integration issues with other features -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015 Bar Magal
+;; Copyright (C) 2015, 2016 Bar Magal
 
-;; Author: Bar Magal (2015)
+;; Author: Bar Magal
 ;; Package: purpose
 
 ;; This file is not part of GNU Emacs.
@@ -66,7 +66,7 @@ This function should be advised around
 (defun purpose--fix-hydra-lv ()
   "Add hydra's LV buffer to Purpose's ignore list."
   (eval-after-load 'lv
-    '(add-to-list 'purpose-action-function-ignore-buffer-names "^\\*LV\\*$")))
+    '(add-to-list 'purpose-action-function-ignore-buffer-names "^ \\*LV\\*$")))
 
 
 
@@ -93,16 +93,27 @@ Install helm's purpose configuration."
 ;;; neotree buffer in a way that doesn't work well with Purpose.
 ;;; We override how neotree displays its buffer.  When neotree tries to open a
 ;;; file in a fancy way, we let it.
+;;; The integration issues fixed here:
+;;; - calling `neotree' from a dedicated window opened neotree on the right,
+;;;   with 2 or 3 horizontally-split windows showing the buffer from the
+;;;   dedicated window (see https://github.com/jaypei/emacs-neotree/issues/124)
+;;; - with one 'edit' window, one 'general' window, select the 'general' window,
+;;;   then call `neotree'. from neotree window, open an 'edit' buffer in a new
+;;;   split (press '-' or '|'). 'general' window is split in two, the new 'edit'
+;;;   buffer is displayed in the 'edit' window instead of the old 'edit' buffer
+
 (defun purpose--fix-create-neo-window ()
   "Create neotree window, with Purpose."
   (let* ((buffer (neo-global--get-buffer t))
          (window (display-buffer buffer)))
     (neo-window--init window buffer)
-    (setq neo-global--window window)))
+    (neo-global--attach)
+    (neo-global--reset-width)
+    window))
 
 (defun purpose--fix-display-neotree (buffer alist)
   "Display neotree window, with Purpose."
-  (let* ((first-window (neo-global--get-first-window))
+  (let* ((first-window (frame-root-window))
          (new-window (split-window first-window nil 'left)))
     (purpose-change-buffer buffer new-window 'window alist)
     new-window))

@@ -1,8 +1,8 @@
 ;;; window-purpose-layout.el --- Save and load window layout -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015 Bar Magal
+;; Copyright (C) 2015, 2016 Bar Magal
 
-;; Author: Bar Magal (2015)
+;; Author: Bar Magal
 ;; Package: purpose
 
 ;; This file is not part of GNU Emacs.
@@ -30,12 +30,30 @@
 (require 'ring)
 (require 'window-purpose-core)
 
+(defconst purpose--built-in-layouts-dir
+  (when load-file-name
+    (concat (file-name-directory load-file-name) "layouts/"))
+  "Location of built-in layouts shipped with Purpose.")
+
+(defcustom purpose-use-built-in-layouts t
+  "If nil, don't use layouts from `purpose--built-in-layouts-dir'."
+  :group 'purpose
+  :type 'boolean
+  :package-version "1.6")
+
 (defcustom purpose-default-layout-file
   (concat user-emacs-directory ".purpose-layout")
   "Default file for saving/loading purpose layout."
   :group 'purpose
   :type 'file
   :package-version "1.2")
+
+(defcustom purpose-layout-dirs
+  (list (locate-user-emacs-file "layouts/"))
+  "List of directories containing layout files."
+  :group 'purpose
+  :type '(repeat file)
+  :package-version "1.5")
 
 (defcustom purpose-get-extra-window-params-functions nil
   "If non-nil, this variable should be a list of functions.
@@ -48,7 +66,7 @@ This variable is used by `purpose-window-params'.  See
 (defcustom purpose-set-window-properties-functions nil
   "Hook to run after calling `purpose-set-window-properties'.
 Use this to set additional properties for windows as they are created,
-when `purpose-set-window-layout' or `purpose-load-window-layout' is called.  Each
+when `purpose-set-window-layout' or `purpose-load-window-layout-file' is called.  Each
 function in `purpose-set-window-properties-functions' is called with two
 arguments: PROPERTIES and WINDOW.  PROPERTIES is the window's property
 list as saved in the used layout, and WINDOW is the new window.  If
@@ -198,6 +216,115 @@ WINDOW must be a live window and defaults to the selected one."
    (purpose--window-percentage-to-height height-percentage window)
    window))
 
+(defun purpose--tree-width-from-edges (tree)
+  "Get TREE's total width."
+  (let ((edges (nth 1 tree)))
+    (- (nth 2 edges) (car edges))))
+
+(defun purpose--tree-height-from-edges (tree)
+  "Get TREE's total height."
+  (let ((edges (nth 1 tree)))
+    (- (nth 3 edges) (nth 1 edges))))
+
+
+
+;;; Helpers for finding layouts by name
+(defun purpose--directory-files (suffix directory)
+  "Get a list of all filenames that end in SUFFIX in DIRECTORY.
+The base filenames without the suffix are returned."
+  (cl-loop for filename in (directory-files directory nil nil t)
+           if (purpose--suffix-p suffix filename)
+           collect (purpose--remove-suffix suffix filename)))
+
+(defun purpose--file-with-suffix (name suffix directory)
+  "Get file with basename NAME and suffix SUFFIX in DIRECTORY.
+The full path of the file returned.  Return nil if no file can be found.
+NAME is the name of the file without the suffix or the directory.
+SUFFIX should include a \".\" (if needed), it will not be added
+automatically.
+DIRECTORY must be the name of an existing directory."
+  (cl-loop for filename in (directory-files directory t)
+           if (string= (file-name-nondirectory filename)
+                       (format "%s%s" name suffix))
+           return filename))
+
+(defun purpose-normalize-layout-directories (&optional layout-dirs include-built-in-p)
+  "Return a list of layout directories.
+LAYOUT-DIRS is a list of directory names, and defaults to
+`purpose-layout-dirs'.
+If INCLUDE-BUILT-IN-P is non-nil, include
+`purpose--built-in-layouts-dir' in the result."
+  (if include-built-in-p
+      (append (or layout-dirs purpose-layout-dirs)
+              (list purpose--built-in-layouts-dir))
+    (or layout-dirs purpose-layout-dirs)))
+
+(defun purpose-all-window-layouts (&optional layout-dirs include-built-in-p)
+  "Get a sorted list of all window layouts in LAYOUT-DIRS.
+LAYOUT-DIRS is a list of directory names, and defaults to
+`purpose-layout-dirs'.
+If INCLUDE-BUILT-IN-P is non-nil, also search layouts in
+`purpose--built-in-layouts-dir'."
+  (sort (delete-dups
+         (purpose-flatten
+          (cl-loop for dir in (purpose-normalize-layout-directories
+                               layout-dirs include-built-in-p)
+                   if (and (file-readable-p dir)
+                           (file-directory-p dir))
+                   collect (purpose--directory-files ".window-layout" dir))))
+        #'string-lessp))
+
+(defun purpose-find-window-layout (name &optional layout-dirs)
+  "Get the full path of a window layout.
+NAME is the name of the window layout.
+LAYOUT-DIRS is a list of directories to search for the layout file, and
+defaults to `purpose-layout-dirs'.  Any non-existent or unreadable
+directory is ignored. If `purpose-use-built-in-layouts' is non-nil and
+the layout can't be found in LAYOUT-DIRS, then search also in
+`purpose--built-in-layouts-dir'.
+If there are severeal layouts with the same name, the first that is found
+is returned.  The directories are searched in the same order that they
+appear in LAYOUT-DIRS."
+  (cl-loop for dir in (purpose-normalize-layout-directories
+                       layout-dirs purpose-use-built-in-layouts)
+           for filename = (and (file-readable-p dir)
+                               (file-directory-p dir)
+                               (purpose--file-with-suffix name ".window-layout" dir))
+           if filename return filename))
+
+(defun purpose-all-frame-layouts (&optional layout-dirs include-built-in-p)
+  "Get a sorted list of all frame layouts in LAYOUT-DIRS.
+LAYOUT-DIRS is a list of directory names, and defaults to
+`purpose-layout-dirs'.
+If INCLUDE-BUILT-IN-P is non-nil, also search layouts in
+`purpose--built-in-layouts-dir'."
+  (sort (delete-dups
+         (purpose-flatten
+          (cl-loop for dir in (purpose-normalize-layout-directories
+                               layout-dirs include-built-in-p)
+                   if (and (file-readable-p dir)
+                           (file-directory-p dir))
+                   collect (purpose--directory-files ".frame-layout" dir))))
+        #'string-lessp))
+
+(defun purpose-find-frame-layout (name &optional layout-dirs)
+  "Get the full path of a frame layout.
+NAME is the name of the frame layout.
+LAYOUT-DIRS is a list of directories to search for the layout file, and
+defaults to `purpose-layout-dirs'.  Any non-existent or unreadable
+directory is ignored. If `purpose-use-built-in-layouts' is non-nil and
+the layout can't be found in LAYOUT-DIRS, then search also in
+`purpose--built-in-layouts-dir'.
+If there are severeal layouts with the same name, the first that is found
+is returned.  The directories are searched in the same order that they
+appear in LAYOUT-DIRS."
+  (cl-loop for dir in (purpose-normalize-layout-directories
+                       layout-dirs purpose-use-built-in-layouts)
+           for filename = (and (file-readable-p dir)
+                               (file-directory-p dir)
+                               (purpose--file-with-suffix name ".frame-layout" dir))
+           if filename return filename))
+
 
 
 ;;; Recursive helpers for setting/getting the layout
@@ -209,25 +336,31 @@ WINDOW must be a live window and defaults to the selected one."
                   (cl-second window-tree))
             (mapcar #'purpose--get-window-layout-1 (cddr window-tree)))))
 
-(defun purpose--set-window-layout-1 (tree window)
-  "Helper function for `purpose-set-window-layout'."
+(defun purpose--set-window-layout-1 (tree window ref-width ref-height)
+  "Helper function for `purpose-set-window-layout'.
+REF-WIDTH and REF-HEIGHT are the sizes of the root window, as
+saved in the top-level tree (not the actual sizes of the selected
+frame)."
   (if (purpose-window-params-p tree)
       (progn
+        ;; set size and properties of leaf window
         (purpose--set-size-percentage (plist-get tree :width)
                                       (plist-get tree :height)
                                       window)
         (purpose-set-window-properties tree window))
 
-    ;; this section is commented out, because it doesn't really matter
-    ;; (let ((edges (second tree)))
-    ;;   (purpose--set-size-percentage (- (third edges) (first edges))
-    ;;             (- (fourth edges) (second edges))
-    ;;             window))
+    ;; set size of parent window
+    (let ((width-percentage (/ (purpose--tree-width-from-edges tree)
+                               ref-width 1.0))
+          (height-percentage (/ (purpose--tree-height-from-edges tree)
+                                ref-height 1.0)))
+      (purpose--set-size-percentage width-percentage height-percentage window))
 
+    ;; split parent window and recurse into children
     (let ((windows (purpose--split-window tree window)))
       (cl-loop for sub-tree in (cddr tree)
                for window in windows
-               do (purpose--set-window-layout-1 sub-tree window)))))
+               do (purpose--set-window-layout-1 sub-tree window ref-width ref-height)))))
 
 
 
@@ -260,11 +393,24 @@ This function doesn't change the selected frame (uses
     ;; 2. split window, recurse for each window
     (if (purpose-window-params-p layout)
         (purpose-set-window-properties layout)
-      (purpose--set-window-layout-1 layout (selected-window)))
+      (purpose--set-window-layout-1 layout (selected-window)
+                                    (purpose--tree-width-from-edges layout)
+                                    (purpose--tree-height-from-edges layout)))
+    ;; if purpose has more than 1 window, try to show different buffers in those
+    ;; windows
+    (let ((purposes (delete-dups (mapcar #'purpose-window-purpose
+                                         (window-list frame)))))
+      (dolist (purpose purposes)
+        (cl-mapcar #'set-window-buffer
+                   (purpose-windows-with-purpose purpose frame)
+                   ;; TODO: implement function to take only first N buffers with a
+                   ;; certain purpose, instead of getting all them (more efficient)
+                   (purpose-buffers-with-purpose purpose))))
     (unless norecord
       (ring-insert purpose-recent-window-layouts layout))))
 
-(defun purpose-save-window-layout (&optional filename)
+;;;###autoload
+(defun purpose-save-window-layout-file (&optional filename)
   "Save window layout of current frame to file FILENAME.
 If FILENAME is nil, use `purpose-default-layout-file' instead."
   (interactive
@@ -275,10 +421,11 @@ If FILENAME is nil, use `purpose-default-layout-file' instead."
                   (file-name-nondirectory purpose-default-layout-file))))
   (with-temp-file (or filename purpose-default-layout-file)
     ;; "%S" - print as S-expression - this allows us to read the value with
-    ;; `read' later in `purpose-load-window-layout'
+    ;; `read' later in `purpose-load-window-layout-file'
     (insert (format "%S" (purpose-get-window-layout)))))
 
-(defun purpose-load-window-layout (&optional filename)
+;;;###autoload
+(defun purpose-load-window-layout-file (&optional filename)
   "Load window layout from file FILENAME.
 If FILENAME is nil, use `purpose-default-layout-file' instead."
   (interactive
@@ -291,6 +438,48 @@ If FILENAME is nil, use `purpose-default-layout-file' instead."
    (with-temp-buffer
      (insert-file-contents (or filename purpose-default-layout-file))
      (read (point-marker)))))
+
+;;;###autoload
+(defun purpose-save-window-layout (name directory)
+  "Save a window layout.
+NAME is the name to give the window layout.
+DIRECTORY is the directory in which to save the layout."
+  (interactive
+   (let ((layout-dirs (purpose-normalize-layout-directories nil nil)))
+     (if (null layout-dirs)
+         (user-error (concat "No directory is set for user layouts. "
+                             "Please add a directory to `purpose-layouts-dir'"))
+       (list (read-string "[PU] save layout name: ")
+             (funcall (purpose-get-completing-read-function)
+                      "[PU] save to directory: "
+                      layout-dirs nil t)))))
+  (let ((layout-file (concat (file-name-as-directory directory)
+                             name ".window-layout")))
+    (unless (file-exists-p directory)
+      (make-directory directory t))
+    (purpose-save-window-layout-file layout-file)))
+
+;;;###autoload
+(defun purpose-load-window-layout (&optional name layout-dirs)
+  "Load a window layout.
+NAME is the name of a window layout.  If NAME is not given, prompt the
+user for a name.
+LAYOUT-DIRS is a list of directories to search for the layout file, and
+defaults to `purpose-layout-dirs'.  If `purpose-use-built-in-layouts',
+then `purpose--built-in-layouts-dir' is also searched.  See
+`purpose-find-window-layout' for more details.
+
+To load a window layout from a specific file, use
+`purpose-load-window-layout-file'."
+  (interactive)
+  (let ((name (or name (funcall (purpose-get-completing-read-function)
+                                "[PU] Load window layout:"
+                                (purpose-all-window-layouts layout-dirs
+                                                            purpose-use-built-in-layouts)
+                                nil t))))
+    ;; layout with NAME is guaranteed to exist because of non-nil REQUIRE-MATCH
+    ;; argument to (purpose-get-completing-read-function).
+    (purpose-load-window-layout-file (purpose-find-window-layout name layout-dirs))))
 
 (defun purpose-reset-window-layout ()
   "Load most recent window layout from `purpose-reset-window-layouts'.
@@ -329,7 +518,8 @@ specified by LAYOUT."
   (unless norecord
     (ring-insert purpose-recent-frame-layouts layout)))
 
-(defun purpose-save-frame-layout (&optional filename)
+;;;###autoload
+(defun purpose-save-frame-layout-file (&optional filename)
   "Save frame layout of Emacs to file FILENAME.
 If FILENAME is nil, use `purpose-default-layout-file' instead."
   (interactive
@@ -340,10 +530,11 @@ If FILENAME is nil, use `purpose-default-layout-file' instead."
                   (file-name-nondirectory purpose-default-layout-file))))
   (with-temp-file (or filename purpose-default-layout-file)
     ;; "%S" - print as S-expression - this allows us to read the value with
-    ;; `read' later in `purpose-load-window-layout'
+    ;; `read' later in `purpose-load-window-layout-file'
     (insert (format "%S" (purpose-get-frame-layout)))))
 
-(defun purpose-load-frame-layout (&optional filename)
+;;;###autoload
+(defun purpose-load-frame-layout-file (&optional filename)
   "Load frame layout from file FILENAME.
 If FILENAME is nil, use `purpose-default-layout-file' instead."
   (interactive
@@ -356,6 +547,48 @@ If FILENAME is nil, use `purpose-default-layout-file' instead."
    (with-temp-buffer
      (insert-file-contents (or filename purpose-default-layout-file))
      (read (point-marker)))))
+
+;;;###autoload
+(defun purpose-save-frame-layout (name directory)
+  "Save a frame layout.
+NAME is the name to give the frame layout.
+DIRECTORY is the directory in which to save the layout."
+  (interactive
+   (let ((layout-dirs (purpose-normalize-layout-directories nil nil)))
+     (if (null layout-dirs)
+         (user-error (concat "No directory is set for user layouts. "
+                             "Please add a directory to `purpose-layouts-dir'"))
+       (list (read-string "[PU] save layout name: ")
+             (funcall (purpose-get-completing-read-function)
+                      "[PU] save to directory: "
+                      layout-dirs nil t)))))
+  (let ((layout-file (concat (file-name-as-directory directory)
+                             name ".frame-layout")))
+    (unless (file-exists-p directory)
+      (make-directory directory t))
+    (purpose-save-frame-layout-file layout-file)))
+
+;;;###autoload
+(defun purpose-load-frame-layout (&optional name layout-dirs)
+  "Load a frame layout.
+NAME is the name of a frame layout.  If NAME is not given, prompt the
+user for a name.
+LAYOUT-DIRS is a list of directories to search for the layout file, and
+defaults to `purpose-layout-dirs'.  If `purpose-use-built-in-layouts',
+then `purpose--built-in-layouts-dir' is also searched.  See
+`purpose-find-frame-layout' for more details.
+
+To load a frame layout from a specific file, use
+`purpose-load-frame-layout-file'."
+  (interactive)
+  (let ((name (or name (funcall (purpose-get-completing-read-function)
+                                "[PU] Load frame layout:"
+                                (purpose-all-frame-layouts layout-dirs
+                                                           purpose-use-built-in-layouts)
+                                nil t))))
+    ;; layout with NAME is guaranteed to exist because of non-nil REQUIRE-MATCH
+    ;; argument to (purpose-get-completing-read-function).
+    (purpose-load-frame-layout-file (purpose-find-frame-layout name layout-dirs))))
 
 (defun purpose-reset-frame-layout ()
   "Load most recent frame layout from `purpose-reset-frame-layouts'.
@@ -374,6 +607,7 @@ Use INDEX=0 for most recent."
 
 ;;; Other
 
+;;;###autoload
 (defun purpose-delete-non-dedicated-windows ()
   "Delete all windows that aren't dedicated to their purpose or buffer."
   (interactive)
@@ -384,6 +618,7 @@ Use INDEX=0 for most recent."
               (delete-window window)))
         (window-list)))
 
+;;;###autoload
 (defun purpose-set-window-purpose (purpose &optional dont-dedicate)
   "Set window's purpose to PURPOSE, and dedicate it.
 With prefix argument (DONT-DEDICATE is non-nil), don't dedicate the

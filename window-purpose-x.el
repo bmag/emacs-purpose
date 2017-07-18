@@ -1,8 +1,8 @@
 ;;; window-purpose-x.el --- Extensions for Purpose -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015 Bar Magal
+;; Copyright (C) 2015, 2016 Bar Magal
 
-;; Author: Bar Magal (2015)
+;; Author: Bar Magal
 ;; Package: purpose
 
 ;; This file is not part of GNU Emacs.
@@ -688,6 +688,7 @@ cancel the override of `replace-buffer-in-windows'."
       (purpose-advice-add 'replace-buffer-in-windows :override 'purpose-x-replace-buffer-in-windows)
     (purpose-advice-remove 'replace-buffer-in-windows :override 'purpose-x-replace-buffer-in-windows)))
 
+;;;###autoload
 (defun purpose-x-kill-setup ()
   "Activate purpose-x-kill extension.
 This extension makes `kill-buffer' aware of the purpose-dedicated window

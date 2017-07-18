@@ -1,8 +1,8 @@
 ;;; window-purpose-utils.el --- Utilities -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015 Bar Magal
+;; Copyright (C) 2015, 2016 Bar Magal
 
-;; Author: Bar Magal (2015)
+;; Author: Bar Magal
 ;; Package: purpose
 
 ;; This file is not part of GNU Emacs.
@@ -26,6 +26,8 @@
 ;;; Code:
 
 (require 'cl-lib)
+;; subr-x isn't available in 24.3
+(require 'subr-x nil t)
 
 (defcustom purpose-message-on-p nil
   "If non-nil, `purpose-message' will produce a message.
@@ -129,7 +131,7 @@ advice style is available.  OLD-BODY is the advice's body if the
 new advice style is unavailable.
 
 `define-purpose-compatible-advice' properly supports only :around, :before and :after advices."
-  (declare (indent 5) (debug t))
+  (declare (indent 5) (debug (&define sexp sexp name lambda-list stringp (&rest form) (&rest form))))
   (if (fboundp 'advice-add)
       `(defun ,name (,@(purpose-advice-new-style-arglist arglist where))
      ,docstring
@@ -143,7 +145,7 @@ new advice style is unavailable.
   "Enable advice, using new or old advice style as appropriate.
 SYMBOL, WHERE and NAME have the same meaning as in
 `define-purpose-advice'."
-  (declare (indent nil) (debug t))
+  (declare (indent nil) (debug 0))
   (if (fboundp 'advice-add)
       `(advice-add ,symbol ,where ,name)
     `(progn
@@ -155,7 +157,7 @@ SYMBOL, WHERE and NAME have the same meaning as in
   "Disable advice, using new or old advice style as appropriate.
 SYMBOL, WHERE and NAME have the same meaning as in
 `define-purpose-advice'."
-  (declare (indent nil) (debug t))
+  (declare (indent nil) (debug 0))
   (if (fboundp 'advice-remove)
       `(advice-remove ,symbol ,name)
     `(progn
@@ -179,6 +181,45 @@ for each entry in hash-table TABLE."
     (lambda (hash-table)
       "Return all values in HASH-TABLE."
         (purpose--iter-hash (lambda (_kk vv) vv) hash-table))))
+
+;; taken from http://emacs.stackexchange.com/a/7405/6533, credit to Jordon Biondo
+(defun purpose--call-stack ()
+  "Return the current call stack frames."
+  (let ((frames)
+        (frame)
+        (index 5))
+    (while (setq frame (backtrace-frame index))
+      (push frame frames)
+      (cl-incf index))
+    (cl-remove-if-not 'car frames)))
+
+;; taken from http://emacs.stackexchange.com/a/7405/6533, credit to Jordon Biondo
+(defun purpose--function-stack ()
+  "Like `purpose--call-stack' but is a list of only the function names."
+  (butlast (mapcar 'cl-second (purpose--call-stack))))
+
+(defalias 'purpose--suffix-p
+  (if (fboundp 'string-suffix-p)
+      #'string-suffix-p
+    ;; taken from string-suffix-p in subr.el in Emacs 24.5.1
+    (lambda (suffix string  &optional ignore-case)
+      "Return non-nil if SUFFIX is a suffix of STRING.
+If IGNORE-CASE is non-nil, the comparison is done without paying
+attention to case differences."
+      (let ((start-pos (- (length string) (length suffix))))
+        (and (>= start-pos 0)
+             (eq t (compare-strings suffix nil nil
+                                    string start-pos nil ignore-case)))))))
+
+(defalias 'purpose--remove-suffix
+  (if (fboundp 'string-remove-suffix)
+      #'string-remove-suffix
+    ;; based on string-remove-suffix in subr-x.el in Emacs 24.5.1
+    (lambda (suffix string)
+      "Remove SUFFIX from STRING if present."
+      (if (purpose--suffix-p suffix string)
+          (substring string 0 (- (length string) (length suffix)))
+        string))))
 
 (provide 'window-purpose-utils)
 ;;; window-purpose-utils.el ends here

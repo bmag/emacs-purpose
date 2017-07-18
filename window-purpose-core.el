@@ -1,8 +1,8 @@
 ;;; window-purpose-core.el --- Core functions for Purpose -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015 Bar Magal
+;; Copyright (C) 2015, 2016 Bar Magal
 
-;; Author: Bar Magal (2015)
+;; Author: Bar Magal
 ;; Package: purpose
 
 ;; This file is not part of GNU Emacs.
@@ -228,11 +228,12 @@ The window's purpose is determined by its buffer's purpose.
 WINDOW defaults to the selected window."
   (purpose-buffer-purpose (window-buffer window)))
 
-(defun purpose-windows-with-purpose (purpose)
-  "Return a list of all live windows with purpose PURPOSE."
+(defun purpose-windows-with-purpose (purpose &optional frame)
+  "Return a list of all live windows with purpose PURPOSE in FRAME.
+FRAME defaults to the selected frame."
   (cl-remove-if-not #'(lambda (window)
                         (eql purpose (purpose-window-purpose window)))
-                    (window-list)))
+                    (window-list frame)))
 
 (defun purpose-get-all-purposes ()
   "Return a list of all known purposes."
@@ -312,6 +313,7 @@ WINDOW defaults to the selected window."
     flag))
 
 ;; not really purpose-related, but helpful for the user
+;;;###autoload
 (defun purpose-toggle-window-buffer-dedicated (&optional window)
   "Toggle window WINDOW's dedication to its current buffer on or off.
 WINDOW defaults to the selected window."
