@@ -297,6 +297,8 @@ Fill `purpose--extended-mode-purposes',
                         ;; in Emacs 24.5-, `css-mode' doesn't derive from `prog-mode'
                         (css-mode . edit)
                         (comint-mode . terminal)
+                        (eshell-mode . terminal)
+                        (term-mode . terminal)
                         (dired-mode . dired)
                         (ibuffer-mode . buffers)
                         (Buffer-menu-mode . buffers)

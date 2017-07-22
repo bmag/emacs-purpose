@@ -94,6 +94,8 @@ correct hash tables."
                      Buffer-menu-mode
                      ibuffer-mode
                      dired-mode
+                     term-mode
+                     eshell-mode
                      comint-mode
                      css-mode
                      text-mode
@@ -107,6 +109,8 @@ correct hash tables."
                      buffers
                      buffers
                      dired
+                     terminal
+                     terminal
                      terminal
                      edit
                      edit
