@@ -16,4 +16,5 @@
  ;; (depends-on "popwin")
  ;; (depends-on "guide-key")
  ;; (depends-on "which-key")
+ ;; (depends-on "magit") ;; for magit-popup.el
  )

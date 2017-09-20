@@ -223,6 +223,33 @@ Don't call this function before `popwin' is loaded."
 
 
 
+;;; Let magit-popup use its own way of opening a help window (see https://github.com/syl20bnr/spacemacs/issues/9570)
+(defun purpose--fix-magit-popup ()
+  "Let magit-popup display help windows the way it wants."
+  (eval-after-load 'magit-popup
+    '(progn
+       (define-purpose-compatible-advice 'magit-popup-describe-function
+           :around purpose--fix-magit-popup-help
+           (&rest args)
+           "Make Purpose inactive during `magit-popup-describe-function'."
+         ;; new style advice
+         ((without-purpose (apply oldfun args)))
+         ;; old style advice
+         ((without-purpose ad-do-it)))
+       (define-purpose-compatible-advice 'magit-popup-manpage
+           :around purpose--fix-magit-popup-help
+           (&rest args)
+           "Make Purpose inactive during `magit-popup-manpage'."
+         ;; new style advice
+         ((without-purpose (apply oldfun args)))
+         ;; old style advice
+         ((without-purpose ad-do-it)))
+       (purpose-advice-add 'magit-popup-describe-function
+                           :around 'purpose--fix-magit-popup-help)
+       (purpose-advice-add 'magit-popup-manpage
+                           :around 'purpose--fix-magit-popup-help)
+       )))
+
 ;;; install fixes
 
 (defun purpose-fix-install (&rest exclude)
@@ -252,7 +279,9 @@ are:
   (unless (member 'guide-key exclude)
     (purpose--fix-guide-key))
   (unless (member 'which-key exclude)
-    (purpose--fix-which-key)))
+    (purpose--fix-which-key))
+  (unless (member 'magit-popup exclude)
+    (purpose--fix-magit-popup)))
 
 (provide 'window-purpose-fixes)
 ;;; window-purpose-fixes.el ends here
