@@ -173,6 +173,42 @@ When `purpose--active-p' is nil, call original `neo-global--create-window'."
 
 
 
+;;; `org-no-popups' suppresses `display-buffer-alist', so we should suppress
+;;; purpose-mode as well. However, since it's a macro and evaluated during
+;;; byte-compilation, we can't use advice for it. Instead, we wrap functions
+;;; that use the macro.
+;;; known functions: `org-get-location', `org-switch-to-buffer-other-window'
+(defun purpose--fix-org-no-popups-1 ()
+  "Make Purpose inactive during some functions that use `org-no-popups'.
+Don't call this function before `org' is loaded."
+  (define-purpose-compatible-advice 'org-switch-to-buffer-other-window
+      :around purpose--fix-org-switch-to-buffer-other-window
+      (&rest args)
+      "Make Purpose inactive during `org-switch-to-buffer-other-window'."
+    ;; new style advice
+    ((without-purpose (apply oldfun args)))
+    ;; old style advice
+    ((without-purpose ad-do-it)))
+  (define-purpose-compatible-advice 'org-get-location
+      :around purpose--fix-org-get-location
+      (&rest args)
+      "Make Purpose inactive during `org-get-location'."
+    ;; new style advice
+    ((without-purpose (apply oldfun args)))
+    ;; old style advice
+    ((without-purpose ad-do-it)))
+  (purpose-advice-add 'org-switch-to-buffer-other-window
+                      :around 'purpose--fix-org-switch-to-buffer-other-window)
+  (purpose-advice-add 'org-get-location
+                      :around 'purpose--fix-org-get-location))
+
+(defun purpose--fix-org-no-popups ()
+  "Call `purpose--fix-org-no-popups-1' after `org' is loaded."
+  (eval-after-load 'org
+    '(purpose--fix-org-no-popups-1)))
+
+
+
 ;;; popwin uses `switch-to-buffer' when it replicates the window tree, so
 ;;; Purpose has to be deactivated during that time. this affects guide-key too
 (defun purpose--fix-popwin-1 ()
@@ -261,6 +297,7 @@ are:
 - 'lv : don't integrate with lv (hydra)
 - 'helm : don't integrate with helm
 - 'neotree : don't integrate with neotree
+- 'org : don't integrate with org
 - 'popwin : don't integrate with popwin
 - 'guide-key : don't integrate with guide-key
 - 'which-key : don't integrate with which-key"
@@ -274,6 +311,8 @@ are:
     (purpose--fix-helm))
   (unless (member 'neotree exclude)
     (purpose--fix-neotree))
+  (unless (member 'org exclude)
+    (purpose--fix-org-no-popups))
   (unless (member 'popwin exclude)
     (purpose--fix-popwin))
   (unless (member 'guide-key exclude)
