@@ -261,6 +261,22 @@ The prompt is chosen according to `purpose-preferred-prompt'."
   (purpose-insert-user-input "foo")
   (should (equal (purpose-read-purpose "Purpose: " '(foo bar baz)) 'foo)))
 
+(ert-deftest purpose-test-default-purpose-when-visiting-file ()
+  "Test that the default purpose for a buffer visiting a file is 'edit.
+Also test that if there was a predefined purpose for that buffer
+it gets that one, and that the default purpose for a buffer not
+visiting a file is still `default-purpose'."
+  (unwind-protect
+      (purpose-with-temp-config
+       nil '(("foo" . yolo)) nil
+       (find-file "foo")
+       (should (equal (purpose-buffer-purpose (get-buffer "foo")) 'yolo))
+       (find-file "bar")
+       (should (equal (purpose-buffer-purpose (get-buffer "bar")) 'edit))
+       (get-buffer-create "baz")
+       (should (equal (purpose-buffer-purpose (get-buffer "baz")) default-purpose))
+       (purpose-kill-buffers-safely "foo" "bar" "baz"))))
+
 (provide 'core-test)
 
 ;;; core-test.el ends here
