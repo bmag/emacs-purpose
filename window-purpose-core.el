@@ -40,6 +40,12 @@
   :type 'symbol
   :package-version "1.2")
 
+(defcustom default-file-purpose 'edit
+  "The default purpose for buffers visiting a file which didn't get a purpose."
+  :group 'purpose
+  :type 'symbol
+  :package-version "1.2")
+
 (defcustom purpose-preferred-prompt 'auto
   "Which interface should Purpose use when prompting the user.
 Available options are: 'auto - use IDO when `ido-mode' is enabled,
@@ -212,6 +218,9 @@ If no purpose was determined, return `default-purpose'."
      (purpose--buffer-purpose-mode buffer-or-name
                                    purpose--default-mode-purposes)))
 
+   ;; If the buffer is visiting a file, fallback to 'edit purpose
+   (when (buffer-file-name (get-buffer buffer-or-name))
+     default-file-purpose)
    ;; fallback to default purpose
    default-purpose))
 
