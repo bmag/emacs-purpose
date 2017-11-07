@@ -44,7 +44,7 @@
   "The default purpose for buffers visiting a file which didn't get a purpose."
   :group 'purpose
   :type 'symbol
-  :package-version "1.2")
+  :package-version "1.6.1")
 
 (defcustom purpose-preferred-prompt 'auto
   "Which interface should Purpose use when prompting the user.
@@ -218,9 +218,9 @@ If no purpose was determined, return `default-purpose'."
      (purpose--buffer-purpose-mode buffer-or-name
                                    purpose--default-mode-purposes)))
 
-   ;; If the buffer is visiting a file, fallback to 'edit purpose
-   (when (buffer-file-name (get-buffer buffer-or-name))
-     default-file-purpose)
+   ;; if the buffer is visiting a file, fallback to 'edit purpose
+   (and (buffer-file-name (get-buffer buffer-or-name))
+        default-file-purpose)
    ;; fallback to default purpose
    default-purpose))
 

@@ -4,7 +4,7 @@
 
 ;; Author: Bar Magal
 ;; Package: purpose
-;; Version: 1.6
+;; Version: 1.6.1
 ;; Keywords: frames
 ;; Homepage: https://github.com/bmag/emacs-purpose
 ;; Package-Requires: ((emacs "24") (cl-lib "0.5") (let-alist "1.0.3") (imenu-list "0.1"))
@@ -72,7 +72,7 @@
 (require 'window-purpose-prefix-overload)
 (require 'window-purpose-fixes)
 
-(defconst purpose-version "1.6"
+(defconst purpose-version "1.6.1"
   "Purpose's version.")
 
 
