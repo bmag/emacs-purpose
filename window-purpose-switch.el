@@ -194,11 +194,11 @@ this case, `purpose-display-at-right-width' is ignored."
 ;; maybe-pop-up-window: display buffer in a new window in the selected frame, if possible (window can be split)
 ;; pop-up-frame: display buffer in a new frame
 
-(defun purpose-change-buffer (buffer window type alist)
+(defun purpose-change-buffer (buffer window type &optional alist dedicated)
   "Display BUFFER in WINDOW, but don't select it.
 BUFFER, WINDOW, TYPE and ALIST have the same meaning as
 `window--display-buffer'.'"
-  (window--display-buffer buffer window type alist))
+  (window--display-buffer buffer window type alist dedicated))
 
 (defun purpose-window-buffer-reusable-p (window buffer)
   "Return non-nil if WINDOW can be reused to display BUFFER.
@@ -492,7 +492,7 @@ used window, split the selected window."
          (new-window (or (split-window-sensibly old-window)
                          (and force-split
                               (split-window old-window)))))
-    (purpose-change-buffer buffer new-window 'window alist)
+    (purpose-change-buffer buffer new-window 'window alist display-buffer-mark-dedicated)
     new-window))
 
 (defun purpose-display-pop-up-window (buffer alist)
@@ -506,8 +506,8 @@ used window, split the selected window."
 
 (defun purpose-display-maybe-pop-up-window (buffer alist)
   "Display BUFFER in a new window, if possible.
-The display is possible if `pop-up-windows' is non-nil.
-The display is done with `display-buffer-pop-up-window'."
+The display is possible if `pop-up-windows' is non-nil.  The
+display is done similar to `display-buffer-pop-up-window'."
   (when pop-up-windows
     (purpose-display-pop-up-window--internal buffer alist nil)))
 
@@ -532,7 +532,7 @@ both.  In case of conflict, `pop-up-frame-parameters' takes precedence."
                       (funcall pop-up-frame-function))))
            (window (and frame (frame-selected-window frame))))
       (when window
-        (purpose-change-buffer buffer window 'frame alist)))))
+        (purpose-change-buffer buffer window 'frame alist display-buffer-mark-dedicated)))))
 
 (defun purpose-display-maybe-pop-up-frame (buffer alist)
   "Display BUFFER in a new frame, if possible.
