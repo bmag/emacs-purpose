@@ -51,12 +51,18 @@
 (require 'ibuf-ext)
 (require 'imenu-list)
 
+(defcustom purpose-x-code1-dired-buffer-name "*Files*"
+  "The buffer name used for the `dired' buffer specific to Code1 extension."
+  :group 'purpose
+  :type '(string)
+  :package-version "1.5")
+
 (defvar purpose-x-code1--window-layout
   '(nil
     (0 0 152 35)
     (t
      (0 0 29 35)
-     (:purpose dired :purpose-dedicated t :width 0.16 :height 0.5 :edges
+     (:purpose code1-dired :purpose-dedicated t :width 0.16 :height 0.5 :edges
                (0.0 0.0 0.19333333333333333 0.5))
      (:purpose buffers :purpose-dedicated t :width 0.16 :height 0.4722222222222222 :edges
                (0.0 0.5 0.19333333333333333 0.9722222222222222)))
@@ -65,7 +71,7 @@
     (:purpose ilist :purpose-dedicated t :width 0.15333333333333332 :height 0.9722222222222222 :edges
               (0.8266666666666667 0.0 1.0133333333333334 0.9722222222222222)))
   "Window layout for purpose-x-code1-dired-ibuffer.
-Has a main 'edit window, and two side windows - 'dired and 'buffers.
+Has a main 'edit window, and two side windows - 'code1-dired and 'buffers.
 All windows are purpose-dedicated.")
 
 ;; the name arg ("purpose-x-code1") is necessary for Emacs 24.3 and older
@@ -73,8 +79,9 @@ All windows are purpose-dedicated.")
   (purpose-conf "purpose-x-code1"
                 :mode-purposes
                 '((ibuffer-mode . buffers)
-                  (dired-mode . dired)
-                  (imenu-list-major-mode . ilist))))
+                  (imenu-list-major-mode . ilist))
+                :name-purposes
+                `((,purpose-x-code1-dired-buffer-name . code1-dired))))
 
 (defvar purpose-x-code1-buffers-changed nil
   "Internal variable for use with `frame-or-buffer-changed-p'.")
@@ -125,14 +132,27 @@ If a non-buffer-dedicated window with purpose 'dired exists, display
 the directory of the current buffer in that window, using `dired'.
 If there is no window available, do nothing.
 If current buffer doesn't have a filename, do nothing."
-  (when (and (buffer-file-name)
-             (cl-delete-if #'window-dedicated-p
-                           (purpose-windows-with-purpose 'dired)))
-    (save-selected-window
-      (dired (file-name-directory (buffer-file-name)))
-      (when (fboundp 'dired-hide-details-mode)
-        (dired-hide-details-mode))
-      (bury-buffer (current-buffer)))))
+(save-selected-window
+    (let ((file-path (buffer-file-name)))
+      (when (and file-path
+                 (cl-delete-if #'window-dedicated-p
+                               (purpose-windows-with-purpose 'code1-dired)))
+        ;; Prevents immediately closing the newly created popup help window
+        (letf (((symbol-value 'purpose-select-buffer-hook) nil))
+          (let ((buffer (dired-noselect (file-name-directory file-path))))
+            ;; Make sure code1 only creates 1 dired buffer
+            (dolist (other-buf (purpose-buffers-with-purpose 'code1-dired))
+              (when (and (not (eq buffer other-buf))
+                         (not (string= (buffer-name other-buf)
+                                       (purpose--dummy-buffer-name 'code1-dired))))
+                (kill-buffer other-buf)))
+            (with-current-buffer buffer
+              (rename-buffer purpose-x-code1-dired-buffer-name))
+            (switch-to-buffer buffer)
+            (dired-goto-file file-path)
+            (when (fboundp 'dired-hide-details-mode)
+              (dired-hide-details-mode))
+            (bury-buffer (current-buffer))))))))
 
 (defun purpose-x-code1-update-changed ()
   "Update auxiliary buffers if frame/buffer had changed.
@@ -147,7 +167,7 @@ buffer had changed."
   "Setup purpose-x-code1.
 This setup includes 4 windows:
 1. dedicated 'edit window
-2. dedicated 'dired window.  This window shows the current buffer's
+2. dedicated 'code1-dired window.  This window shows the current buffer's
 directory in a special window, using `dired' and
 `dired-hide-details-mode' (if available).
 3. dedicated 'buffers window.  This window shows the currently open
