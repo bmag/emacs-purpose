@@ -55,7 +55,7 @@
   "The buffer name used for the `dired' buffer specific to Code1 extension."
   :group 'purpose
   :type '(string)
-  :package-version "1.5")
+  :package-version "1.6.2")
 
 (defvar purpose-x-code1--window-layout
   '(nil
