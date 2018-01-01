@@ -159,7 +159,10 @@ If current buffer doesn't have a filename, do nothing."
   "Update auxiliary buffers if frame/buffer had changed.
 Uses `frame-or-buffer-changed-p' to determine whether the frame or
 buffer had changed."
-  (when (frame-or-buffer-changed-p 'purpose-x-code1-buffers-changed)
+  (when (and
+         (frame-or-buffer-changed-p 'purpose-x-code1-buffers-changed)
+         (not (memq (purpose-buffer-purpose (current-buffer)) '(code1-dired buffers ilist)))
+         (not (minibufferp)))
     (purpose-x-code1-update-dired)
     (imenu-list-update-safe)))
 
