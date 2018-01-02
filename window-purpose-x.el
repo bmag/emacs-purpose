@@ -151,6 +151,8 @@ If current buffer doesn't have a filename, do nothing."
             (switch-to-buffer buffer)
             (dired-goto-file file-path)
             (when (fboundp 'dired-hide-details-mode)
+              (when (not (assq 'dired-hide-details-mode minor-mode-alist))
+                (add-minor-mode 'dired-hide-details-mode ""))
               (dired-hide-details-mode))
             (bury-buffer (current-buffer))))))))
 
