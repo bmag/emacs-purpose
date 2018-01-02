@@ -133,29 +133,29 @@ If a non-buffer-dedicated window with purpose 'dired exists, display
 the directory of the current buffer in that window, using `dired'.
 If there is no window available, do nothing.
 If current buffer doesn't have a filename, do nothing."
-(save-selected-window
+  (save-selected-window
     (let ((file-path (buffer-file-name)))
       (when (and file-path
                  (cl-delete-if #'window-dedicated-p
                                (purpose-windows-with-purpose 'code1-dired)))
-        ;; Prevents immediately closing the newly created popup help window
-        (letf (((symbol-value 'purpose-select-buffer-hook) nil))
-          (let ((buffer (dired-noselect (file-name-directory file-path))))
-            ;; Make sure code1 only creates 1 dired buffer
-            (dolist (other-buf (purpose-buffers-with-purpose 'code1-dired))
-              (when (and (not (eq buffer other-buf))
-                         (not (string= (buffer-name other-buf)
-                                       (purpose--dummy-buffer-name 'code1-dired))))
-                (kill-buffer other-buf)))
-            (with-current-buffer buffer
-              (rename-buffer purpose-x-code1-dired-buffer-name)
-              (when (fboundp 'dired-hide-details-mode)
-                (when (not (assq 'dired-hide-details-mode minor-mode-alist))
-                  (add-minor-mode 'dired-hide-details-mode ""))
-                (dired-hide-details-mode)))
-            (display-buffer buffer)
-            (dired-goto-file file-path)
-            (bury-buffer (current-buffer))))))))
+        (let ((buffer (dired-noselect (file-name-directory file-path))))
+          ;; Make sure code1 only creates 1 dired buffer
+          (dolist (other-buf (purpose-buffers-with-purpose 'code1-dired))
+            (when (and (not (eq buffer other-buf))
+                       (not (string= (buffer-name other-buf)
+                                     (purpose--dummy-buffer-name 'code1-dired))))
+              (kill-buffer other-buf)))
+          (with-current-buffer buffer
+            (rename-buffer purpose-x-code1-dired-buffer-name)
+            (when (fboundp 'dired-hide-details-mode)
+              (when (not (assq 'dired-hide-details-mode minor-mode-alist))
+                (add-minor-mode 'dired-hide-details-mode ""))
+              (dired-hide-details-mode)))
+          ;; Prevents immediately closing the newly created popup help window
+          (letf (((symbol-value 'purpose-select-buffer-hook) nil))
+            (display-buffer buffer))
+          (dired-goto-file file-path)
+          (bury-buffer (current-buffer)))))))
 
 (defun purpose-x-code1-update-changed ()
   "Update auxiliary buffers if frame/buffer had changed.
