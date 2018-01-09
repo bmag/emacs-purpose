@@ -4,6 +4,10 @@
 This guide will head you to the fully ready to use IDE in Emacs. The guide consists of 5 parts: organize your emacs layout, browsing your projects, keep list of your opened files, edit your code, different misc functionalities, list of your functions, classes in currently opened file. This layout requires following things to be installed: neo-tree.
 </p>
 
+First of all, please see the interface of this emacs window-configuration.
+
+[[https://github.com/sergeyglazyrindev/emacs-purpose/blob/master/layouts/full-ide.png|alt=full ide]]
+
 ## Organize your emacs layout
 
 First of all, install window-purpose emacs package through "package-install" or "el-get". Then please create directory YOUR_EMACSD_DIRECTORY/layouts and copy the file full-ide.window-layout there. Add to your init.el following elisp code.
@@ -43,7 +47,7 @@ If you add following to your init.el, then using combination "C-c C-l" you will 
 
 ## Keep list of your opened files
 
-How do you see the list of currently opened files in your project, in your environment ? For this purpose, we’ve added a buffer with purpose buffers and point to this buffer "ibuffers" emacs mode
+How do you see the list of currently opened files in your project, in your environment ? For this purpose, we’ve added a buffer with purpose buffers and pointed to this buffer "ibuffers" emacs mode
 
 How do you switch to this buffer ? You may add your own key combination, using an example of the code above, you need to replace only "dired" with "buffers" and use the key combination which fits your keyboard "habits".
 
@@ -123,7 +127,7 @@ So, these key-combinations will help you to get full advantages of this buffer w
 
 It is handled by ilist major mode.
 
-You can handle to the list of definitions in currently opened file using this hotkey definition
+You can get to the list of definitions in currently opened file using this hotkey definition
 
 ```elisp
 (define-key purpose-mode-map (kbd „C-c C-d“)
