@@ -119,28 +119,27 @@ All windows are purpose-dedicated.")
   (setq ibuffer-display-summary t)
   (setq ibuffer-use-header-line t))
 
-(defun purpose-x-code1-update-dired ()
+(defun purpose-update-dired ()
   "Update free dired window with current buffer's directory.
 If a non-buffer-dedicated window with purpose 'dired exists, display
 the directory of the current buffer in that window, using `dired'.
 If there is no window available, do nothing.
 If current buffer doesn't have a filename, do nothing."
-  (unless (eq major-mode 'org-mode)
-    (when (and (buffer-file-name)
+  (when (and (buffer-file-name)
              (cl-delete-if #'window-dedicated-p
                            (purpose-windows-with-purpose 'dired)))
     (save-selected-window
       (dired (file-name-directory (buffer-file-name)))
       (when (fboundp 'dired-hide-details-mode)
         (dired-hide-details-mode))
-      (bury-buffer (current-buffer))))))
+      (bury-buffer (current-buffer)))))
 
 (defun purpose-x-code1-update-changed ()
   "Update auxiliary buffers if frame/buffer had changed.
 Uses `frame-or-buffer-changed-p' to determine whether the frame or
 buffer had changed."
   (when (frame-or-buffer-changed-p 'purpose-x-code1-buffers-changed)
-    (purpose-x-code1-update-dired)
+    (purpose-update-dired)
     (imenu-list-update-safe)))
 
 ;;;###autoload
@@ -158,7 +157,7 @@ imenu."
   (interactive)
   (purpose-set-extension-configuration :purpose-x-code1 purpose-x-code1-purpose-config)
   (purpose-x-code1--setup-ibuffer)
-  (purpose-x-code1-update-dired)
+  (purpose-update-dired)
   (imenu-list-minor-mode)
   (frame-or-buffer-changed-p 'purpose-x-code1-buffers-changed)
   (add-hook 'post-command-hook #'purpose-x-code1-update-changed)
@@ -711,6 +710,19 @@ This is implemented by overriding `replace-buffer-in-windows' with
   (remove-hook 'purpose-mode-hook 'purpose-x-kill-sync))
 
 ;;; --- purpose-x-kill ends here ---
+
+;;; purpose-full-ide
+
+(defvar purpose-full-ide-buffers-changed nil
+  "Internal variable for use with `frame-or-buffer-changed-p'.")
+
+(defun purpose-full-ide-update-changed ()
+  "Update auxiliary buffers if frame/buffer had changed.
+Uses `frame-or-buffer-changed-p' to determine whether the frame or
+buffer had changed."
+  (when (frame-or-buffer-changed-p 'purpose-full-ide-buffers-changed)
+    (imenu-list-update-safe)))
+
 
 (provide 'window-purpose-x)
 ;;; window-purpose-x.el ends here
