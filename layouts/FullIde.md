@@ -1,7 +1,7 @@
 # Full ide guide for Emacs
 
 <p>
-This guide will head you to the fully ready to use IDE in Emacs. The guide consists of 5 parts: organize your emacs layout, browsing your projects, keep list of your opened files, edit your code, different misc functionalities, list of your functions, classes in currently opened file. This layout requires following things to be installed: neo-tree, org . For @todo functionality.
+This guide will head you to the fully ready to use IDE in Emacs. The guide consists of 5 parts: organize your emacs layout, browsing your projects, keep list of your opened files, edit your code, different misc functionalities, list of your functions, classes in currently opened file. This layout requires following things to be installed: neo-tree.
 </p>
 
 ## Organize your emacs layout
