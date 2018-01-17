@@ -794,11 +794,6 @@ If it doesn't exist, create it."
   (set 'neotree-smart-open nil)
   (neotree-show))
 
-(defun set-full-ide-window-layout (window)
-  (interactive)
-  (remove-hook 'neo-after-create-hook #'set-full-ide-window-layout)
-  (purpose-set-window-layout purpose-full-ide--window-layout))
-
 (defun purpose-full-ide-setup ()
   (interactive)
   (purpose-set-extension-configuration :purpose-full-ide purpose-full-ide-purpose-config)
@@ -808,9 +803,8 @@ If it doesn't exist, create it."
   (frame-or-buffer-changed-p 'purpose-full-ide-buffers-changed)
   (add-hook 'post-command-hook #'purpose-full-ide-update-changed)
   (when (load "neotree" t t)
-    (add-hook 'neo-after-create-hook #'set-full-ide-window-layout)
     (purpose-setup-neotree))
-  )
+  (purpose-set-window-layout purpose-full-ide--window-layout))
 
 (defun purpose-full-ide-unset ()
   "Unset purpose-full-ide."
