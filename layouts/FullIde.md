@@ -6,7 +6,7 @@ This guide will head you to the fully ready to use IDE in Emacs. The guide consi
 
 First of all, please see the interface of this emacs window-configuration.
 
-[[https://github.com/sergeyglazyrindev/emacs-purpose/blob/master/layouts/full-ide.png|alt=full-ide]]
+![](https://github.com/sergeyglazyrindev/emacs-purpose/blob/master/layouts/full-ide.png|alt=full-ide)
 
 ## Organize your emacs layout
 
