@@ -18,10 +18,10 @@ First of all, install window-purpose emacs package through "package-install" or 
   (purpose-mode)
   (purpose-full-ide-setup))
 
-(global-set-key (kbd „M-L“)OB ’load-purpose-mode)
+(global-set-key (kbd "M-L") 'load-purpose-mode)
 
-(defun get-only-one-buffer-with-purpose (purpose)
-  „Get buffers wih purpose“
+    (defun get-only-one-buffer-with-purpose (purpose)
+  "Get buffers wih purpose"
   (buffer-name (nth 0 (purpose-buffers-with-purpose purpose))))
 ```
 
@@ -35,8 +35,8 @@ How do you switch to list of the files in your project ?
 If you add following to your init.el, then using combination "C-c C-l" you will be able to switch to the buffer with your directory structure.
 
 ```elisp
-(define-key purpose-mode-map (kbd „C-c C-l“)
-  (lambda () (interactive) (purpose-switch-buffer (get-only-one-buffer-with-purpose ’Neotree))))
+(define-key purpose-mode-map (kbd "C-c C-l")
+  (lambda () (interactive) (purpose-switch-buffer (get-only-one-buffer-with-purpose 'Neotree))))
 
 ```
 
@@ -51,8 +51,8 @@ How do you switch to this buffer ? You may add your own key combination, using a
 The emacs configuration for this need depends on technologies you are working with. I work mostly with python/js/bash, so for my needs I need no extra configuration for emacs-purpose buffer purposes. But you may decide to add your own purposes, please configure it as described below.
 
 ```elisp
-(add-to-list ’purpose-user-mode-purposes
-             ’(EMACS_MODE . PURPOSE))
+(add-to-list 'purpose-user-mode-purposes
+             '(EMACS_MODE . PURPOSE))
 ;; don’t forget to recompile user-configuration after you updated list of supported emacs modes
 (purpose-compile-user-configuration)
 
@@ -61,8 +61,8 @@ The emacs configuration for this need depends on technologies you are working wi
 You may switch to the file opened in your emacs using key combination "C-c C-c". To enable this key combination, please add the code below to your init.el
 
 ```elisp
-(define-key purpose-mode-map (kbd „C-c C-c“)
-  (lambda () (interactive) (purpose-switch-buffer-with-some-purpose ’edit)))
+(define-key purpose-mode-map (kbd "C-c C-c")
+  (lambda () (interactive) (purpose-switch-buffer-with-some-purpose 'edit)))
 
 ```
 
@@ -72,8 +72,8 @@ You may switch to the file opened in your emacs using key combination "C-c C-c".
 It would be great to show a search results in the misc buffer and get huge benefit of being able to simply switch to the file to edit or analyze some code. For this you need just to configure your purpose-mode-mapping for needed major modes and it will work naturally.
 
 ```elisp
-(add-to-list ’purpose-user-mode-purposes
-             ’(inferior-python-mode . misc))
+(add-to-list 'purpose-user-mode-purposes
+             '(inferior-python-mode . misc))
 ;; don’t forget to recompile user-configuration after you updated list of supported emacs modes
 (purpose-compile-user-configuration)
 
@@ -108,8 +108,8 @@ It is handled by ilist major mode.
 You can get to the list of definitions in currently opened file using this hotkey definition
 
 ```elisp
-(define-key purpose-mode-map (kbd „C-c C-d“)
-  (lambda () (interactive)  (purpose-switch-buffer (get-only-one-buffer-with-purpose ’ilist))))
+(define-key purpose-mode-map (kbd "C-c C-d")
+  (lambda () (interactive)  (purpose-switch-buffer (get-only-one-buffer-with-purpose 'ilist))))
 
 ```
 
