@@ -50,6 +50,7 @@
 (require 'ibuffer)
 (require 'ibuf-ext)
 (require 'imenu-list)
+(require 'shut-up)
 
 (defcustom purpose-x-code1-dired-buffer-name "*Files*"
   "The buffer name used for the `dired' buffer specific to Code1 extension."
@@ -137,7 +138,7 @@ If current buffer doesn't have a filename, do nothing."
       (when (and file-path
                  (cl-delete-if #'window-dedicated-p
                                (purpose-windows-with-purpose 'code1-dired)))
-        (let ((buffer (dired-noselect (file-name-directory file-path))))
+        (let ((buffer (shut-up (dired-noselect (file-name-directory file-path)))))
           ;; Make sure code1 only creates 1 dired buffer
           (dolist (other-buf (purpose-buffers-with-purpose 'code1-dired))
             (when (and (not (eq buffer other-buf))
@@ -162,12 +163,15 @@ If current buffer doesn't have a filename, do nothing."
   "Update auxiliary buffers if frame/buffer had changed.
 Uses `frame-or-buffer-changed-p' to determine whether the frame or
 buffer had changed."
-  (when (and
-         (frame-or-buffer-changed-p 'purpose-x-code1-buffers-changed)
-         (not (memq (purpose-buffer-purpose (current-buffer)) '(code1-dired buffers ilist)))
-         (not (minibufferp)))
-    (purpose-x-code1-update-dired)
-    (imenu-list-update-safe)))
+  (let ((buf (current-buffer)))
+    (when (and
+           (frame-or-buffer-changed-p 'purpose-x-code1-buffers-changed)
+           (not (memq (purpose-buffer-purpose buf) '(code1-dired buffers ilist)))
+           (not (minibufferp)))
+      (purpose-x-code1-update-dired)
+      (when (and (not (eq buf imenu-list--displayed-buffer))
+                 (eq (purpose-buffer-purpose buf) 'edit))
+        (imenu-list-update)))))
 
 ;;;###autoload
 (defun purpose-x-code1-setup ()
@@ -186,6 +190,19 @@ imenu."
   (purpose-x-code1--setup-ibuffer)
   (purpose-x-code1-update-dired)
   (imenu-list-minor-mode)
+  (setq imenu-list-auto-update nil
+        imenu-list-update-current-entry nil
+        imenu-list-persist-when-imenu-index-unavailable nil)
+  (imenu-list-stop-timer)
+  (add-hook 'buffer-list-update-hook
+            (lambda ()
+              (let ((last-buf (cl-find-if
+                               (lambda (buf) (string-match "^[^ *]" (buffer-name buf)))
+                               (buffer-list))))
+                (when (and last-buf
+                           (eq (purpose-buffer-purpose last-buf) 'edit))
+                  (with-current-buffer last-buf
+                    (imenu-list-update))))))
   (frame-or-buffer-changed-p 'purpose-x-code1-buffers-changed)
   (add-hook 'post-command-hook #'purpose-x-code1-update-changed)
   (purpose-set-window-layout purpose-x-code1--window-layout))
