@@ -106,7 +106,12 @@ All windows are purpose-dedicated.")
   (when (get-buffer "*Ibuffer*")
     (kill-buffer "*Ibuffer*"))
   (save-selected-window
-    (ibuffer-list-buffers)))
+    (ibuffer-list-buffers)
+    (let ((ibuf (get-buffer "*Ibuffer*")))
+      (when ibuf
+        (with-current-buffer ibuf
+          (setq mode-line-format nil
+                truncate-lines t))))))
 
 (defun purpose-x-code1--unset-ibuffer ()
   "Unset ibuffer settings."
@@ -146,7 +151,9 @@ If current buffer doesn't have a filename, do nothing."
                                      (purpose--dummy-buffer-name 'code1-dired))))
               (kill-buffer other-buf)))
           (with-current-buffer buffer
-            (rename-buffer purpose-x-code1-dired-buffer-name))
+            (rename-buffer purpose-x-code1-dired-buffer-name)
+            (setq truncate-lines t
+                  mode-line-format nil))
           ;; Prevents immediately closing the newly created popup help window
           (letf (((symbol-value 'purpose-select-buffer-hook) nil))
             (switch-to-buffer buffer))
@@ -184,21 +191,33 @@ buffer had changed."
 
 (defvar purpose-x-code1--original-imenu-list-settings (make-hash-table))
 
-(defun purpose-x-code1-set-imenu-list-vars ()
-  "Override some `imenu-list' settings."
+(defun purpose-x-code1--setup-imenu-list ()
   (dolist (var '(imenu-list-auto-update
                  imenu-list-update-current-entry
                  imenu-list-persist-when-imenu-index-unavailable))
     (puthash var (symbol-value var) purpose-x-code1--original-imenu-list-settings)
     (set var nil))
-  (imenu-list-stop-timer))
 
-(defun purpose-x-code1-unset-imenu-list-vars ()
-  "Reset `imenu-list' options to before x-code1 was activated."
+  (imenu-list-minor-mode)
+
+  (imenu-list-stop-timer)
+
+  (with-current-buffer (get-buffer imenu-list-buffer-name)
+    (setq truncate-lines t
+          mode-line-format nil))
+
+  (add-hook 'find-file-hook 'purpose-x-code-1-update-imenu-list)
+  (add-hook 'buffer-list-update-hook 'purpose-x-code-1-update-imenu-list))
+
+(defun purpose-x-code1--unset-imenu-list ()
+  (imenu-list-minor-mode -1)
+
   (dolist (var (hash-table-keys purpose-x-code1--original-imenu-list-settings))
     (set var (gethash var purpose-x-code1--original-imenu-list-settings)))
-  (when imenu-list-auto-update
-    (imenu-list-start-timer)))
+
+  (remove-hook 'find-file-hook 'purpose-x-code-1-update-imenu-list)
+  (remove-hook 'buffer-list-update-hook 'purpose-x-code-1-update-imenu-list))
+
 
 ;;;###autoload
 (defun purpose-x-code1-setup ()
@@ -216,9 +235,7 @@ imenu."
   (purpose-set-extension-configuration :purpose-x-code1 purpose-x-code1-purpose-config)
   (purpose-x-code1--setup-ibuffer)
   (purpose-x-code1-update-dired)
-  (imenu-list-minor-mode)
-  (purpose-x-code1-set-imenu-list-vars)
-  (add-hook 'buffer-list-update-hook 'purpose-x-code-1-update-imenu-list)
+  (purpose-x-code1--setup-imenu-list)
   (frame-or-buffer-changed-p 'purpose-x-code1-buffers-changed)
   (add-hook 'post-command-hook #'purpose-x-code1-update-changed)
   (purpose-set-window-layout purpose-x-code1--window-layout))
@@ -228,9 +245,7 @@ imenu."
   (interactive)
   (purpose-del-extension-configuration :purpose-x-code1)
   (purpose-x-code1--unset-ibuffer)
-  (imenu-list-minor-mode -1)
-  (purpose-x-code1-unset-imenu-list-vars)
-  (remove-hook 'buffer-list-update-hook 'purpose-x-code-1-update-imenu-list)
+  (purpose-x-code1--unset-imenu-list)
   (remove-hook 'post-command-hook #'purpose-x-code1-update-changed))
 
 ;;; --- purpose-x-code1 ends here ---
