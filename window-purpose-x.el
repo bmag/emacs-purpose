@@ -173,6 +173,33 @@ buffer had changed."
                  (eq (purpose-buffer-purpose buf) 'edit))
         (imenu-list-update)))))
 
+(defun purpose-x-code-1-update-imenu-list ()
+  (let ((last-buf (cl-find-if
+                   (lambda (buf) (string-match "^[^ *]" (buffer-name buf)))
+                   (buffer-list))))
+    (when (and last-buf
+               (eq (purpose-buffer-purpose last-buf) 'edit))
+      (with-current-buffer last-buf
+        (imenu-list-update)))))
+
+(defvar purpose-x-code1--original-imenu-list-settings (make-hash-table))
+
+(defun purpose-x-code1-set-imenu-list-vars ()
+  "Override some `imenu-list' settings."
+  (dolist (var '(imenu-list-auto-update
+                 imenu-list-update-current-entry
+                 imenu-list-persist-when-imenu-index-unavailable))
+    (puthash var (symbol-value var) purpose-x-code1--original-imenu-list-settings)
+    (set var nil))
+  (imenu-list-stop-timer))
+
+(defun purpose-x-code1-unset-imenu-list-vars ()
+  "Reset `imenu-list' options to before x-code1 was activated."
+  (dolist (var (hash-table-keys purpose-x-code1--original-imenu-list-settings))
+    (set var (gethash var purpose-x-code1--original-imenu-list-settings)))
+  (when imenu-list-auto-update
+    (imenu-list-start-timer)))
+
 ;;;###autoload
 (defun purpose-x-code1-setup ()
   "Setup purpose-x-code1.
@@ -190,19 +217,8 @@ imenu."
   (purpose-x-code1--setup-ibuffer)
   (purpose-x-code1-update-dired)
   (imenu-list-minor-mode)
-  (setq imenu-list-auto-update nil
-        imenu-list-update-current-entry nil
-        imenu-list-persist-when-imenu-index-unavailable nil)
-  (imenu-list-stop-timer)
-  (add-hook 'buffer-list-update-hook
-            (lambda ()
-              (let ((last-buf (cl-find-if
-                               (lambda (buf) (string-match "^[^ *]" (buffer-name buf)))
-                               (buffer-list))))
-                (when (and last-buf
-                           (eq (purpose-buffer-purpose last-buf) 'edit))
-                  (with-current-buffer last-buf
-                    (imenu-list-update))))))
+  (purpose-x-code1-set-imenu-list-vars)
+  (add-hook 'buffer-list-update-hook 'purpose-x-code-1-update-imenu-list)
   (frame-or-buffer-changed-p 'purpose-x-code1-buffers-changed)
   (add-hook 'post-command-hook #'purpose-x-code1-update-changed)
   (purpose-set-window-layout purpose-x-code1--window-layout))
@@ -213,6 +229,8 @@ imenu."
   (purpose-del-extension-configuration :purpose-x-code1)
   (purpose-x-code1--unset-ibuffer)
   (imenu-list-minor-mode -1)
+  (purpose-x-code1-unset-imenu-list-vars)
+  (remove-hook 'buffer-list-update-hook 'purpose-x-code-1-update-imenu-list)
   (remove-hook 'post-command-hook #'purpose-x-code1-update-changed))
 
 ;;; --- purpose-x-code1 ends here ---
