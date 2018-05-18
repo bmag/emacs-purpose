@@ -50,12 +50,20 @@
 (require 'ibuffer)
 (require 'ibuf-ext)
 (require 'imenu-list)
+(require 'shut-up)
 
 (defcustom purpose-x-code1-dired-buffer-name "*Files*"
   "The buffer name used for the `dired' buffer specific to Code1 extension."
   :group 'purpose
   :type '(string)
   :package-version "1.5")
+
+(defcustom purpose-x-code1-dired-goto-file nil
+  "Whether the entry for the current file should be highlighted
+in `dired' using `dired-goto-file'."
+  :group 'purpose
+  :type '(boolean)
+  :package-version "1.6.2")
 
 (defvar purpose-x-code1--window-layout
   '(nil
@@ -84,9 +92,6 @@ All windows are purpose-dedicated.")
                 :name-purposes
                 `((,purpose-x-code1-dired-buffer-name . code1-dired))))
 
-(defvar purpose-x-code1-buffers-changed nil
-  "Internal variable for use with `frame-or-buffer-changed-p'.")
-
 (define-ibuffer-filter purpose-x-code1-ibuffer-files-only
     "Display only buffers that are bound to files."
   ()
@@ -106,7 +111,12 @@ All windows are purpose-dedicated.")
   (when (get-buffer "*Ibuffer*")
     (kill-buffer "*Ibuffer*"))
   (save-selected-window
-    (ibuffer-list-buffers)))
+    (ibuffer-list-buffers)
+    (let ((ibuf (get-buffer "*Ibuffer*")))
+      (when ibuf
+        (with-current-buffer ibuf
+          (setq mode-line-format nil
+                truncate-lines t))))))
 
 (defun purpose-x-code1--unset-ibuffer ()
   "Unset ibuffer settings."
@@ -136,9 +146,9 @@ If current buffer doesn't have a filename, do nothing."
   (save-selected-window
     (let ((file-path (buffer-file-name)))
       (when (and file-path
-                 (cl-delete-if #'window-dedicated-p
+                 (cl-delete-if 'window-dedicated-p
                                (purpose-windows-with-purpose 'code1-dired)))
-        (let ((buffer (dired-noselect (file-name-directory file-path))))
+        (let ((buffer (shut-up (dired-noselect (file-name-directory file-path)))))
           ;; Make sure code1 only creates 1 dired buffer
           (dolist (other-buf (purpose-buffers-with-purpose 'code1-dired))
             (when (and (not (eq buffer other-buf))
@@ -147,6 +157,8 @@ If current buffer doesn't have a filename, do nothing."
               (kill-buffer other-buf)))
           (with-current-buffer buffer
             (rename-buffer purpose-x-code1-dired-buffer-name)
+            (setq truncate-lines t
+                  mode-line-format nil)
             (when (fboundp 'dired-hide-details-mode)
               (when (not (assq 'dired-hide-details-mode minor-mode-alist))
                 (add-minor-mode 'dired-hide-details-mode ""))
@@ -161,12 +173,30 @@ If current buffer doesn't have a filename, do nothing."
   "Update auxiliary buffers if frame/buffer had changed.
 Uses `frame-or-buffer-changed-p' to determine whether the frame or
 buffer had changed."
-  (when (and
-         (frame-or-buffer-changed-p 'purpose-x-code1-buffers-changed)
-         (not (memq (purpose-buffer-purpose (current-buffer)) '(code1-dired buffers ilist)))
-         (not (minibufferp)))
+  (when (and (not (minibufferp))
+             (eq (purpose-buffer-purpose (current-buffer)) 'edit))
     (purpose-x-code1-update-dired)
-    (imenu-list-update-safe)))
+    (imenu-list-update)))
+
+(defvar purpose-x-code1--original-imenu-list-settings (make-hash-table))
+
+(defun purpose-x-code1--setup-imenu-list ()
+  (dolist (var '(imenu-list-auto-update
+                 imenu-list-update-current-entry
+                 imenu-list-persist-when-imenu-index-unavailable))
+    (puthash var (symbol-value var) purpose-x-code1--original-imenu-list-settings)
+    (set var nil))
+  (imenu-list-minor-mode)
+  (imenu-list-stop-timer)
+  (with-current-buffer (get-buffer imenu-list-buffer-name)
+    (setq truncate-lines t
+          mode-line-format nil)))
+
+(defun purpose-x-code1--unset-imenu-list ()
+  (imenu-list-minor-mode -1)
+  (dolist (var (hash-table-keys purpose-x-code1--original-imenu-list-settings))
+    (set var (gethash var purpose-x-code1--original-imenu-list-settings))))
+
 
 ;;;###autoload
 (defun purpose-x-code1-setup ()
@@ -184,18 +214,17 @@ imenu."
   (purpose-set-extension-configuration :purpose-x-code1 purpose-x-code1-purpose-config)
   (purpose-x-code1--setup-ibuffer)
   (purpose-x-code1-update-dired)
-  (imenu-list-minor-mode)
-  (frame-or-buffer-changed-p 'purpose-x-code1-buffers-changed)
-  (add-hook 'post-command-hook #'purpose-x-code1-update-changed)
-  (purpose-set-window-layout purpose-x-code1--window-layout))
+  (purpose-x-code1--setup-imenu-list)
+  (purpose-set-window-layout purpose-x-code1--window-layout)
+  (add-hook 'window-configuration-change-hook #'purpose-x-code1-update-changed))
 
 (defun purpose-x-code1-unset ()
   "Unset purpose-x-code1."
   (interactive)
-  (purpose-del-extension-configuration :purpose-x-code1)
+  (remove-hook 'window-configuration-change-hook #'purpose-x-code1-update-changed)
+  (purpose-x-code1--unset-imenu-list)
   (purpose-x-code1--unset-ibuffer)
-  (imenu-list-minor-mode -1)
-  (remove-hook 'post-command-hook #'purpose-x-code1-update-changed))
+  (purpose-del-extension-configuration :purpose-x-code1))
 
 ;;; --- purpose-x-code1 ends here ---
 
