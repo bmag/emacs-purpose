@@ -320,7 +320,7 @@ Can have the same values as `purpose-display-at-top-height' and
 When changing the value of this variable in elisp code, you should call
 `purpose-x-popwin-update-conf' for the change to take effect."
   :group 'purpose
-  :type 'list
+  :type '(repeat symbol)
   :set #'(lambda (symbol value)
            (prog1 (set-default symbol value)
              (purpose-x-popwin-update-conf)))
@@ -334,7 +334,7 @@ windows.
 When changing the value of this variable in elisp code, you should call
 `purpose-x-popwin-update-conf' for the change to take effect."
   :group 'purpose
-  :type 'list
+  :type '(repeat string)
   :set #'(lambda (symbol value)
            (prog1 (set-default symbol value)
              (purpose-x-popwin-update-conf)))
@@ -348,7 +348,7 @@ windows.
 When changing the value of this variable in elisp code, you should call
 `purpose-x-popwin-update-conf' for the change to take effect."
   :group 'purpose
-  :type 'list
+  :type '(repeat string)
   :set #'(lambda (symbol value)
            (prog1 (set-default symbol value)
              (purpose-x-popwin-update-conf)))
