@@ -46,21 +46,6 @@
   :type 'symbol
   :package-version "1.6.1")
 
-(defcustom purpose-preferred-prompt 'auto
-  "Which interface should Purpose use when prompting the user.
-Available options are: 'auto - use IDO when `ido-mode' is enabled,
-otherwise Helm when `helm-mode' is enabled, otherwise use default Emacs
-prompts; 'ido - use IDO; 'helm - use Helm; 'vanilla - use default Emacs
-prompts."
-  :group 'purpose
-  :type '(choice (const auto)
-                 (const ido)
-                 (const helm)
-                 (const vanilla))
-  :package-version "1.4")
-
-
-
 ;;; utilities
 
 (defun purpose--buffer-major-mode (buffer-or-name)
@@ -86,50 +71,6 @@ dummy buffer with the purpose 'edit."
                (string= "*" (substring name -1)))
       ;; 10 = (length "*pu-dummy-")
       (intern (substring name 10 -1)))))
-
-(defun purpose-get-read-function (ido-method helm-method vanilla-method)
-  "Get function to read something from the user.
-Return value depends on `purpose-preferred-prompt', `ido-mode' and
-`helm-mode'.
-| `purpose-preferred-prompt' | `ido-mode' | `helm-mode' | method  |
-|----------------------------+------------+-------------+---------|
-| auto                       | t          | any         | ido     |
-| auto                       | nil        | t           | helm    |
-| auto                       | nil        | nil         | vanilla |
-| ido                        | any        | any         | ido     |
-| helm                       | any        | any         | helm    |
-| vanilla                    | any        | any         | vanilla |"
-  (cl-case purpose-preferred-prompt
-    ('auto (cond ((bound-and-true-p ido-mode) ido-method)
-                 ((bound-and-true-p helm-mode) helm-method)
-                 (t vanilla-method)))
-    ('ido ido-method)
-    ('helm helm-method)
-    (t vanilla-method)))
-
-(defun purpose-get-completing-read-function ()
-  "Intelligently choose a function to perform completing read.
-The returned function is chosen according to the rules of
-`purpose-get-read-function'.
-ido method: `ido-completing-read'
-helm method: `completing-read' (this is on purpose)
-vanilla method: `completing-read'"
-  (purpose-get-read-function #'ido-completing-read
-                             #'completing-read
-                             #'completing-read))
-
-(defun purpose-get-read-file-name-function ()
-  "Intelligently choose a function to read a file name.
-The returned function is chosen according to the rules of
-`purpose-get-read-function'.
-ido method: `ido-read-file-name'
-helm method: `read-file-name'
-vanilla method: `read-file-name'"
-  (purpose-get-read-function #'ido-read-file-name
-                             #'read-file-name
-                             #'read-file-name))
-
-
 
 ;;; simple purpose-finding operations for `purpose-buffer-purpose'
 (defun purpose--buffer-purpose-mode (buffer-or-name mode-conf)
@@ -269,14 +210,13 @@ defaults to all defined purposes.
 REQUIRE-MATCH and INITIAL-OUTPUT have the same meaning as in
 `completing-read'."
   (let ((purpose-strings (mapcar #'symbol-name
-                                 (or purposes (purpose-get-all-purposes))))
-        (reader-function (purpose-get-completing-read-function)))
-    (intern (funcall reader-function
-                     prompt
-                     purpose-strings
-                     nil
-                     require-match
-                     initial-output))))
+                                 (or purposes (purpose-get-all-purposes)))))
+    (intern (completing-read
+             prompt
+             purpose-strings
+             nil
+             require-match
+             initial-output))))
 
 
 ;;; purpose-aware buffer low-level functions

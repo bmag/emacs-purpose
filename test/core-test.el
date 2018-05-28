@@ -214,39 +214,6 @@ Functions tested are:
 (unless (boundp 'helm-mode)
   (defvar helm-mode))
 
-(ert-deftest purpose-test-preferred-prmopt ()
-  "Test user gets his preferred prompt method.
-The prompt is chosen according to `purpose-preferred-prompt'."
-  (let ((purpose-preferred-prompt 'ido))
-    (should (purpose-test-preferred-prompt-checker ido)))
-  (let ((purpose-preferred-prompt 'helm))
-    (should (purpose-test-preferred-prompt-checker helm)))
-  (let ((purpose-preferred-prompt 'vanilla))
-    (should (purpose-test-preferred-prompt-checker vanilla)))
-  (let ((purpose-preferred-prompt 'auto))
-    (let ((ido-mode nil)
-          (helm-mode nil))
-      (should (purpose-test-preferred-prompt-checker vanilla)))
-    (let ((ido-mode nil)
-          (helm-mode t))
-      (should (purpose-test-preferred-prompt-checker helm)))
-    (let ((ido-mode t)
-          (helm-mode nil))
-      (should (purpose-test-preferred-prompt-checker ido)))
-    (let ((ido-mode t)
-          (helm-mode t))
-      (should (purpose-test-preferred-prompt-checker ido)))))
-
-(ert-deftest purpose-test-preferred-completing-read ()
-  "Test `purpose-get-completing-read-function' sanity."
-  (let ((purpose-preferred-prompt 'ido))
-    (should (equal (purpose-get-completing-read-function) 'ido-completing-read))))
-
-(ert-deftest purpose-test-preferred-read-file-name ()
-  "Test `purpose-get-read-file-name-function' sanity."
-  (let ((purpose-preferred-prompt 'ido))
-    (should (equal (purpose-get-read-file-name-function) 'ido-read-file-name))))
-
 (ert-deftest purpose-test-get-all-purposes ()
   "Test `purpose-get-all-purposes'."
   (purpose-with-temp-config

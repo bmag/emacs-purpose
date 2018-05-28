@@ -1100,11 +1100,11 @@ This works internally by using `without-purpose' and
 
 (defun purpose-read-buffers-with-purpose (purpose)
   "Prompt the user for a buffer with purpose PURPOSE."
-  (funcall (purpose-get-completing-read-function)
-           "[PU] Buffer: "
-           (mapcar #'buffer-name
-                   (delq (current-buffer)
-                         (purpose-buffers-with-purpose purpose)))))
+  (completing-read
+   "[PU] Buffer: "
+   (mapcar #'buffer-name
+           (delq (current-buffer)
+                 (purpose-buffers-with-purpose purpose)))))
 
 ;;;###autoload
 (defun purpose-switch-buffer-with-purpose (&optional purpose)
