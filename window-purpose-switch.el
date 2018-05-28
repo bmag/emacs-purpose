@@ -273,7 +273,7 @@ event that a window on another frame is chosen, avoid raising
 that frame."
   (let-alist alist
     (let* ((frames (purpose--reusable-frames alist))
-           (windows (purpose-flatten (mapcar #'window-list frames)))
+           (windows (window-list-1 nil nil frames))
            window)
       (setq windows (cl-delete-if-not
                      #'(lambda (window)
@@ -312,7 +312,7 @@ If ALIST has a non-nil `inhibit-switch-frame' entry, then in the event
 that a window on another frame is chosen, avoid raising that frame."
   (let-alist alist
     (let* ((frames (purpose--reusable-frames alist))
-           (windows (purpose-flatten (mapcar #'window-list frames)))
+           (windows (window-list-1 nil nil frames))
            (purpose (or purpose (purpose-buffer-purpose buffer)))
            window)
       (setq windows (cl-delete-if-not
@@ -350,7 +350,7 @@ event that a window on another frame is chosen, avoid raising
 that frame."
   (let* ((frames (cl-delete (selected-frame)
                             (purpose--reusable-frames alist)))
-         (windows (purpose-flatten (mapcar #'window-list frames)))
+         (windows (window-list-1 nil nil frames))
          window)
     (setq windows (cl-delete-if-not
                    #'(lambda (window)
@@ -389,7 +389,7 @@ If ALIST has a non-nil `inhibit-switch-frame' entry, then in the event
 that a window on another frame is chosen, avoid raising that frame."
   (let* ((frames (cl-delete (selected-frame)
                             (purpose--reusable-frames alist)))
-         (windows (purpose-flatten (mapcar #'window-list frames)))
+         (windows (window-list-1 nil nil frames))
          (purpose (or purpose (purpose-buffer-purpose buffer)))
          window)
     (setq windows (cl-delete-if-not
