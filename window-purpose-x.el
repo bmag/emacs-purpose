@@ -129,9 +129,11 @@ If current buffer doesn't have a filename, do nothing."
              (cl-delete-if #'window-dedicated-p
                            (purpose-windows-with-purpose 'dired)))
     (save-selected-window
-      (dired (file-name-directory (buffer-file-name)))
-      (when (fboundp 'dired-hide-details-mode)
-        (dired-hide-details-mode))
+      (let ((buffer (dired-noselect (file-name-directory (buffer-file-name)))))
+        (with-current-buffer buffer
+          (when (fboundp 'dired-hide-details-mode)
+            (dired-hide-details-mode)))
+        (display-buffer buffer))
       (bury-buffer (current-buffer)))))
 
 (defun purpose-x-code1-update-changed ()
