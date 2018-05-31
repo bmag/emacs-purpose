@@ -160,6 +160,7 @@ If current buffer doesn't have a filename, do nothing."
                        (not (string= (buffer-name other-buf)
                                      (purpose--dummy-buffer-name 'code1-dired))))
               (kill-buffer other-buf)))
+          ;; Set up local vars
           (with-current-buffer buffer
             (rename-buffer purpose-x-code1-dired-buffer-name)
             (setq truncate-lines t
@@ -196,6 +197,8 @@ If current buffer doesn't have a filename, do nothing."
   (imenu-list-stop-timer)
   (with-current-buffer (get-buffer imenu-list-buffer-name)
     (setq truncate-lines t
+          word-wrap nil
+          visual-line-mode nil
           mode-line-format nil)))
 
 (defun purpose-x-code1--unset-imenu-list ()
