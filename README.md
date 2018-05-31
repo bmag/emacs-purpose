@@ -166,9 +166,13 @@ All of the window layout commands have frame layout equivalents, e.g.
 ## Customizing Purpose
 
 ### Prompts
-With `purpose-preferred-prompt`, you can choose whether you want Purpose to use
-IDO or Helm when it needs information from the user. By default, when both IDO
-and Helm are enabled, Purpose prefers IDO.
+In the past, the variable `purpose-preferred-prompt`, allowed you to choose whether you want Purpose to use
+IDO or Helm when it needs information from the user. This variable has been removed. Instead, the prompt
+relies on the normal mechanism. For Helm prompts enable `helm-mode`, for Ivy mode enable `ivy-mode`, for
+IDO prompts enable `ido-mode`, etc. If using `ido-mode`, note that because how IDO works it doesn't
+cover all commands, and some commands won't have an IDO prompt. To work around that, please see the
+package [ido-completion-read+](https://github.com/DarwinAwardWinner/ido-completing-read-plus) (formerly
+ido-ubiquitous).
 
 ### Changing purpose configuration
 Purpose lets you define your own purposes. You can do so by using the variables
