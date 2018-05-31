@@ -128,8 +128,9 @@ If current buffer doesn't have a filename, do nothing."
   (when (and (buffer-file-name)
              (cl-delete-if #'window-dedicated-p
                            (purpose-windows-with-purpose 'dired)))
+    ;; calling `save-selected-window' is likely unnecessary
     (save-selected-window
-      (dired (file-name-directory (buffer-file-name)))
+      (display-buffer (dired-noselect (file-name-directory (buffer-file-name))))
       (when (fboundp 'dired-hide-details-mode)
         (dired-hide-details-mode))
       (bury-buffer (current-buffer)))))
