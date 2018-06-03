@@ -174,8 +174,9 @@ If current buffer doesn't have a filename, do nothing."
           ;; Prevents immediately closing the newly created popup help window
           (letf (((symbol-value 'purpose-select-buffer-hook) nil))
             (display-buffer buffer))
-          (dired-goto-file file-path)
-          (bury-buffer (current-buffer)))))))
+          (bury-buffer buffer)
+          (when purpose-x-code1-dired-goto-file
+            (dired-goto-file file-path)))))))
 
 (defun purpose-x-code1-update-changed ()
   "Update auxiliary buffers if frame/buffer had changed."
