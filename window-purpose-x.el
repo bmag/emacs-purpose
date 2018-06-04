@@ -70,8 +70,7 @@ All windows are purpose-dedicated.")
 
 ;; the name arg ("purpose-x-code1") is necessary for Emacs 24.3 and older
 (defvar purpose-x-code1-purpose-config
-  (purpose-conf "purpose-x-code1"
-                :mode-purposes
+  (purpose-conf :mode-purposes
                 '((ibuffer-mode . buffers)
                   (dired-mode . dired)
                   (imenu-list-major-mode . ilist))))
@@ -190,13 +189,11 @@ imenu."
 ;;; - `purpose-x-magit-off'
 
 (defvar purpose-x-magit-single-conf
-  (purpose-conf "magit-single"
-                :regexp-purposes '(("^\\*magit" . magit)))
+  (purpose-conf :regexp-purposes '(("^\\*magit" . magit)))
   "Configuration that gives each magit major mode the same purpose.")
 
 (defvar purpose-x-magit-multi-conf
   (purpose-conf
-   "magit-multi"
    :mode-purposes '((magit-diff-mode . magit-diff)
                     (magit-status-mode . magit-status)
                     (magit-log-mode . magit-log)
@@ -384,7 +381,6 @@ The configuration is updated according to
   (interactive)
   (cl-flet ((joiner (x) (cons x 'popup)))
     (let ((conf (purpose-conf
-                 "popwin"
                  :mode-purposes (mapcar #'joiner purpose-x-popwin-major-modes)
                  :name-purposes (mapcar #'joiner purpose-x-popwin-buffer-names)
                  :regexp-purposes (mapcar #'joiner
@@ -673,12 +669,9 @@ window-local buffer lists."
         ;; Unrecord BUFFER in WINDOW.
         (unrecord-window-buffer window buffer)))))
 
-(define-purpose-compatible-advice 'replace-buffer-in-windows
-    :override purpose-x-replace-buffer-in-windows
-    (&optional buffer-or-name)
-    "Override `replace-buffer-in-windows' with a purpose-aware version."
-  ((purpose-x-replace-buffer-in-windows-1 buffer-or-name))
-  ((setq ad-return-value (purpose-x-replace-buffer-in-windows-1 buffer-or-name))))
+(defun purpose-x-replace-buffer-in-windows (&optional buffer-or-name)
+  "Override `replace-buffer-in-windows' with a purpose-aware version."
+  (purpose-x-replace-buffer-in-windows-1 buffer-or-name))
 
 (defun purpose-x-kill-sync ()
   "Synchronize `replace-buffer-in-windows' with `purpose-mode'.
@@ -686,8 +679,8 @@ If `purpose-mode' is enabled, override `replace-buffer-in-windows' with
 `purpose-x-replace-buffer-in-windows'.  If `purpose-mode' is disabled,
 cancel the override of `replace-buffer-in-windows'."
   (if purpose-mode
-      (purpose-advice-add 'replace-buffer-in-windows :override 'purpose-x-replace-buffer-in-windows)
-    (purpose-advice-remove 'replace-buffer-in-windows :override 'purpose-x-replace-buffer-in-windows)))
+      (advice-add 'replace-buffer-in-windows :override 'purpose-x-replace-buffer-in-windows)
+    (advice-remove 'replace-buffer-in-windows 'purpose-x-replace-buffer-in-windows)))
 
 ;;;###autoload
 (defun purpose-x-kill-setup ()
@@ -708,7 +701,7 @@ This is implemented by overriding `replace-buffer-in-windows' with
 (defun purpose-x-kill-unset ()
   "Deactivate purpose-x-kill extension."
   (interactive)
-  (purpose-advice-remove 'replace-buffer-in-windows :override 'purpose-x-replace-buffer-in-windows)
+  (advice-remove 'replace-buffer-in-windows 'purpose-x-replace-buffer-in-windows)
   (remove-hook 'purpose-mode-hook 'purpose-x-kill-sync))
 
 ;;; --- purpose-x-kill ends here ---
