@@ -7,7 +7,7 @@
 ;; Version: 1.6.1
 ;; Keywords: frames
 ;; Homepage: https://github.com/bmag/emacs-purpose
-;; Package-Requires: ((emacs "24") (cl-lib "0.5") (let-alist "1.0.3") (imenu-list "0.1"))
+;; Package-Requires: ((emacs "25") (imenu-list "0.1"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -272,34 +272,22 @@ Some examples:
 (defun purpose--add-advices ()
   "Add all advices needed for Purpose to work.
 This function is called when `purpose-mode' is activated."
-  (purpose-advice-add 'switch-to-buffer :around
-                      #'purpose-switch-to-buffer-advice)
-  (purpose-advice-add 'switch-to-buffer-other-window :around
-                      #'purpose-switch-to-buffer-other-window-advice)
-  (purpose-advice-add 'switch-to-buffer-other-frame :around
-                      #'purpose-switch-to-buffer-other-frame-advice)
-  (purpose-advice-add 'pop-to-buffer :around
-                      #'purpose-pop-to-buffer-advice)
-  (purpose-advice-add 'pop-to-buffer-same-window :around
-                      #'purpose-pop-to-buffer-same-window-advice)
-  (purpose-advice-add 'display-buffer :around
-                      #'purpose-display-buffer-advice))
+  (advice-add 'switch-to-buffer :around #'purpose-switch-to-buffer-advice)
+  (advice-add 'switch-to-buffer-other-window :around #'purpose-switch-to-buffer-other-window-advice)
+  (advice-add 'switch-to-buffer-other-frame :around #'purpose-switch-to-buffer-other-frame-advice)
+  (advice-add 'pop-to-buffer :around #'purpose-pop-to-buffer-advice)
+  (advice-add 'pop-to-buffer-same-window :around #'purpose-pop-to-buffer-same-window-advice)
+  (advice-add 'display-buffer :around #'purpose-display-buffer-advice))
 
 (defun purpose--remove-advices ()
   "Remove all advices needed for Purpose to work.
 This function is called when `purpose-mode' is deactivated."
-  (purpose-advice-remove 'switch-to-buffer :around
-                         #'purpose-switch-to-buffer-advice)
-  (purpose-advice-remove 'switch-to-buffer-other-window :around
-                         #'purpose-switch-to-buffer-other-window-advice)
-  (purpose-advice-remove 'switch-to-buffer-other-frame :around
-                         #'purpose-switch-to-buffer-other-frame-advice)
-  (purpose-advice-remove 'pop-to-buffer :around
-                         #'purpose-pop-to-buffer-advice)
-  (purpose-advice-remove 'pop-to-buffer-same-window :around
-                         #'purpose-pop-to-buffer-same-window-advice)
-  (purpose-advice-remove 'display-buffer :around
-                         #'purpose-display-buffer-advice))
+  (advice-remove 'switch-to-buffer #'purpose-switch-to-buffer-advice)
+  (advice-remove 'switch-to-buffer-other-window #'purpose-switch-to-buffer-other-window-advice)
+  (advice-remove 'switch-to-buffer-other-frame #'purpose-switch-to-buffer-other-frame-advice)
+  (advice-remove 'pop-to-buffer #'purpose-pop-to-buffer-advice)
+  (advice-remove 'pop-to-buffer-same-window #'purpose-pop-to-buffer-same-window-advice)
+  (advice-remove 'display-buffer #'purpose-display-buffer-advice))
 
 ;;;###autoload
 (define-minor-mode purpose-mode nil

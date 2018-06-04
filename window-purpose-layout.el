@@ -29,6 +29,7 @@
 (require 'cl-lib)
 (require 'ring)
 (require 'window-purpose-core)
+(eval-when-compile (require 'subr-x))
 
 (defconst purpose--built-in-layouts-dir
   (when load-file-name
@@ -233,8 +234,8 @@ WINDOW must be a live window and defaults to the selected one."
   "Get a list of all filenames that end in SUFFIX in DIRECTORY.
 The base filenames without the suffix are returned."
   (cl-loop for filename in (directory-files directory nil nil t)
-           if (purpose--suffix-p suffix filename)
-           collect (purpose--remove-suffix suffix filename)))
+           if (string-suffix-p suffix filename)
+           collect (string-remove-suffix suffix filename)))
 
 (defun purpose--file-with-suffix (name suffix directory)
   "Get file with basename NAME and suffix SUFFIX in DIRECTORY.
