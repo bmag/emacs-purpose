@@ -38,10 +38,10 @@ before_install:
   - make -f emacs-travis.mk install_texinfo
 install:
   # Install your dependencies
+  - make clean
   - make install
 script:
   # Run your tests
-  - make clean
   - make test
 addons:
   apt:
