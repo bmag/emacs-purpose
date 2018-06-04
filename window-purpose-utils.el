@@ -26,8 +26,6 @@
 ;;; Code:
 
 (require 'cl-lib)
-;; subr-x isn't available in 24.3
-(require 'subr-x nil t)
 
 (defcustom purpose-message-on-p nil
   "If non-nil, `purpose-message' will produce a message.
@@ -44,17 +42,6 @@ return the formatted string. FORMAT-STRING and ARGS are passed to
   (if purpose-message-on-p
       (apply #'message format-string args)
     (apply #'format format-string args)))
-
-;; define our (limited) version of alist-get
-(defun purpose-alist-get (key alist &optional default _remove)
-  "Get KEY's value in ALIST.
-If no such key, return DEFAULT.
-When setting KEY's value, if the new value is equal to DEFAULT and
-REMOVE is non-nil, then delete the KEY instead."
-  (let ((entry (assq key alist)))
-    (if entry
-        (cdr entry)
-      default)))
 
 (defun purpose-alist-set (key value alist)
   "Set VALUE to be the value associated to KEY in ALIST.
@@ -102,68 +89,6 @@ Example:
 
 
 
-;;; compatibility layer for advices
-
-(defun purpose-advice-convert-where-arg (where)
-  "Convert WHERE argument from new advice style to old advice style.
-New style is :before, :after, etc.  Old style is 'before, 'after, etc."
-  (unless (keywordp where)
-    (signal 'wrong-type-argument `(keywordp ,where)))
-  (if (eq where :override)
-      'around
-    (intern (mapconcat #'identity (cdr (split-string (symbol-name where) ":")) ":"))))
-
-(defun purpose-advice-new-style-arglist (arglist where)
-  "Convert ARGLIST to new style, according to WHERE.
-If WHERE is :around, add 'oldfun to the beginning of ARGLIST.
-Otherwise, return ARGLIST without changes."
-  (if (eql where :around)
-      (append '(oldfun) arglist)
-    arglist))
-
-(defmacro define-purpose-compatible-advice (symbol where name arglist docstring new-body old-body)
-  "Define advice, using new or old advice style as appropriate.
-SYMBOL and WHERE have the same meaning as in `advice-add'.  NAME
-has the same meaning as FUNCTION argument of `advice-add'.
-ARGLIST has the same meaning as in `defadvice'.  DOCSTRING is the
-advice's documentation.  NEW-BODY is the advice's body if the new
-advice style is available.  OLD-BODY is the advice's body if the
-new advice style is unavailable.
-
-`define-purpose-compatible-advice' properly supports only :around, :before and :after advices."
-  (declare (indent 5) (debug (&define sexp sexp name lambda-list stringp (&rest form) (&rest form))))
-  (if (fboundp 'advice-add)
-      `(defun ,name (,@(purpose-advice-new-style-arglist arglist where))
-     ,docstring
-     ,@new-body)
-    ;; ,(cadr symbol) turns <'foo> into <foo>
-    `(defadvice ,(cadr symbol) (,(purpose-advice-convert-where-arg where) ,name ,arglist)
-       ,docstring
-       ,@old-body)))
-
-(defmacro purpose-advice-add (symbol where name)
-  "Enable advice, using new or old advice style as appropriate.
-SYMBOL, WHERE and NAME have the same meaning as in
-`define-purpose-advice'."
-  (declare (indent nil) (debug 0))
-  (if (fboundp 'advice-add)
-      `(advice-add ,symbol ,where ,name)
-    `(progn
-       (ad-enable-advice ,symbol ',(purpose-advice-convert-where-arg where) ,name)
-       (ad-update ,symbol)
-       (ad-activate ,symbol))))
-
-(defmacro purpose-advice-remove (symbol where name)
-  "Disable advice, using new or old advice style as appropriate.
-SYMBOL, WHERE and NAME have the same meaning as in
-`define-purpose-advice'."
-  (declare (indent nil) (debug 0))
-  (if (fboundp 'advice-remove)
-      `(advice-remove ,symbol ,name)
-    `(progn
-       (ad-disable-advice ,symbol ',(purpose-advice-convert-where-arg where) ,name)
-       (ad-update ,symbol))))
-
 (defun purpose--iter-hash (function table)
   "Like `maphash', but return a list the results of calling FUNCTION
 for each entry in hash-table TABLE."
@@ -174,13 +99,6 @@ for each entry in hash-table TABLE."
                                (list (funcall function key value)))))
              table)
     results))
-
-(defalias 'purpose-hash-table-values
-  (if (fboundp 'hash-table-values)
-    #'hash-table-values
-    (lambda (hash-table)
-      "Return all values in HASH-TABLE."
-        (purpose--iter-hash (lambda (_kk vv) vv) hash-table))))
 
 ;; taken from http://emacs.stackexchange.com/a/7405/6533, credit to Jordon Biondo
 (defun purpose--call-stack ()
@@ -197,29 +115,6 @@ for each entry in hash-table TABLE."
 (defun purpose--function-stack ()
   "Like `purpose--call-stack' but is a list of only the function names."
   (butlast (mapcar 'cl-second (purpose--call-stack))))
-
-(defalias 'purpose--suffix-p
-  (if (fboundp 'string-suffix-p)
-      #'string-suffix-p
-    ;; taken from string-suffix-p in subr.el in Emacs 24.5.1
-    (lambda (suffix string  &optional ignore-case)
-      "Return non-nil if SUFFIX is a suffix of STRING.
-If IGNORE-CASE is non-nil, the comparison is done without paying
-attention to case differences."
-      (let ((start-pos (- (length string) (length suffix))))
-        (and (>= start-pos 0)
-             (eq t (compare-strings suffix nil nil
-                                    string start-pos nil ignore-case)))))))
-
-(defalias 'purpose--remove-suffix
-  (if (fboundp 'string-remove-suffix)
-      #'string-remove-suffix
-    ;; based on string-remove-suffix in subr-x.el in Emacs 24.5.1
-    (lambda (suffix string)
-      "Remove SUFFIX from STRING if present."
-      (if (purpose--suffix-p suffix string)
-          (substring string 0 (- (length string) (length suffix)))
-        string))))
 
 (provide 'window-purpose-utils)
 ;;; window-purpose-utils.el ends here

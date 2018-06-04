@@ -27,6 +27,7 @@
 ;;; Code:
 
 (require 'window-purpose-configuration)
+(eval-when-compile (require 'subr-x))
 
 (defgroup purpose nil
   "purpose-mode configuration"
@@ -190,7 +191,7 @@ FRAME defaults to the selected frame."
   (delete-dups
    (append (list default-purpose)
            (purpose-flatten
-            (mapcar #'purpose-hash-table-values
+            (mapcar #'hash-table-values
                     (append (when purpose-use-default-configuration
                               (list purpose--default-name-purposes
                                     purpose--default-mode-purposes

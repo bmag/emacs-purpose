@@ -59,10 +59,7 @@
 
 ;;; Types
 
-;; `purpose-conf' is not an autoload because there is a bug in autoloading
-;; `defclass' in Emacs 24.3. (no problem with Emacs 24.4)
-;; If we decide to drop support for Emacs 24.3, we can make `purpose-conf' an
-;; autoload again.
+;;;###autoload
 (defclass purpose-conf ()
   ((mode-purposes :initarg :mode-purposes
                   :initform '()
@@ -376,8 +373,7 @@ configuration.
 Example:
  (purpose-set-extension-configuration
      :python
-     (purpose-conf \"py\"
-                   :mode-purposes
+     (purpose-conf :mode-purposes
                    '((python-mode . python)
                      (inferior-python-mode . interpreter))))
 
