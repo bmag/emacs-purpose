@@ -1,27 +1,49 @@
 language: emacs-lisp
-
-script:
-  - emacs --version
-  - make test
-
+# Emacs fails to build in container-based builds on Travis
+# See https://github.com/travis-ci/travis-ci/issues/9061
+# and https://github.com/moby/moby/issues/22801
+sudo: required
+dist: trusty
+cache:
+  - directories:
+      # Cache stable Emacs binaries (saves 1min per job)
+      - "$HOME/emacs/"
+# Allow Emacs snapshot builds to fail and don't wait for it
+matrix:
+  fast_finish: true
+  allow_failures:
+    - env: EMACS_VERSION=snapshot
+git:
+  depth: 1
 env:
   matrix:
-    - EVM_EMACS=emacs-24.5-travis
-    - EVM_EMACS=emacs-24.4-travis
-    - EVM_EMACS=emacs-24.3-travis
-    # - EVM_EMACS=emacs-24.2-travis
-    # - EVM_EMACS=emacs-24.1-travis
-    # - EVM_EMACS=emacs-git-snapshot-travis
-# matrix:
-#   fast_finish: true
-#   # allow_failures:
-#   #   - env: EVM_EMACS=emacs-git-snapshot-travis
-
-sudo: no
+    - EMACS_VERSION=25.1
+    - EMACS_VERSION=25.2
+    - EMACS_VERSION=25.3
+    - EMACS_VERSION=26.1
+    - EMACS_VERSION=snapshot
+    - TEXINFO_VERSION=6.1
+  global:
+    # Maximum number of executing procesors
+    - MAKE_JOBS=$(getconf _NPROCESSORS_ONLN)
 before_install:
-  - curl -fsSkL https://gist.github.com/rejeep/ebcd57c3af83b049833b/raw > travis.sh && source ./travis.sh
-  - evm install $EVM_EMACS --use --skip
-  - cask
-
-# notifications:
-#   email: false
+  # Configure $PATH: Executables are installed to $HOME/bin
+  - export PATH="$HOME/bin:$PATH"
+  # Download the makefile to emacs-travis.mk
+  - wget 'https://raw.githubusercontent.com/flycheck/emacs-travis/master/emacs-travis.mk'
+  # Install Emacs (according to $EMACS_VERSION) and Cask
+  - make -f emacs-travis.mk install_emacs
+  - make -f emacs-travis.mk install_cask
+  # Install Texinfo, if you need to build info manuals for your project
+  - make -f emacs-travis.mk install_texinfo
+install:
+  # Install your dependencies
+  - make install
+script:
+  # Run your tests
+  - make clean
+  - make test
+addons:
+  apt:
+    packages:
+      - libperl-dev
