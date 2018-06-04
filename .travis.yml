@@ -4,10 +4,6 @@ language: emacs-lisp
 # and https://github.com/moby/moby/issues/22801
 sudo: required
 dist: trusty
-cache:
-  - directories:
-      # Cache stable Emacs binaries (saves 1min per job)
-      - "$HOME/emacs/"
 # Allow Emacs snapshot builds to fail and don't wait for it
 matrix:
   fast_finish: true
