@@ -227,12 +227,14 @@ imenu."
   (purpose-x-code1--setup-imenu-list)
   (frame-or-buffer-changed-p 'purpose-x-code1-buffers-changed)
   (purpose-set-window-layout purpose-x-code1--window-layout)
+  (add-hook 'post-command-hook #'purpose-x-code1-update-changed)
   (add-hook 'window-configuration-change-hook #'purpose-x-code1-update-changed))
 
 (defun purpose-x-code1-unset ()
   "Unset purpose-x-code1."
   (interactive)
   (remove-hook 'window-configuration-change-hook #'purpose-x-code1-update-changed)
+  (remove-hook 'post-command-hook #'purpose-x-code1-update-changed)
   (purpose-x-code1--unset-imenu-list)
   (purpose-x-code1--unset-ibuffer)
   (purpose-del-extension-configuration :purpose-x-code1))
