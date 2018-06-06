@@ -172,7 +172,7 @@ If current buffer doesn't have a filename, do nothing."
                 (add-minor-mode 'dired-hide-details-mode ""))
               (dired-hide-details-mode)))
           ;; Prevents immediately closing the newly created popup help window
-          (letf (((symbol-value 'purpose-select-buffer-hook) nil))
+          (cl-letf (((symbol-value 'purpose-select-buffer-hook) nil))
             (display-buffer buffer))
           (bury-buffer buffer)
           (when purpose-x-code1-dired-goto-file
