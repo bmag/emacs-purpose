@@ -68,7 +68,6 @@
 Has a main 'edit window, and two side windows - 'dired and 'buffers.
 All windows are purpose-dedicated.")
 
-;; the name arg ("purpose-x-code1") is necessary for Emacs 24.3 and older
 (defvar purpose-x-code1-purpose-config
   (purpose-conf :mode-purposes
                 '((ibuffer-mode . buffers)

@@ -96,7 +96,6 @@ correct hash tables."
                                    term-mode
                                    eshell-mode
                                    comint-mode
-                                   css-mode
                                    text-mode
                                    prog-mode)))
     (should (purpose-set-equal-p (hash-table-values purpose--default-mode-purposes)
@@ -111,7 +110,6 @@ correct hash tables."
                                    terminal
                                    terminal
                                    terminal
-                                   edit
                                    edit
                                    edit)))
     (should (purpose-set-equal-p (hash-table-keys purpose--default-name-purposes)

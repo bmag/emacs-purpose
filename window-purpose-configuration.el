@@ -291,8 +291,6 @@ Fill `purpose--extended-mode-purposes',
   (purpose--fill-hash purpose--default-mode-purposes
                       '((prog-mode . edit)
                         (text-mode . edit)
-                        ;; in Emacs 24.5-, `css-mode' doesn't derive from `prog-mode'
-                        (css-mode . edit)
                         (comint-mode . terminal)
                         (eshell-mode . terminal)
                         (term-mode . terminal)

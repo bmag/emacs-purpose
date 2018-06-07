@@ -291,8 +291,6 @@ This function is called when `purpose-mode' is deactivated."
 
 ;;;###autoload
 (define-minor-mode purpose-mode
-  ;; can't do coverage in Emacs 24.3 and older if the docstring is nil :-(
-  ;; this is because of a bug in `edebug-defun'
   "Toggle Purpose mode on or off according to the regular rules."
   :global t :lighter (:eval (purpose--modeline-string))
   (if purpose-mode
