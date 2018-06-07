@@ -55,15 +55,20 @@
 (defcustom purpose-x-code1-dired-buffer-name "*Files*"
   "The buffer name used for the `dired' buffer specific to Code1 extension."
   :group 'purpose
-  :type '(string)
-  :package-version "1.5")
+  :type 'string
+  :package-version "1.6.2")
 
 (defcustom purpose-x-code1-dired-goto-file nil
   "Whether the entry for the current file should be highlighted
 in `dired' using `dired-goto-file'."
   :group 'purpose
-  :type '(boolean)
+  :type 'boolean
   :package-version "1.6.2")
+
+(defcustom purpose-x-code1-update-idle-delay 1
+  "Time in seconds after idling before updating code1."
+  :group 'purpose
+  :type 'number)
 
 (defvar purpose-x-code1--window-layout
   '(nil
@@ -174,17 +179,31 @@ If current buffer doesn't have a filename, do nothing."
           ;; Prevents immediately closing the newly created popup help window
           (cl-letf (((symbol-value 'purpose-select-buffer-hook) nil))
             (display-buffer buffer))
-          (bury-buffer buffer)
           (when purpose-x-code1-dired-goto-file
             (dired-goto-file file-path)))))))
 
 (defun purpose-x-code1-update-changed ()
   "Update auxiliary buffers if frame/buffer had changed."
-  (when (or (frame-or-buffer-changed-p 'purpose-x-code1-buffers-changed)
-            (and (not (minibufferp))
-                 (not (memq (purpose-buffer-purpose (current-buffer)) '(code1-dired buffers ilist)))))
+  (when (and (not (eq (current-buffer) (get-buffer imenu-list-buffer-name)))
+             (or (frame-or-buffer-changed-p 'purpose-x-code1-buffers-changed)
+                 (and (not (minibufferp))
+                      (not (memq (purpose-buffer-purpose (current-buffer)) '(code1-dired buffers ilist))))))
     (purpose-x-code1-update-dired)
     (imenu-list-update)))
+
+(defvar purpose-x-code1-post-command-action-timer nil)
+
+(defun purpose-x-code1-debounced-update-changed ()
+  (when (timerp purpose-x-code1-post-command-action-timer)
+    (cancel-timer purpose-x-code1-post-command-action-timer)
+    (setq purpose-x-code1-post-command-action-timer nil))
+  (let ((wrapper (lambda ()
+                   (unwind-protect
+                       (purpose-x-code1-update-changed)
+                     (cancel-timer purpose-x-code1-post-command-action-timer)
+                     (setq purpose-x-code1-post-command-action-timer nil)))))
+    (setq purpose-x-code1-post-command-action-timer
+          (run-with-idle-timer purpose-x-code1-update-idle-delay nil wrapper))))
 
 (defvar purpose-x-code1--original-imenu-list-settings (make-hash-table))
 
@@ -227,14 +246,14 @@ imenu."
   (purpose-x-code1--setup-imenu-list)
   (frame-or-buffer-changed-p 'purpose-x-code1-buffers-changed)
   (purpose-set-window-layout purpose-x-code1--window-layout)
-  (add-hook 'post-command-hook #'purpose-x-code1-update-changed)
-  (add-hook 'window-configuration-change-hook #'purpose-x-code1-update-changed))
+  (add-hook 'post-command-hook #'purpose-x-code1-debounced-update-changed)
+  (add-hook 'window-configuration-change-hook #'purpose-x-code1-debounced-update-changed))
 
 (defun purpose-x-code1-unset ()
   "Unset purpose-x-code1."
   (interactive)
-  (remove-hook 'window-configuration-change-hook #'purpose-x-code1-update-changed)
-  (remove-hook 'post-command-hook #'purpose-x-code1-update-changed)
+  (remove-hook 'window-configuration-change-hook #'purpose-x-code1-debounced-update-changed)
+  (remove-hook 'post-command-hook #'purpose-x-code1-debounced-update-changed)
   (purpose-x-code1--unset-imenu-list)
   (purpose-x-code1--unset-ibuffer)
   (purpose-del-extension-configuration :purpose-x-code1))
