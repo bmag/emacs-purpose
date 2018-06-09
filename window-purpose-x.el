@@ -105,6 +105,10 @@ All windows are purpose-dedicated.")
   ()
   (buffer-file-name buf))
 
+(defun purpose-x-code1-ibuffer-shut-up-advice (oldfun &rest args)
+  "Shut up `ibuffer-redisplay' and `ibuffer-update'"
+  (shut-up (apply oldfun args)))
+
 (defun purpose-x-code1--setup-ibuffer ()
   "Set up ibuffer settings."
   (add-hook 'ibuffer-mode-hook
@@ -118,6 +122,8 @@ All windows are purpose-dedicated.")
   ;; (setq ibuffer-default-shrink-to-minimum-size t)
   (when (get-buffer "*Ibuffer*")
     (kill-buffer "*Ibuffer*"))
+  (advice-add 'ibuffer-redisplay :around 'purpose-x-code1-ibuffer-shut-up-advice)
+  (advice-add 'ibuffer-update :around 'purpose-x-code1-ibuffer-shut-up-advice)
   (save-selected-window
     (ibuffer-list-buffers)
     (let ((ibuf (get-buffer "*Ibuffer*")))
@@ -130,6 +136,8 @@ All windows are purpose-dedicated.")
 
 (defun purpose-x-code1--unset-ibuffer ()
   "Unset ibuffer settings."
+  (advice-remove 'ibuffer-redisplay 'purpose-x-code1-ibuffer-shut-up-advice)
+  (advice-remove 'ibuffer-update 'purpose-x-code1-ibuffer-shut-up-advice)
   (remove-hook 'ibuffer-mode-hook
                #'(lambda ()
                    (ibuffer-filter-by-purpose-x-code1-ibuffer-files-only nil)))
