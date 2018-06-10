@@ -179,7 +179,8 @@ If current buffer doesn't have a filename, do nothing."
             (setq truncate-lines t
                   word-wrap nil
                   visual-line-mode nil
-                  mode-line-format nil)
+                  mode-line-format nil
+                  auto-revert-verbose nil)
             (when (fboundp 'dired-hide-details-mode)
               (when (not (assq 'dired-hide-details-mode minor-mode-alist))
                 (add-minor-mode 'dired-hide-details-mode ""))
