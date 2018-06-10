@@ -208,8 +208,9 @@ If current buffer doesn't have a filename, do nothing."
   (let ((wrapper (lambda ()
                    (unwind-protect
                        (purpose-x-code1-update-changed)
-                     (cancel-timer purpose-x-code1-post-command-action-timer)
-                     (setq purpose-x-code1-post-command-action-timer nil)))))
+                     (when (timerp purpose-x-code1-post-command-action-timer)
+                       (cancel-timer purpose-x-code1-post-command-action-timer)
+                       (setq purpose-x-code1-post-command-action-timer nil))))))
     (setq purpose-x-code1-post-command-action-timer
           (run-with-idle-timer purpose-x-code1-update-idle-delay nil wrapper))))
 
