@@ -248,6 +248,12 @@ terminal if it's non-nil."
                       reusable-frames)
              nil)))))
 
+(defun purpose--pick-selected-or-any-window (windows)
+  (let ((selected (selected-window)))
+    (if (member selected windows)
+        selected
+      (car windows))))
+
 (defun purpose-display-reuse-window-buffer (buffer alist)
   "Return a window that is already displaying BUFFER.
 Return nil if no usable window is found.
@@ -281,7 +287,7 @@ that frame."
                      windows))
       (when .inhibit-same-window
         (setq windows (delq (selected-window) windows)))
-      (setq window (car windows))
+      (setq window (purpose--pick-selected-or-any-window windows))
       (when window
         (purpose-change-buffer buffer window 'reuse alist))
       window)))
@@ -321,7 +327,7 @@ that a window on another frame is chosen, avoid raising that frame."
                      windows))
       (when .inhibit-same-window
         (setq windows (delq (selected-window) windows)))
-      (setq window (car windows))
+      (setq window (purpose--pick-selected-or-any-window windows))
       (when window
         (purpose-change-buffer buffer window 'reuse alist))
       window)))
