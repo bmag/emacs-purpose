@@ -95,8 +95,8 @@ it yourself.")
                            purpose-display-maybe-pop-up-window
                            purpose-display-maybe-pop-up-frame))
     (force-same-window . (purpose-display-maybe-same-window))
-    (prefer-other-window . (purpose-display-reuse-window-buffer
-                            purpose-display-reuse-window-purpose
+    (prefer-other-window . (purpose-display-reuse-window-buffer-other-window
+                            purpose-display-reuse-window-purpose-other-window
                             purpose-display-maybe-other-window
                             purpose-display-maybe-pop-up-window
                             purpose-display-maybe-other-frame
@@ -326,6 +326,18 @@ that a window on another frame is chosen, avoid raising that frame."
         (purpose-change-buffer buffer window 'reuse alist))
       window)))
 
+(defun purpose-display-reuse-window-buffer-other-window (buffer alist)
+  "Return a non-selected window that is already displaying BUFFER.
+This is the same `purpose-display-reuse-window-buffer', except
+the currently selected window is not eligible for reuse."
+  (purpose-display-reuse-window-buffer buffer (cons '(inhibit-same-window . t) alist)))
+
+(defun purpose-display-reuse-window-purpose-other-window (buffer alist)
+  "Return a non-selected window that is already used for the purpose PURPOSE.
+This is the same `purpose-display-reuse-window-purpose', except
+the currently selected window is not eligible for reuse."
+  (purpose-display-reuse-window-purpose buffer (cons '(inhibit-same-window . t) alist)))
+
 (defun purpose-display-reuse-window-buffer-other-frame (buffer alist)
   "Return a window that is already displaying BUFFER.
 Return nil if no usable window is found.
@@ -492,8 +504,9 @@ used window, split the selected window."
          (new-window (or (split-window-sensibly old-window)
                          (and force-split
                               (split-window old-window)))))
-    (purpose-change-buffer buffer new-window 'window alist)
-    new-window))
+    (when new-window
+      (purpose-change-buffer buffer new-window 'window alist)
+      new-window)))
 
 (defun purpose-display-pop-up-window (buffer alist)
   "Display BUFFER in a new window.

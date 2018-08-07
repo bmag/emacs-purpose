@@ -174,7 +174,7 @@
             (set-window-buffer nil "xxx-p0-0")
             ;; (purpose-pop-buffer "xxx-p0-1")
             (pop-to-buffer "xxx-p0-1")
-            (purpose-check-displayed-buffers '("xxx-p0-1"))
+            (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-1"))
             ;; 2
             (message "2...")
             (delete-other-windows)
@@ -183,7 +183,7 @@
             (set-window-buffer nil "xxx-p0-0")
             (purpose-pop-buffer "xxx-p0-1")
             ;; (pop-to-buffer "xxx-p0-1")
-            (purpose-check-displayed-buffers '("xxx-p0-1" "xxx-p1-0"))
+            (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-1"))
             ;; 3
             (message "3...")
             (delete-other-windows)
