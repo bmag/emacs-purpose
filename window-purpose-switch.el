@@ -249,10 +249,8 @@ terminal if it's non-nil."
              nil)))))
 
 (defun purpose--pick-selected-or-any-window (windows)
-  (let ((selected (selected-window)))
-    (if (member selected windows)
-        selected
-      (car windows))))
+  (car (or (memq (selected-window) windows)
+	   windows)))
 
 (defun purpose-display-reuse-window-buffer (buffer alist)
   "Return a window that is already displaying BUFFER.
