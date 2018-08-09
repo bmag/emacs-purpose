@@ -1,6 +1,6 @@
 ;;; layout-test.el --- Tests for window-purpose-layout.el -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015, 2016 Bar Magal
+;; Copyright (C) 2015-2016 Bar Magal & contributors
 
 ;; Author: Bar Magal
 ;; Package: purpose

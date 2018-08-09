@@ -1,6 +1,6 @@
 ;;; switch-test.el --- Tests for window-purpose-switch.el -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015, 2016 Bar Magal
+;; Copyright (C) 2015-2018 Bar Magal & contributors
 
 ;; Author: Bar Magal
 ;; Package: purpose
