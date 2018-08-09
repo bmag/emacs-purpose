@@ -1,6 +1,6 @@
 ;;; window-purpose-fixes.el --- fix integration issues with other features -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015, 2016 Bar Magal
+;; Copyright (C) 2015-2017 Bar Magal & contributors
 
 ;; Author: Bar Magal
 ;; Package: purpose

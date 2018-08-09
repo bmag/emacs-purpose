@@ -1,5 +1,43 @@
 #+TITLE: Changelog
 
+* Release 1.6.1
+** Breaking Changes
+*** [[https://github.com/bmag/emacs-purpose/issues/84][#84]], [[https://github.com/bmag/emacs-purpose/pull/125][#125]]:  remove option ~purpose-preferred-prompt~ and prompts shims.
+    Removed ~completing-read~ and ~read-file-name~ shims, thus the
+    custom variable ~purpose-preferred-prompt~ has been removed. From the README:
+    #+BEGIN_QUOTE
+    In the past, the variable `purpose-preferred-prompt`, allowed you
+    to choose whether you want Purpose to use IDO or Helm when it
+    needs information from the user. This variable has been
+    removed. Instead, the prompt relies on the normal mechanism. For
+    Helm prompts enable `helm-mode`, for Ivy mode enable `ivy-mode`,
+    for IDO prompts enable `ido-mode`, etc. If using `ido-mode`, note
+    that because how IDO works it doesn't cover all commands, and some
+    commands won't have an IDO prompt. To work around that, please see
+    the package
+    [ido-completion-read+](https://github.com/DarwinAwardWinner/ido-completing-read-plus)
+    (formerly ido-ubiquitous).
+    #+END_QUOTE
+** Enhancements
+*** [[https://github.com/bmag/emacs-purpose/issues/113][#113]], [[https://github.com/bmag/emacs-purpose/pull/114][#114]]: default to ~edit~ purpose for buffers visiting files
+    If a buffer is visiting a file, its default purpose (if no other
+    purpose matches) will be ~edit~.
+*** Emacsen 25.1, 25.3 and 26.1 added to Travis CI tests
+    Emacs 25.2 not added, because it is almost exactly the same as
+    25.3, and the difference doesn't affect Purpose's behavior.
+** Bug Fixes
+*** added some missing default purposes for some modes
+    - css-mode: edit
+    - eshell-mode, term-mode: terminal
+*** [[https://github.com/bmag/emacs-purpose/issues/110][#110]]: wrong window layout after using magit-popup's help system
+    Added a fix in ~window-purpose-fixes.el~.
+*** [[https://github.com/bmag/emacs-purpose/issues/111][#111]]: wrong layout when using org-goto
+    Added a fix in ~window-purpose-fixes.el~.
+*** [[https://github.com/bmag/emacs-purpose/pull/123][#123]] purpose-x-popwin: fix custom type mismatches
+*** [[https://github.com/bmag/emacs-purpose/issues/127][#127]], [[https://github.com/bmag/emacs-purpose/pull/128][#128]]: purpose-x-code1: correctly create and display dired buffer
+*** [[https://github.com/bmag/emacs-purpose/pull/118][#118]]: fix typos in README
+*** [[https://github.com/bmag/emacs-purpose/pull/121][#121]]: prefer the selected window even with multiple frames
+*** [[https://github.com/bmag/emacs-purpose/issues/120][#120]]: pop-up-frames takes precedence over pop-up-windows
 * Release 1.6
 ** New Features
 *** New functions for easier purpose configuration
