@@ -28,7 +28,9 @@
 
 (require 'cl-lib)
 (require 'f)
-(require 'seq)
+;; seq.el was introduced in Emacs 25.1
+(unless (version< emacs-version "25")
+  (require 'seq))
 
 (defvar cpt-path
   (f-parent (f-this-file)))

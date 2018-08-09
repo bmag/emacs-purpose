@@ -59,7 +59,8 @@ correct hash tables for the uncompiled alists."
   (purpose-with-empty-config
     (let
         ((purpose-extended-conf
-          (purpose-conf :mode-purposes '((prog-mode . edit)
+          (purpose-conf "test"
+                        :mode-purposes '((prog-mode . edit)
                                          (dired-mode . dired))
                         :name-purposes '(("editor" . edit)
                                          ("foo" . bar))
@@ -128,8 +129,8 @@ correct hash tables."
 See `purpose-set-extension-configuration' and
 `purpose-del-extension-configuration'."
   (purpose-with-empty-config
-    (should-error (purpose-set-extension-configuration 'foo (purpose-conf)))
-    (purpose-set-extension-configuration :foo (purpose-conf))
+    (should-error (purpose-set-extension-configuration 'foo (purpose-conf "foo")))
+    (purpose-set-extension-configuration :foo (purpose-conf "foo"))
     (should-error (purpose-del-extension-configuration 'foo))
     (purpose-del-extension-configuration :foo)))
 
@@ -169,7 +170,8 @@ This one tests `purpose-with-additional-purposes'."
     (message "Testing purpose-set-extension-configuration ...")
     (purpose-set-extension-configuration
      :python
-     (purpose-conf :mode-purposes '((python-mode . python)
+     (purpose-conf "py"
+                   :mode-purposes '((python-mode . python)
                                     (inferior-python-mode . interpreter))))
     (should (purpose-set-equal-p (hash-table-keys purpose--extended-mode-purposes) '(inferior-python-mode python-mode)))
     (should (purpose-set-equal-p (hash-table-values purpose--extended-mode-purposes) '(interpreter python)))
