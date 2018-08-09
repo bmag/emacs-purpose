@@ -68,9 +68,11 @@
 Has a main 'edit window, and two side windows - 'dired and 'buffers.
 All windows are purpose-dedicated.")
 
-;; the name arg ("purpose-x-code1") is necessary for Emacs 24.3 and older
+;; the name arg ("purpose-x-code1") is necessary for Emacs 24.5 and older
+;; (omitting it produces an "Invalid slot name" error)
 (defvar purpose-x-code1-purpose-config
-  (purpose-conf :mode-purposes
+  (purpose-conf "purpose-x-code1"
+                :mode-purposes
                 '((ibuffer-mode . buffers)
                   (dired-mode . dired)
                   (imenu-list-major-mode . ilist))))
@@ -189,11 +191,13 @@ imenu."
 ;;; - `purpose-x-magit-off'
 
 (defvar purpose-x-magit-single-conf
-  (purpose-conf :regexp-purposes '(("^\\*magit" . magit)))
+  (purpose-conf "magit-single"
+                :regexp-purposes '(("^\\*magit" . magit)))
   "Configuration that gives each magit major mode the same purpose.")
 
 (defvar purpose-x-magit-multi-conf
   (purpose-conf
+   "magit-multi"
    :mode-purposes '((magit-diff-mode . magit-diff)
                     (magit-status-mode . magit-status)
                     (magit-log-mode . magit-log)
@@ -381,6 +385,7 @@ The configuration is updated according to
   (interactive)
   (cl-flet ((joiner (x) (cons x 'popup)))
     (let ((conf (purpose-conf
+                 "popwin"
                  :mode-purposes (mapcar #'joiner purpose-x-popwin-major-modes)
                  :name-purposes (mapcar #'joiner purpose-x-popwin-buffer-names)
                  :regexp-purposes (mapcar #'joiner
