@@ -197,6 +197,36 @@
             (purpose-mode -1)))
       (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p0-1" "xxx-p1-0"))))
 
+(ert-deftest purpose-test-mark-dedicated ()
+  "Test `purpose-change-buffer' honors `display-buffer-mark-dedicated'."
+  (save-window-excursion
+    (unwind-protect
+	(let ((purpose-message-on-p t))
+	  (purpose-with-temp-config
+	      nil nil '(("^xxx-p0-" . p0) ("^xxx-p1-" . p1))
+	    (purpose-create-buffers-for-test :p0 1 :p1 1)
+	    (message "testing mark-dedicated nil...")
+	    (delete-other-windows)
+	    (set-window-buffer nil "xxx-p0-0")
+	    (set-window-dedicated-p nil nil)
+	    (let* ((display-buffer-mark-dedicated nil))
+	      (purpose-pop-buffer "xxx-p1-0")
+	      (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p1-0"))
+	      (should (string= "xxx-p1-0" (buffer-name (window-buffer))))
+	      (should-not (window-dedicated-p)))
+
+	    (message "testing mark-dedicated t...")
+	    (delete-other-windows)
+	    (set-window-buffer nil "xxx-p0-0")
+	    (set-window-dedicated-p nil nil)
+	    (let* ((display-buffer-mark-dedicated t))
+	      (purpose-pop-buffer "xxx-p1-0")
+	      (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p1-0"))
+	      (should (string= "xxx-p1-0" (buffer-name (window-buffer))))
+	      (should (window-dedicated-p)))))
+
+      (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p1-0"))))
+
 (ert-deftest purpose-test-pop-buffer-same-window ()
   "Test variations of `purpose-pop-buffer-same-window'.
 - 1 windows, switch to other purpose
