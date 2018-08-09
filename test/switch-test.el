@@ -293,26 +293,24 @@
 (ert-deftest purpose-test-display-no-buffer ()
   "Test `display-buffer-no-window' works with `purpose-mode'.
 Window layout should be unchanged."
-  ;; `display-buffer-no-window' isn't defined in Emacs 24.3 and older
-  (when (fboundp 'display-buffer-no-window)
-    (save-window-excursion
-      (unwind-protect
-          (let ((purpose-message-on-p t))
-            (purpose-create-buffers-for-test :p0 2)
-            (purpose-mode 1)
-            (delete-other-windows)
-            (set-window-buffer nil "xxx-p0-0")
-            (split-window)
-            (message "testing buffer not displayed ...")
-            (should-not (display-buffer "xxx-p0-1" '(display-buffer-no-window (allow-no-window . t))))
-            (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-0"))
-            (message "testing buffer not displayed (2) ...")
-            (should-not (display-buffer "xxx-p0-1" '((display-buffer-no-window
-                                                      purpose-display-maybe-other-window)
-                                                     (allow-no-window . t))))
-            (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-0")))
-        (purpose-mode -1)
-        (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p0-1")))))
+  (save-window-excursion
+    (unwind-protect
+        (let ((purpose-message-on-p t))
+          (purpose-create-buffers-for-test :p0 2)
+          (purpose-mode 1)
+          (delete-other-windows)
+          (set-window-buffer nil "xxx-p0-0")
+          (split-window)
+          (message "testing buffer not displayed ...")
+          (should-not (display-buffer "xxx-p0-1" '(display-buffer-no-window (allow-no-window . t))))
+          (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-0"))
+          (message "testing buffer not displayed (2) ...")
+          (should-not (display-buffer "xxx-p0-1" '((display-buffer-no-window
+                                                    purpose-display-maybe-other-window)
+                                                   (allow-no-window . t))))
+          (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-0")))
+      (purpose-mode -1)
+      (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p0-1"))))
 
 (ert-deftest purpose-test-display-fallback-pop-window ()
   "Test value `pop-up-window' for `purpose-display-fallback'.
