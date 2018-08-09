@@ -97,10 +97,12 @@ it yourself.")
     (force-same-window . (purpose-display-maybe-same-window))
     (prefer-other-window . (purpose-display-reuse-window-buffer-other-window
                             purpose-display-reuse-window-purpose-other-window
-                            purpose-display-maybe-other-window
-                            purpose-display-maybe-pop-up-window
-                            purpose-display-maybe-other-frame
+			    ;; only pops if `pop-up-frames' says so
                             purpose-display-maybe-pop-up-frame
+			    ;; only pops when sensible (`split-window-sensibly')
+                            purpose-display-maybe-pop-up-window
+                            purpose-display-maybe-other-window
+                            purpose-display-maybe-other-frame
                             purpose-display-maybe-same-window))
     (prefer-other-frame . (purpose-display-reuse-window-buffer-other-frame
                            purpose-display-reuse-window-purpose-other-frame
