@@ -95,8 +95,8 @@ it yourself.")
                            purpose-display-maybe-pop-up-window
                            purpose-display-maybe-pop-up-frame))
     (force-same-window . (purpose-display-maybe-same-window))
-    (prefer-other-window . (purpose-display-reuse-window-buffer-other-window
-                            purpose-display-reuse-window-purpose-other-window
+    (prefer-other-window . (purpose-display-reuse-window-buffer
+                            purpose-display-reuse-window-purpose
 			    ;; only pops if `pop-up-frames' says so
                             purpose-display-maybe-pop-up-frame
 			    ;; only pops when sensible (`split-window-sensibly')
@@ -331,18 +331,6 @@ that a window on another frame is chosen, avoid raising that frame."
       (when window
         (purpose-change-buffer buffer window 'reuse alist))
       window)))
-
-(defun purpose-display-reuse-window-buffer-other-window (buffer alist)
-  "Return a non-selected window that is already displaying BUFFER.
-This is the same `purpose-display-reuse-window-buffer', except
-the currently selected window is not eligible for reuse."
-  (purpose-display-reuse-window-buffer buffer (cons '(inhibit-same-window . t) alist)))
-
-(defun purpose-display-reuse-window-purpose-other-window (buffer alist)
-  "Return a non-selected window that is already used for the purpose PURPOSE.
-This is the same `purpose-display-reuse-window-purpose', except
-the currently selected window is not eligible for reuse."
-  (purpose-display-reuse-window-purpose buffer (cons '(inhibit-same-window . t) alist)))
 
 (defun purpose-display-reuse-window-buffer-other-frame (buffer alist)
   "Return a window that is already displaying BUFFER.
