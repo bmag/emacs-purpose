@@ -6,11 +6,13 @@ script:
 
 env:
   matrix:
+    - EVM_EMACS=emacs-26.1-travis
+    - EVM_EMACS=emacs-25.3-travis
+    # don't need 25.2 because it's the same 25.3
+    - EVM_EMACS=emacs-25.1-travis
     - EVM_EMACS=emacs-24.5-travis
     - EVM_EMACS=emacs-24.4-travis
     - EVM_EMACS=emacs-24.3-travis
-    # - EVM_EMACS=emacs-24.2-travis
-    # - EVM_EMACS=emacs-24.1-travis
     # - EVM_EMACS=emacs-git-snapshot-travis
 # matrix:
 #   fast_finish: true
