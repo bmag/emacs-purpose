@@ -1,5 +1,13 @@
 #+TITLE: Changelog
 
+* Release 1.7
+** Breaking Changes
+*** removed support for Emacs 24.3
+    Supported versions are Emacs 24.4 and newer (up to 26.1 at the
+    time of writing). The branch ~release-1.6~ will continue to
+    support Emacs 24.3 and is available for those who need it.
+** Bug Fixes
+*** [[https://github.com/bmag/emacs-purpose/pull/116][#116]]: honor ~display-buffer-mark-dedicated~
 * Release 1.6.1
 ** Breaking Changes
 *** [[https://github.com/bmag/emacs-purpose/issues/84][#84]], [[https://github.com/bmag/emacs-purpose/pull/125][#125]]:  remove option ~purpose-preferred-prompt~ and prompts shims.

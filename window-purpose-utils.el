@@ -1,6 +1,6 @@
 ;;; window-purpose-utils.el --- Utilities -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015-2016 Bar Magal & contributors
+;; Copyright (C) 2015-2018 Bar Magal & contributors
 
 ;; Author: Bar Magal
 ;; Package: purpose
