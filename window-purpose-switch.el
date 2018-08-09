@@ -763,7 +763,7 @@ If ALIST is nil, it is ignored and `purpose--alist' is used instead."
       (let* ((user-action-sequence .user-action-sequence)
              (special-action-sequence (purpose--special-action-sequence buffer
                                                                         alist))
-             (normal-action-sequence (alist-get
+             (normal-action-sequence (purpose-alist-get
                                       (or .action-order
                                           purpose-default-action-order)
                                       purpose-action-sequences))

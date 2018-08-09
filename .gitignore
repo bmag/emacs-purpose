@@ -9,3 +9,4 @@ dist
 # Ecukes
 /features/project/.cask
 /features/project/test/*.el
+/test/user-input.txt
