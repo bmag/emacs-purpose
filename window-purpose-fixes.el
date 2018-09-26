@@ -103,7 +103,8 @@ Install helm's purpose configuration."
 (defun purpose--fix-display-neotree (buffer alist)
   "Display neotree window, with Purpose."
   (let* ((first-window (frame-root-window))
-         (new-window (split-window first-window nil 'left)))
+         (side (or (and (eq neo-window-position 'left) 'left) 'right))
+         (new-window (split-window first-window nil side)))
     (purpose-change-buffer buffer new-window 'window alist)
     new-window))
 

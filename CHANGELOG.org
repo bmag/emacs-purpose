@@ -1,5 +1,8 @@
 #+TITLE: Changelog
 
+* Not Part of a Tagged Release Yet
+** Bug Fixes
+*** [[https://github.com/bmag/emacs-purpose/issues/133][#133]]: Neotree fix honors ~neo-window-position~
 * Release 1.7
 ** Breaking Changes
 *** removed support for Emacs 24.3
