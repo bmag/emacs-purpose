@@ -1016,7 +1016,7 @@ If Purpose is active (`purpose--active-p' is non-nil), call
 (defmacro without-purpose (&rest body)
   "Make Purpose inactive while executing BODY.
 This works internally by temporarily setting `purpose--active-p'."
-  (declare (indent defun) (debug body))
+  (declare (indent 0) (debug body))
   `(let ((purpose--active-p nil))
      ,@body))
 
