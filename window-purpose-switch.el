@@ -1016,7 +1016,7 @@ If Purpose is active (`purpose--active-p' is non-nil), call
 (defmacro without-purpose (&rest body)
   "Make Purpose inactive while executing BODY.
 This works internally by temporarily setting `purpose--active-p'."
-  (declare (indent defun) (debug body))
+  (declare (indent 0) (debug body))
   `(let ((purpose--active-p nil))
      ,@body))
 
@@ -1025,10 +1025,13 @@ This works internally by temporarily setting `purpose--active-p'."
 This works internally by using `without-purpose' and
 `call-interactively'."
   (declare (indent defun) (debug function-form))
-  `(lambda ()
-     (interactive)
-     (without-purpose
-       (call-interactively ,command))))
+  (let ((command-sym (cl-gensym)))
+    `(lambda ()
+       (interactive)
+       (without-purpose
+         (let ((,command-sym ,command))
+           (call-interactively (or (command-remapping ,command-sym)
+                                   ,command-sym)))))))
 
 
 

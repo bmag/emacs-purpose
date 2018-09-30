@@ -63,6 +63,7 @@
 
 ;;; Code:
 
+(require 'cl-lib)
 (require 'easymenu)
 (require 'window-purpose-utils)
 (require 'window-purpose-configuration)
@@ -90,9 +91,14 @@ it calls OTHER-FN interactively.
 Example:
   (purpose-ido-caller #'ido-find-file #'find-file)"
   (declare (indent nil) (debug (function-form function-form)))
-  `(lambda (&rest _args)
-     (interactive)
-     (call-interactively (if ido-mode ,ido-fn ,other-fn))))
+  (let ((other-fn-sym (cl-gensym)))
+    `(lambda (&rest _args)
+       (interactive)
+       (call-interactively (if ido-mode
+                               ,ido-fn
+                             (let ((,other-fn-sym ,other-fn))
+                               (or (command-remapping ,other-fn-sym)
+                                   ,other-fn-sym)))))))
 
 (defalias 'purpose-friendly-find-file
   (purpose-ido-caller #'ido-find-file #'find-file)
