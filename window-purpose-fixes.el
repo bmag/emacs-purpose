@@ -250,7 +250,8 @@ Don't call this function before `popwin' is loaded."
   "Don't interfere with which-key, and use a seperate which-key purpose."
   (eval-after-load 'which-key
     '(progn
-       (add-to-list 'purpose-action-function-ignore-buffer-names (regexp-quote which-key-buffer-name))
+       (add-to-list 'purpose-action-function-ignore-buffer-names
+                    (regexp-quote which-key-buffer-name))
        (purpose-set-extension-configuration
         :which-key
         (purpose-conf
@@ -320,7 +321,24 @@ are:
   (unless (member 'which-key exclude)
     (purpose--fix-which-key))
   (unless (member 'magit-popup exclude)
-    (purpose--fix-magit-popup)))
+    (purpose--fix-magit-popup))
+  (unless (member 'zone exclude)
+    (purpose--fix-zone)))
+
+
+
+;; Zone buffers should always open in the same window
+(defun purpose--fix-zone ()
+  "Zone buffers should always open in the same window."
+  (eval-after-load 'zone
+    '(progn
+       (purpose-set-extension-configuration
+        :zone
+        (purpose-conf "zone" :name-purposes `(("*zone*" . Zone))))
+       (add-to-list 'purpose-special-action-sequences
+                    '(Zone display-buffer-same-window)))))
+
+
 
 (provide 'window-purpose-fixes)
 ;;; window-purpose-fixes.el ends here
