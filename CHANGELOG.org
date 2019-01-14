@@ -3,6 +3,12 @@
 * Not Part of a Tagged Release Yet
 ** Bug Fixes
 *** [[https://github.com/bmag/emacs-purpose/issues/133][#133]]: Neotree fix honors ~neo-window-position~
+*** [[https://github.com/bmag/emacs-purpose/issues/137][#137]]: ~purpose-change-buffer~ to ignore ~dedicated~ argument in new Emacsen
+    As of Emacs 27.0.50, the function ~window--display-buffer~ no longer accepts
+    a ~dedicated~ argument, and instead relies on ~alist~ and
+    ~display-buffer-mark-dedicated~ to decide dedication state of the window. As
+    result, ~purpose-change-buffer~ ignores the ~dedicated~ argument when using
+    Emacs version 27 or newer. Older Emacs versions are not affected.
 * Release 1.7
 ** Breaking Changes
 *** removed support for Emacs 24.3

@@ -198,9 +198,19 @@ this case, `purpose-display-at-right-width' is ignored."
 
 (defun purpose-change-buffer (buffer window type &optional alist dedicated)
   "Display BUFFER in WINDOW, but don't select it.
-BUFFER, WINDOW, TYPE and ALIST have the same meaning as
-`window--display-buffer'.'"
-  (window--display-buffer buffer window type alist dedicated))
+BUFFER, WINDOW, TYPE, ALIST and DEDICATED have the same meaning
+as in `window--display-buffer'.
+
+DEDICATED is ignored for Emacs versions in which
+`window--display-buffer' doesn't support a DEDICATED
+argument (i.e. version 27)."
+  (if (version< emacs-version "27")
+      (window--display-buffer buffer window type alist dedicated)
+    ;; optional argument `dedicated' was removed in emacs 27 development branch
+    ;; (as of 2019-01-14). This is a temporary fix to be re-evaluated once emacs
+    ;; 27 development reaches the pretest phase. (docstring to be re-evaluated
+    ;; as well)
+    (window--display-buffer buffer window type alist)))
 
 (defun purpose-window-buffer-reusable-p (window buffer)
   "Return non-nil if WINDOW can be reused to display BUFFER.
