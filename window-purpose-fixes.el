@@ -54,8 +54,8 @@ This function should be advised around
 ;;; Hydra's *LV* buffer should be ignored by Purpose
 (defun purpose--fix-hydra-lv ()
   "Add hydra's LV buffer to Purpose's ignore list."
-  (eval-after-load 'lv
-    '(add-to-list 'purpose-action-function-ignore-buffer-names "^ \\*LV\\*$")))
+  (with-eval-after-load 'lv
+    (add-to-list 'purpose-action-function-ignore-buffer-names "^ \\*LV\\*$")))
 
 
 
@@ -69,12 +69,12 @@ This function should be advised around
   "Fix issues with helm.
 Add helm's buffers to Purposes's ignore list.
 Install helm's purpose configuration."
-  (eval-after-load 'helm
-    '(add-to-list 'purpose-action-function-ignore-buffer-names "^\\*Helm"))
-  (eval-after-load 'helm
-    '(add-to-list 'purpose-action-function-ignore-buffer-names "^\\*helm"))
-  (eval-after-load 'helm
-    '(purpose-set-extension-configuration :helm purpose--helm-conf)))
+  (with-eval-after-load 'helm
+    (add-to-list 'purpose-action-function-ignore-buffer-names "^\\*Helm"))
+  (with-eval-after-load 'helm
+    (add-to-list 'purpose-action-function-ignore-buffer-names "^\\*helm"))
+  (with-eval-after-load 'helm
+    (purpose-set-extension-configuration :helm purpose--helm-conf)))
 
 
 
@@ -144,8 +144,8 @@ When `purpose--active-p' is nil, call original `neo-global--create-window'."
 
 (defun purpose--fix-neotree ()
   "Call `purpose--fix-neotree-1' after `neotree' is loaded."
-  (eval-after-load 'neotree
-    '(purpose--fix-neotree-1)))
+  (with-eval-after-load 'neotree
+    (purpose--fix-neotree-1)))
 
 
 
@@ -170,8 +170,8 @@ Don't call this function before `org' is loaded."
 
 (defun purpose--fix-org-no-popups ()
   "Call `purpose--fix-org-no-popups-1' after `org' is loaded."
-  (eval-after-load 'org
-    '(purpose--fix-org-no-popups-1)))
+  (with-eval-after-load 'org
+    (purpose--fix-org-no-popups-1)))
 
 
 
@@ -188,20 +188,20 @@ Don't call this function before `popwin' is loaded."
 
 (defun purpose--fix-popwin ()
   "Call `purpose--fix-popwin-1' after `popwin' is loaded."
-  (eval-after-load 'popwin
-    '(purpose--fix-popwin-1)))
+  (with-eval-after-load 'popwin
+    (purpose--fix-popwin-1)))
 
 
 
 ;;; Use a seperate purpose for guide-key window (not 'general)
 (defun purpose--fix-guide-key ()
   "Use a seperate purpose for guide-key window."
-  (eval-after-load 'guide-key
-    '(purpose-set-extension-configuration
-      :guide-key
-      (purpose-conf
-       "guide-key"
-       :name-purposes `((,guide-key/guide-buffer-name . guide-key))))))
+  (with-eval-after-load 'guide-key
+    (purpose-set-extension-configuration
+     :guide-key
+     (purpose-conf
+      "guide-key"
+      :name-purposes `((,guide-key/guide-buffer-name . guide-key))))))
 
 
 
@@ -209,33 +209,44 @@ Don't call this function before `popwin' is loaded."
 ;;; with how which-key opens a window/frame
 (defun purpose--fix-which-key ()
   "Don't interfere with which-key, and use a seperate which-key purpose."
-  (eval-after-load 'which-key
-    '(progn
-       (add-to-list 'purpose-action-function-ignore-buffer-names
-                    (regexp-quote which-key-buffer-name))
-       (purpose-set-extension-configuration
-        :which-key
-        (purpose-conf
-         "which-key"
-         :name-purposes `((,which-key-buffer-name . which-key)))))))
+  (with-eval-after-load 'which-key
+    (add-to-list 'purpose-action-function-ignore-buffer-names
+                 (regexp-quote which-key-buffer-name))
+    (purpose-set-extension-configuration
+     :which-key
+     (purpose-conf
+      "which-key"
+      :name-purposes `((,which-key-buffer-name . which-key))))))
 
 
 
 ;;; Let magit-popup use its own way of opening a help window (see https://github.com/syl20bnr/spacemacs/issues/9570)
 (defun purpose--fix-magit-popup ()
   "Let magit-popup display help windows the way it wants."
-  (eval-after-load 'magit-popup
-    '(progn
-       (defun purpose--fix-magit-popup-help (oldfun &rest args)
-         "Make Purpose inactive during `magit-popup-describe-function'."
-         (without-purpose (apply oldfun args)))
-       (defun purpose--fix-magit-popup-help (oldfun &rest args)
-         "Make Purpose inactive during `magit-popup-manpage'."
-         (without-purpose (apply oldfun args)))
-       (advice-add 'magit-popup-describe-function
-                   :around 'purpose--fix-magit-popup-help)
-       (advice-add 'magit-popup-manpage
-                   :around 'purpose--fix-magit-popup-help))))
+  (with-eval-after-load 'magit-popup
+    (defun purpose--fix-magit-popup-help (oldfun &rest args)
+      "Make Purpose inactive during `magit-popup-describe-function'."
+      (without-purpose (apply oldfun args)))
+    (defun purpose--fix-magit-popup-help (oldfun &rest args)
+      "Make Purpose inactive during `magit-popup-manpage'."
+      (without-purpose (apply oldfun args)))
+    (advice-add 'magit-popup-describe-function
+                :around 'purpose--fix-magit-popup-help)
+    (advice-add 'magit-popup-manpage
+                :around 'purpose--fix-magit-popup-help)))
+
+
+
+;;; Zone buffers should always open in the same window
+(defun purpose--fix-zone ()
+  "Zone buffers should always open in the same window."
+  (with-eval-after-load 'zone
+    progn
+    (purpose-set-extension-configuration
+     :zone
+     (purpose-conf "zone" :name-purposes '(("*zone*" . Zone))))
+    (add-to-list 'purpose-special-action-sequences
+                 '(Zone display-buffer-same-window))))
 
 ;;; install fixes
 
@@ -274,21 +285,6 @@ are:
     (purpose--fix-magit-popup))
   (unless (member 'zone exclude)
     (purpose--fix-zone)))
-
-
-
-;; Zone buffers should always open in the same window
-(defun purpose--fix-zone ()
-  "Zone buffers should always open in the same window."
-  (eval-after-load 'zone
-    '(progn
-       (purpose-set-extension-configuration
-        :zone
-        (purpose-conf "zone" :name-purposes `(("*zone*" . Zone))))
-       (add-to-list 'purpose-special-action-sequences
-                    '(Zone display-buffer-same-window)))))
-
-
 
 (provide 'window-purpose-fixes)
 ;;; window-purpose-fixes.el ends here
