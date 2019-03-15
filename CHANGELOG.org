@@ -10,6 +10,7 @@
     result, ~purpose-change-buffer~ ignores the ~dedicated~ argument when using
     Emacs version 27 or newer. Older Emacs versions are not affected.
 *** [[https://github.com/bmag/emacs-purpose/pull/134][#134]]: add support for Zone
+*** [[https://github.com/bmag/emacs-purpose/issues/78#issuecomment-467664376][#78 (comment)]] purpose-x-persp extension: ~persp-curr~ is now a function 
 * Release 1.7
 ** Breaking Changes
 *** removed support for Emacs 24.3

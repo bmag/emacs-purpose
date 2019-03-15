@@ -526,7 +526,7 @@ To add/remove entries, use:
 
 (defun purpose-x-persp-activate ()
   "Activate current perspective's purpose configuration."
-  (let ((conf (gethash (persp-name persp-curr) purpose-x-persp-confs)))
+  (let ((conf (gethash (persp-name (persp-curr)) purpose-x-persp-confs)))
     (if conf
         (purpose-set-extension-configuration :perspective conf)
       (purpose-x-persp-remove))))
@@ -568,7 +568,7 @@ purpose configurations."
 (defun purpose-x-persp-get-buffer-names ()
   "Get names of all buffers with same purpose and perspective as current buffer.
 The returned list doesn't contain the current buffer."
-  (let ((persp-buffers (persp-buffers persp-curr)))
+  (let ((persp-buffers (persp-buffers (persp-curr))))
     (mapcar #'buffer-name
             (cl-delete-if-not (lambda (buffer) (member buffer persp-buffers))
                               (delete (current-buffer)
