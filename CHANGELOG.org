@@ -1,6 +1,16 @@
 #+TITLE: Changelog
 
 * Not Part of a Tagged Release Yet
+** Breaking Changes
+*** [[https://github.com/bmag/emacs-purpose/issues/144][#144]]: purpose-x-magit extension: replace ~magit~ purpose with ~Magit~
+    When using the purpose-x-magit extension via
+    ~purpose-x-magit-single-on~, the extension no longer defines a
+    ~magit~ purpose. Instead it defines an identical purpose named
+    ~Magit~. This way, the purpose can be used as a condition in
+    ~purpose-special-action-sequences~.
+
+    Those who use purpoxe-x-magit via ~purpose-x-magit-multi-on~ are
+    not affected by this change.
 ** Bug Fixes
 *** [[https://github.com/bmag/emacs-purpose/issues/133][#133]]: Neotree fix honors ~neo-window-position~
 *** [[https://github.com/bmag/emacs-purpose/issues/137][#137]]: ~purpose-change-buffer~ to ignore ~dedicated~ argument in new Emacsen

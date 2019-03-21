@@ -182,7 +182,7 @@ imenu."
 ;;; purpose-x-magit extension provides purpose configuration for magit.
 ;;; Two configurations available:
 ;;; - `purpose-x-magit-single-conf': all magit windows have the same purpose
-;;;                                  ('magit)
+;;;                                  ('Magit)
 ;;; - `purpose-x-magit-multi-conf': each magit major-mode has a seperate
 ;;;                                 purpose ('magit-status, 'magit-diff, ...)
 ;;; Use these commands to enable and disable magit's purpose configurations:
@@ -192,7 +192,13 @@ imenu."
 
 (defvar purpose-x-magit-single-conf
   (purpose-conf "magit-single"
-                :regexp-purposes '(("^\\*magit" . magit)))
+                ;; using `magit' as a condition in
+                ;; `purpose-special-action-sequences' is interpreted
+                ;; as a predicate function (for buffer's without a
+                ;; `magit' purpose). `Magit' doesn't have the same
+                ;; problem (no function is named Magit), so that's why
+                ;; we call the purpose `Magit' and not `magit'.
+                :regexp-purposes '(("^\\*magit" . Magit)))
   "Configuration that gives each magit major mode the same purpose.")
 
 (defvar purpose-x-magit-multi-conf
