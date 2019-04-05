@@ -241,7 +241,6 @@ Don't call this function before `popwin' is loaded."
 (defun purpose--fix-zone ()
   "Zone buffers should always open in the same window."
   (with-eval-after-load 'zone
-    progn
     (purpose-set-extension-configuration
      :zone
      (purpose-conf "zone" :name-purposes '(("*zone*" . Zone))))
