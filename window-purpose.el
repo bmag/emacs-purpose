@@ -83,7 +83,7 @@
 ;; commands that know when to use `ido-find-file' and when to use `find-file'.
 ;; the result: Purpose works well both with `ido' and `helm'!!!
 
-(defmacro purpose-ido-caller (ido-fn other-fn)
+(defmacro purpose-ido-caller (ido-fn other-fn &optional counsel-fn)
   "Create an interactive lambda to conditionally call an ido command.
 The lambda calls IDO-FN interactively when `ido-mode' is on, otherwise
 it calls OTHER-FN interactively.
@@ -92,10 +92,14 @@ Example:
   (declare (indent nil) (debug (function-form function-form)))
   `(lambda (&rest _args)
      (interactive)
-     (call-interactively (if ido-mode ,ido-fn ,other-fn))))
+     (call-interactively (if (and counsel-mode ,counsel-fn)
+                             ,counsel-fn
+                           (if ido-mode
+                               ,ido-fn
+                             ,other-fn)))))
 
 (defalias 'purpose-friendly-find-file
-  (purpose-ido-caller #'ido-find-file #'find-file)
+  (purpose-ido-caller #'ido-find-file #'find-file #'counsel-find-file)
   "Call `find-file' or `ido-find-file' intelligently.
 If `ido-mode' is on, call `ido-find-file'.  Otherwise, call `find-file'.
 This allows Purpose to work well with both `ido' and `helm'.")
@@ -117,7 +121,7 @@ If `ido-mode' is on, call `ido-find-file-other-frame'.  Otherwise, call
 This allows Purpose to work well with both `ido' and `helm'.")
 
 (defalias 'purpose-friendly-switch-buffer
-  (purpose-ido-caller #'ido-switch-buffer #'switch-to-buffer)
+  (purpose-ido-caller #'ido-switch-buffer #'switch-to-buffer #'counsel-switch-buffer)
   "Call `switch-to-buffer' or `ido-switch-buffer' intelligently.
 If `ido-mode' is on, call `ido-switch-buffer'.  Otherwise, call
 `switch-to-buffer'.
