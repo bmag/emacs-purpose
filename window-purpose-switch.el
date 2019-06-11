@@ -929,9 +929,10 @@ list of functions, as described in `display-buffer'.  In such case,
 treat the funcion(s) as an action sequence."
   (when (listp action)
     (let ((fn (car action)))
-      (if (listp fn)
-          fn
-        (list fn)))))
+      (cond
+       ((functionp fn) (list fn))
+       ((listp fn) fn)
+       (t (error "Unrecognized display action '%s'" action))))))
 
 (defun purpose-display-buffer-advice
     (oldfun buffer-or-name &optional action frame)
