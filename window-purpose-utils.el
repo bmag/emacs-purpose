@@ -105,9 +105,7 @@ Example:
 for each entry in hash-table TABLE."
   (let (results)
     (maphash #'(lambda (key value)
-                 (setq results
-                       (append results
-                               (list (funcall function key value)))))
+                 (push (funcall function key value) results))
              table)
     results))
 
