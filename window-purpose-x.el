@@ -653,13 +653,22 @@ This function removes the buffer denoted by BUFFER-OR-NAME from all
 window-local buffer lists."
   (interactive "bBuffer to replace: ")
   (let* ((buffer (window-normalize-buffer buffer-or-name))
-         (purpose (purpose-buffer-purpose buffer))
-         (other-buffers (delete buffer (purpose-buffers-with-purpose purpose))))
+         ;; Delay calculating other-buffers until we need it
+         ;; This prevents unnecessary calculations on temporary
+         ;; buffers created by `with-temp-buffer' and other likewise
+         ;; non-displayed buffers
+         (have-other-buffers nil)
+         (other-buffers nil))
     (dolist (window (window-list-1 nil nil t))
       (if (eq (window-buffer window) buffer)
           (unless (window--delete window t t)
-            (let ((dedicated (purpose-window-purpose-dedicated-p window))
-                  (deletable (window-deletable-p window)))
+            (let* ((purpose (purpose-buffer-purpose buffer))
+                   (other-buffers (if have-other-buffers
+                                      other-buffers
+                                    (setq have-other-buffers t
+                                          other-buffers (delete buffer (purpose-buffers-with-purpose purpose)))))
+                   (dedicated (purpose-window-purpose-dedicated-p window))
+                   (deletable (window-deletable-p window)))
               (cond
                ((and dedicated other-buffers)
                 ;; dedicated, so replace with a buffer with the same purpose
