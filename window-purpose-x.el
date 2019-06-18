@@ -364,10 +364,22 @@ When changing the value of this variable in elisp code, you should call
   :initialize 'custom-initialize-default
   :package-version "1.4")
 
+(defvar purpose-x-popwin--popup-purposes ()
+  "List of purposes that are considered 'popup' purposes.
+This is used to automatically delete popup windows when displaying non-popup buffers.")
+
+(defun purpose-x-popwin--buffer-list-update ()
+  "Delete all popup windows not currently displaying a buffer with a popup purpose"
+  (dolist (window (window-list))
+    (when (and (window-parameter window 'purpose-x-popwin-popup-window)
+               (not (member (purpose-window-purpose window) purpose-x-popwin--popup-purposes)))
+    (delete-window window))))
+
 (defun purpose-x-popupify-purpose (purpose &optional display-fn)
   "Set up a popup-like behavior for buffers with purpose PURPOSE.
 DISPLAY-FN is the display function to use for creating the popup window
 for purpose PURPOSE, and defaults to `purpose-display-at-bottom'."
+  (add-to-list 'purpose-x-popwin--popup-purposes purpose)
   (setq purpose-special-action-sequences
         (cl-delete purpose purpose-special-action-sequences :key #'car))
   (push (list purpose
@@ -381,7 +393,8 @@ for purpose PURPOSE, and defaults to `purpose-display-at-bottom'."
 This actually removes any special treatment for PURPOSE in
 `purpose-special-action-sequences', not only popup-like behavior."
   (setq purpose-special-action-sequences
-        (cl-delete purpose purpose-special-action-sequences :key #'car)))
+        (cl-delete purpose purpose-special-action-sequences :key #'car))
+  (setq purpose-x-popwin--popup-purposes (delete purpose purpose-x-popwin--popup-purposes)))
 
 (defun purpose-x-popwin-update-conf ()
   "Update purpose-x-popwin's purpose configuration.
@@ -421,6 +434,7 @@ See `display-buffer' for the meaning of ALIST."
     (let ((window
            (funcall (purpose-x-popwin-get-display-function) buffer alist)))
       (purpose-set-window-purpose-dedicated-p window t)
+      (set-window-parameter window 'purpose-x-popwin-popup-window t)
       (purpose-x-popwin-add-hooks)
       window)))
 
@@ -445,13 +459,15 @@ the user when switching buffers."
                   (lambda ()
                     (interactive)
                     (purpose-x-popwin-closer-1 t)))
-  (add-hook 'purpose-select-buffer-hook #'purpose-x-popwin-closer-1))
+  (add-hook 'purpose-select-buffer-hook #'purpose-x-popwin-closer-1)
+  (add-hook 'buffer-list-update-hook 'purpose-x-popwin--buffer-list-update))
 
 (defun purpose-x-popwin-remove-hooks ()
   "Remove hooks for closing popup window automatically.
 This basically is an undo for `purpose-x-popwin-add-hooks'."
   (global-set-key [remap keyboard-quit] nil)
-  (remove-hook 'purpose-select-buffer-hook #'purpose-x-popwin-closer-1))
+  (remove-hook 'purpose-select-buffer-hook #'purpose-x-popwin-closer-1)
+  (remove-hook 'buffer-list-update-hook 'purpose-x-popwin--buffer-list-update))
 
 (defun purpose-x-popwin-stick ()
   "Prevent current popup window from being automatically closed.
@@ -717,5 +733,6 @@ This is implemented by overriding `replace-buffer-in-windows' with
 
 ;;; --- purpose-x-kill ends here ---
 
+(pushnew '(purpose-x-popwin-popup-window . writable) window-persistent-parameters :key #'car)
 (provide 'window-purpose-x)
 ;;; window-purpose-x.el ends here
