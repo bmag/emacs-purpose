@@ -107,7 +107,7 @@ regexp REGEXP."
   "Return the purpose of buffer BUFFER-OR-NAME, as determined by the
 regexps matched by its name.
 REGEXP-CONF is a hash table mapping name regexps to purposes."
-  (catch found
+  (catch 'found
     (maphash
      #'(lambda (regexp purpose)
          (when (purpose--buffer-purpose-name-regexp-1 buffer-or-name
