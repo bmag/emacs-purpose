@@ -79,13 +79,12 @@ dummy buffer with the purpose 'edit."
 mode and MODE-CONF.
 MODE-CONF is a hash table mapping modes to purposes."
   (when (get-buffer buffer-or-name)     ; check if buffer exists
-    (cl-block nil
-      (maphash
-       (let ((buffer-mode (purpose--buffer-major-mode buffer-or-name)))
-         #'(lambda (mode purpose)
-             (when (provided-mode-derived-p buffer-mode mode)
-               (cl-return purpose))))
-       mode-conf))))
+    (let* ((major-mode (purpose--buffer-major-mode buffer-or-name))
+           (derived-modes (purpose--iter-hash #'(lambda (mode _purpose) mode)
+                                              mode-conf))
+           (derived-mode (apply #'derived-mode-p derived-modes)))
+      (when derived-mode
+        (gethash derived-mode mode-conf)))))
 
 (defun purpose--buffer-purpose-name (buffer-or-name name-conf)
   "Return the purpose of buffer BUFFER-OR-NAME, as determined by its
