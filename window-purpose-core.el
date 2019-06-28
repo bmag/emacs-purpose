@@ -107,13 +107,14 @@ regexp REGEXP."
   "Return the purpose of buffer BUFFER-OR-NAME, as determined by the
 regexps matched by its name.
 REGEXP-CONF is a hash table mapping name regexps to purposes."
-  (car (remove nil
-               (purpose--iter-hash
-                #'(lambda (regexp purpose)
-                    (purpose--buffer-purpose-name-regexp-1 buffer-or-name
-                                                           regexp
-                                                           purpose))
-                regexp-conf))))
+  (catch 'found
+    (maphash
+     #'(lambda (regexp purpose)
+         (when (purpose--buffer-purpose-name-regexp-1 buffer-or-name
+                                                      regexp
+                                                      purpose)
+           (throw 'found purpose)))
+     regexp-conf)))
 
 (defun purpose-buffer-purpose (buffer-or-name)
   "Get the purpose of buffer BUFFER-OR-NAME.
@@ -168,7 +169,7 @@ If no purpose was determined, return `default-purpose'."
 
 (defun purpose-buffers-with-purpose (purpose)
   "Return a list of all existing buffers with purpose PURPOSE."
-  (cl-remove-if-not #'(lambda (buffer)
+  (cl-delete-if-not #'(lambda (buffer)
                         (and (eql purpose (purpose-buffer-purpose buffer))
                              (not (minibufferp buffer))))
                     (buffer-list)))
