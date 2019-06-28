@@ -733,6 +733,6 @@ This is implemented by overriding `replace-buffer-in-windows' with
 
 ;;; --- purpose-x-kill ends here ---
 
-(pushnew '(purpose-x-popwin-popup-window . writable) window-persistent-parameters :key #'car)
+(push '(purpose-x-popwin-popup-window . writable) window-persistent-parameters)
 (provide 'window-purpose-x)
 ;;; window-purpose-x.el ends here
