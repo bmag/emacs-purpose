@@ -107,13 +107,13 @@ regexp REGEXP."
   "Return the purpose of buffer BUFFER-OR-NAME, as determined by the
 regexps matched by its name.
 REGEXP-CONF is a hash table mapping name regexps to purposes."
-  (cl-block nil
+  (catch found
     (maphash
      #'(lambda (regexp purpose)
          (when (purpose--buffer-purpose-name-regexp-1 buffer-or-name
                                                       regexp
                                                       purpose)
-           (cl-return purpose)))
+           (throw 'found purpose)))
      regexp-conf)))
 
 (defun purpose-buffer-purpose (buffer-or-name)
