@@ -198,7 +198,7 @@ imenu."
                 ;; `magit' purpose). `Magit' doesn't have the same
                 ;; problem (no function is named Magit), so that's why
                 ;; we call the purpose `Magit' and not `magit'.
-                :regexp-purposes '(("^\\*magit" . Magit)))
+                :mode-purposes '((magit-mode . Magit)))
   "Configuration that gives each magit major mode the same purpose.")
 
 (defvar purpose-x-magit-multi-conf
