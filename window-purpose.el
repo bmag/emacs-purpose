@@ -83,25 +83,30 @@
 ;; commands that know when to use `ido-find-file' and when to use `find-file'.
 ;; the result: Purpose works well both with `ido' and `helm'!!!
 
-(defmacro purpose-ido-caller (ido-fn other-fn)
-  "Create an interactive lambda to conditionally call an ido command.
-The lambda calls IDO-FN interactively when `ido-mode' is on, otherwise
-it calls OTHER-FN interactively.
+(defmacro purpose-ido-caller (ido-fn helm-fn other-fn)
+  "Create an interactive lambda to conditionally call a command.
+The lambda calls IDO-FN interactively when `ido-mode' is on, it calls
+HELM-FN when `helm-mode' is on, and it calls OTHER-FN interactively.
 Example:
   (purpose-ido-caller #'ido-find-file #'find-file)"
   (declare (indent nil) (debug (function-form function-form)))
   `(lambda (&rest _args)
      (interactive)
-     (call-interactively (if ido-mode ,ido-fn ,other-fn))))
+     (call-interactively (cond (ido-mode ,ido-fn)
+			       (helm-mode ,helm-fn)
+			       (t ,other-fn)))))
 
 (defalias 'purpose-friendly-find-file
-  (purpose-ido-caller #'ido-find-file #'find-file)
-  "Call `find-file' or `ido-find-file' intelligently.
-If `ido-mode' is on, call `ido-find-file'.  Otherwise, call `find-file'.
+  (purpose-ido-caller #'ido-find-file #'helm-find-files #'find-file)
+  "Call `find-file', `helm-find-files' or `ido-find-file' intelligently.
+If `ido-mode' is on, call `ido-find-file'.  If `helm-mode' is on,
+call `helm-find-files'.  Otherwise, call `find-file'.
 This allows Purpose to work well with both `ido' and `helm'.")
 
 (defalias 'purpose-friendly-find-file-other-window
-  (purpose-ido-caller #'ido-find-file-other-window #'find-file-other-window)
+  (purpose-ido-caller #'ido-find-file-other-window
+		      #'find-file-other-window
+		      #'find-file-other-window)
   "Call `find-file-other-window' or `ido-find-file-other-window'
 intelligently.
 If `ido-mode' is on, call `ido-find-file-other-window'.  Otherwise, call
@@ -109,7 +114,9 @@ If `ido-mode' is on, call `ido-find-file-other-window'.  Otherwise, call
 This allows Purpose to work well with both `ido' and `helm'.")
 
 (defalias 'purpose-friendly-find-file-other-frame
-  (purpose-ido-caller #'ido-find-file-other-frame #'find-file-other-frame)
+  (purpose-ido-caller #'ido-find-file-other-frame
+		      #'find-file-other-frame
+		      #'find-file-other-frame)
   "Call `find-file-other-frame' or `ido-find-file-other-frame'
 intelligently.
 If `ido-mode' is on, call `ido-find-file-other-frame'.  Otherwise, call
@@ -117,15 +124,18 @@ If `ido-mode' is on, call `ido-find-file-other-frame'.  Otherwise, call
 This allows Purpose to work well with both `ido' and `helm'.")
 
 (defalias 'purpose-friendly-switch-buffer
-  (purpose-ido-caller #'ido-switch-buffer #'switch-to-buffer)
-  "Call `switch-to-buffer' or `ido-switch-buffer' intelligently.
-If `ido-mode' is on, call `ido-switch-buffer'.  Otherwise, call
-`switch-to-buffer'.
+  (purpose-ido-caller #'ido-switch-buffer
+		      #'helm-mini
+		      #'switch-to-buffer)
+  "Call `switch-to-buffer', `helm-mini' or `ido-switch-buffer' intelligently.
+If `ido-mode' is on, call `ido-switch-buffer'.  If `helm-mode'
+is on, call `helm-mini'.  Otherwise, call `switch-to-buffer'.
 This allows Purpose to work well with both `ido' and `helm'.")
 
 (defalias 'purpose-friendly-switch-buffer-other-window
   (purpose-ido-caller #'ido-switch-buffer-other-window
-                      #'switch-to-buffer-other-window)
+                      #'switch-to-buffer-other-window
+		      #'switch-to-buffer-other-window)
   "Call `switch-to-buffer-other-window' or
 `ido-switch-buffer-other-window' intelligently.
 If `ido-mode' is on, call `ido-switch-buffer-other-window'.  Otherwise,
@@ -134,7 +144,8 @@ This allows Purpose to work well with both `ido' and `helm'.")
 
 (defalias 'purpose-friendly-switch-buffer-other-frame
   (purpose-ido-caller #'ido-switch-buffer-other-frame
-                      #'switch-to-buffer-other-frame)
+                      #'switch-to-buffer-other-frame
+		      #'switch-to-buffer-other-frame)
   "Call `switch-to-buffer-other-frame' or
 `ido-switch-buffer-other-frame' intelligently.
 If `ido-mode' is on, call `ido-switch-buffer-other-frame'.  Otherwise,
