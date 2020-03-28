@@ -184,12 +184,12 @@ If current buffer doesn't have a filename, do nothing."
             (when (fboundp 'dired-hide-details-mode)
               (when (not (assq 'dired-hide-details-mode minor-mode-alist))
                 (add-minor-mode 'dired-hide-details-mode ""))
-              (dired-hide-details-mode)))
+              (dired-hide-details-mode))
+            (when purpose-x-code1-dired-goto-file
+              (dired-goto-file file-path)))
           ;; Prevents immediately closing the newly created popup help window
           (cl-letf (((symbol-value 'purpose-select-buffer-hook) nil))
-            (display-buffer buffer))
-          (when purpose-x-code1-dired-goto-file
-            (dired-goto-file file-path)))))))
+            (display-buffer buffer)))))))
 
 (defun purpose-x-code1-update-changed ()
   "Update auxiliary buffers if frame/buffer had changed."
