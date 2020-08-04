@@ -193,10 +193,10 @@ If current buffer doesn't have a filename, do nothing."
 
 (defun purpose-x-code1-update-changed ()
   "Update auxiliary buffers if frame/buffer had changed."
-  (when (and (not (eq (current-buffer) (get-buffer imenu-list-buffer-name)))
+  (when (and (not (minibufferp))
+             (not (eq (current-buffer) (get-buffer imenu-list-buffer-name)))
              (or (frame-or-buffer-changed-p 'purpose-x-code1-buffers-changed)
-                 (and (not (minibufferp))
-                      (not (memq (purpose-buffer-purpose (current-buffer)) '(code1-dired buffers ilist))))))
+                 (not (memq (purpose-buffer-purpose (current-buffer)) '(code1-dired buffers ilist)))))
     (purpose-x-code1-update-dired)
     (imenu-list-update)))
 
