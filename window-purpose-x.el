@@ -191,6 +191,8 @@ If current buffer doesn't have a filename, do nothing."
           (cl-letf (((symbol-value 'purpose-select-buffer-hook) nil))
             (display-buffer buffer)))))))
 
+(defvar purpose-x-code1-post-command-action-timer nil)
+
 (defun purpose-x-code1-update-changed ()
   "Update auxiliary buffers if frame/buffer had changed."
   (while-no-input
@@ -201,21 +203,6 @@ If current buffer doesn't have a filename, do nothing."
                    (not (memq (purpose-buffer-purpose (current-buffer)) '(code1-dired buffers ilist)))))
       (purpose-x-code1-update-dired)
       (imenu-list-update))))
-
-(defvar purpose-x-code1-post-command-action-timer nil)
-
-(defun purpose-x-code1-debounced-update-changed ()
-  (when (timerp purpose-x-code1-post-command-action-timer)
-    (cancel-timer purpose-x-code1-post-command-action-timer)
-    (setq purpose-x-code1-post-command-action-timer nil))
-  (let ((wrapper (lambda ()
-                   (unwind-protect
-                       (purpose-x-code1-update-changed)
-                     (when (timerp purpose-x-code1-post-command-action-timer)
-                       (cancel-timer purpose-x-code1-post-command-action-timer)
-                       (setq purpose-x-code1-post-command-action-timer nil))))))
-    (setq purpose-x-code1-post-command-action-timer
-          (run-with-idle-timer purpose-x-code1-update-idle-delay nil wrapper))))
 
 (defvar purpose-x-code1--original-imenu-list-settings (make-hash-table))
 
@@ -259,12 +246,12 @@ imenu."
   (frame-or-buffer-changed-p 'purpose-x-code1-buffers-changed)
   (purpose-set-window-layout purpose-x-code1--window-layout)
   (add-hook 'post-command-hook #'purpose-x-code1-update-changed)
-  (add-hook 'window-configuration-change-hook #'purpose-x-code1-debounced-update-changed))
+  (add-hook 'window-configuration-change-hook #'purpose-x-code1-update-changed))
 
 (defun purpose-x-code1-unset ()
   "Unset purpose-x-code1."
   (interactive)
-  (remove-hook 'window-configuration-change-hook #'purpose-x-code1-debounced-update-changed)
+  (remove-hook 'window-configuration-change-hook #'purpose-x-code1-update-changed)
   (remove-hook 'post-command-hook #'purpose-x-code1-update-changed)
   (purpose-x-code1--unset-imenu-list)
   (purpose-x-code1--unset-ibuffer)
