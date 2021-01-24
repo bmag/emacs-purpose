@@ -186,8 +186,6 @@ If current buffer doesn't have a filename, do nothing."
           (cl-letf (((symbol-value 'purpose-select-buffer-hook) nil))
             (display-buffer buffer)))))))
 
-(defvar purpose-x-code1-post-command-action-timer nil)
-
 (defun purpose-x-code1-update-changed ()
   "Update auxiliary buffers if frame/buffer had changed."
   (while-no-input
