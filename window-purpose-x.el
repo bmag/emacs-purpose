@@ -65,11 +65,6 @@ in `dired' using `dired-goto-file'."
   :type 'boolean
   :package-version "1.6.2")
 
-(defcustom purpose-x-code1-update-idle-delay 1
-  "Time in seconds after idling before updating code1."
-  :group 'purpose
-  :type 'number)
-
 (defvar purpose-x-code1--window-layout
   '(nil
     (0 0 152 35)
