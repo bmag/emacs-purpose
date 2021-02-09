@@ -40,21 +40,21 @@
   "If nil, don't use layouts from `purpose--built-in-layouts-dir'."
   :group 'purpose
   :type 'boolean
-  :package-version "1.6")
+  :package-version '(window-purpose . "1.6"))
 
 (defcustom purpose-default-layout-file
   (concat user-emacs-directory ".purpose-layout")
   "Default file for saving/loading purpose layout."
   :group 'purpose
   :type 'file
-  :package-version "1.2")
+  :package-version '(window-purpose . "1.2"))
 
 (defcustom purpose-layout-dirs
   (list (locate-user-emacs-file "layouts/"))
   "List of directories containing layout files."
   :group 'purpose
   :type '(repeat file)
-  :package-version "1.5")
+  :package-version '(window-purpose . "1.5"))
 
 (defcustom purpose-get-extra-window-params-functions nil
   "If non-nil, this variable should be a list of functions.
@@ -62,7 +62,7 @@ This variable is used by `purpose-window-params'.  See
 `purpose-window-params' for more details."
   :group 'purpose
   :type 'hook
-  :package-version "1.4")
+  :package-version '(window-purpose . "1.4"))
 
 (defcustom purpose-set-window-properties-functions nil
   "Hook to run after calling `purpose-set-window-properties'.
@@ -75,7 +75,7 @@ WINDOW is nil, your function should act on the selected window
 instead."
   :group 'purpose
   :type 'hook
-  :package-version "1.2")
+  :package-version '(window-purpose . "1.2"))
 
 (defvar purpose-recent-window-layouts (make-ring 50)
   "Most recently used window layouts.

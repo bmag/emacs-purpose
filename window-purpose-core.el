@@ -33,19 +33,19 @@
   "purpose-mode configuration"
   :group 'windows
   :prefix "purpose-"
-  :package-version "1.2")
+  :package-version '(window-purpose . "1.2"))
 
 (defcustom default-purpose 'general
   "The default purpose for buffers which didn't get another purpose."
   :group 'purpose
   :type 'symbol
-  :package-version "1.2")
+  :package-version '(window-purpose . "1.2"))
 
 (defcustom default-file-purpose 'edit
   "The default purpose for buffers visiting a file which didn't get a purpose."
   :group 'purpose
   :type 'symbol
-  :package-version "1.6.1")
+  :package-version '(window-purpose . "1.6.1"))
 
 ;;; utilities
 
