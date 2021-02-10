@@ -247,6 +247,20 @@ Don't call this function before `popwin' is loaded."
     (add-to-list 'purpose-special-action-sequences
                  '(Zone display-buffer-same-window))))
 
+
+(defun purpose--fix-whitespace ()
+  "Integrate `window-purpose' with `whitespace'."
+  (with-eval-after-load 'whitespace
+    (defun purpose--whitespace-display-window-advice (buffer)
+      "Stops `whitespace-display-window' from splitting and shrinking windows."
+      (with-current-buffer buffer
+        (special-mode)
+        (goto-char (point-min)))
+      (switch-to-buffer buffer))
+    (advice-add 'whitespace-display-window :override
+                'purpose--whitespace-display-window-advice)))
+
+
 ;;; install fixes
 
 (defun purpose-fix-install (&rest exclude)
@@ -261,7 +275,8 @@ are:
 - 'org : don't integrate with org
 - 'popwin : don't integrate with popwin
 - 'guide-key : don't integrate with guide-key
-- 'which-key : don't integrate with which-key"
+- 'which-key : don't integrate with which-key
+- 'whitespace : don't integrate with whitespace"
   (interactive)
   (unless (member 'compilation-next-error-function exclude)
     (advice-add 'compilation-next-error-function
@@ -283,7 +298,9 @@ are:
   (unless (member 'magit-popup exclude)
     (purpose--fix-magit-popup))
   (unless (member 'zone exclude)
-    (purpose--fix-zone)))
+    (purpose--fix-zone))
+  (unless (member 'whitespace exclude)
+    (purpose--fix-whitespace)))
 
 (provide 'window-purpose-fixes)
 ;;; window-purpose-fixes.el ends here
