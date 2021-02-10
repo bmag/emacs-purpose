@@ -50,6 +50,13 @@ This function should be advised around
       (set-window-dedicated-p compilation-window old-window-dedicated-p))))
 
 
+(defun purpose--fix-isearch ()
+  "Set `isearch--display-help-action'.
+
+Prevents `isearch-describe-*' commands from bypassing purpose."
+  (with-eval-after-load 'isearch
+    (setq isearch--display-help-action '(purpose--action-function . nil))))
+
 
 ;;; Hydra's *LV* buffer should be ignored by Purpose
 (defun purpose--fix-hydra-lv ()
@@ -255,6 +262,7 @@ EXCLUDE is a list of integrations to skip.  Known members of EXCLUDE
 are:
 - 'compilation-next-error-function : don't integrate with
   `compilation-next-error-function'.
+- 'isearch : don't integrate with isearch
 - 'lv : don't integrate with lv (hydra)
 - 'helm : don't integrate with helm
 - 'neotree : don't integrate with neotree
@@ -266,6 +274,8 @@ are:
   (unless (member 'compilation-next-error-function exclude)
     (advice-add 'compilation-next-error-function
                 :around #'purpose--fix-compilation-next-error))
+  (unless (member 'isearch exclude)
+    (purpose--fix-isearch))
   (unless (member 'lv exclude)
     (purpose--fix-hydra-lv))
   (unless (member 'helm exclude)
