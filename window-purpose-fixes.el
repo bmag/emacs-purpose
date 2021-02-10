@@ -29,7 +29,33 @@
 (require 'window-purpose-switch)
 (require 'window-purpose-configuration)
 
+(defun purpose--fix-edebug ()
+  "Integrates Edebug with Purpose."
 
+  (with-eval-after-load 'edebug
+    (defun purpose--edebug-pop-to-buffer-advice (buffer &optional window)
+      "Reimplements `edebug-pop-to-buffer' using `pop-to-buffer'
+
+Since `edebug-pop-to-buffer' simply splits the last selected
+window before the minibuffer was popped up, the window it picks
+to display a edebug buffer does not respect `window-purpose' as
+all.  This advice reimplements it by replacing the window
+spliting logic with `pop-to-buffer'."
+      (setq window
+            (cond
+             ((and (edebug-window-live-p window)
+                   (eq (window-buffer window) buffer))
+              window)
+             ((eq (window-buffer) buffer)
+              (selected-window))
+             ((get-buffer-window buffer 0))
+             (t (get-buffer-window (pop-to-buffer buffer)))))
+      (set-window-buffer window buffer)
+      (select-window window)
+      (unless (memq (framep (selected-frame)) '(nil t pc))
+        (x-focus-frame (selected-frame)))
+      (set-window-hscroll window 0))
+    (advice-add 'edebug-pop-to-buffer :override 'purpose--edebug-pop-to-buffer-advice)))
 
 ;;; `compilation-next-error-function' sometimes hides the compilation buffer
 ;;; when Purpose is on. Solution: make the buffer's window dedicated while
@@ -269,6 +295,7 @@ Don't call this function before `popwin' is loaded."
   "Install fixes for integrating Purpose with other features.
 EXCLUDE is a list of integrations to skip.  Known members of EXCLUDE
 are:
+- 'edebug : don't integrate with edebug
 - 'compilation-next-error-function : don't integrate with
   `compilation-next-error-function'.
 - 'next-error : don't integrate with `next-error'
@@ -280,6 +307,8 @@ are:
 - 'guide-key : don't integrate with guide-key
 - 'which-key : don't integrate with which-key"
   (interactive)
+  (unless (member 'edebug exclude)
+    (purpose--fix-edebug))
   (unless (member 'compilation-next-error-function exclude)
     (advice-add 'compilation-next-error-function
                 :around #'purpose--fix-compilation-next-error))
