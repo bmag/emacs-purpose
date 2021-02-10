@@ -50,6 +50,22 @@ This function should be advised around
       (set-window-dedicated-p compilation-window old-window-dedicated-p))))
 
 
+(defun purpose--fix-next-error ()
+  "Integrate `window-purpose' and `next-error'.
+
+Under `next-error-follow-minor-mode', `next-error-no-select' will
+override window-purpose's `display-buffer-overriding-action'.
+This will result in source buffers not displaying in the
+purpose-dedicated window for source code in complex window
+layouts.  This fix makes sure `next-error' works with
+window-purpose."
+  (defun purpose--next-error (oldfun &rest args)
+    "Make sure `next-error' respects `purspose--action-function'."
+    (interactive (lambda (spec) (advice-eval-interactive-spec spec)))
+    (let ((display-buffer-overriding-action '(purpose--action-function . nil)))
+      (apply oldfun args)))
+  (advice-add 'next-error :around 'purpose--next-error))
+
 
 ;;; Hydra's *LV* buffer should be ignored by Purpose
 (defun purpose--fix-hydra-lv ()
@@ -255,6 +271,7 @@ EXCLUDE is a list of integrations to skip.  Known members of EXCLUDE
 are:
 - 'compilation-next-error-function : don't integrate with
   `compilation-next-error-function'.
+- 'next-error : don't integrate with `next-error'
 - 'lv : don't integrate with lv (hydra)
 - 'helm : don't integrate with helm
 - 'neotree : don't integrate with neotree
@@ -266,6 +283,8 @@ are:
   (unless (member 'compilation-next-error-function exclude)
     (advice-add 'compilation-next-error-function
                 :around #'purpose--fix-compilation-next-error))
+  (unless (member 'next-error exclude)
+    (purpose--fix-next-error))
   (unless (member 'lv exclude)
     (purpose--fix-hydra-lv))
   (unless (member 'helm exclude)
