@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -48,9 +48,9 @@ jobs:
         run: |
           make install
           make test
-  finalize:
+  send-coverage-report:
     runs-on: ubuntu-latest
     if: always()
-    needs: build
+    needs: test
     steps:
       - run: curl "https://coveralls.io/webhook?repo_name=$GITHUB_REPOSITORY&repo_token=${{ secrets.GITHUB_TOKEN }}" -d "payload[build_num]=$GITHUB_RUN_NUMBER&payload[status]=done"
