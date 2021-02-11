@@ -40,5 +40,8 @@ jobs:
         with:
           version: 'snapshot'
 
+      - name: Cask install
+        run: make install
+
       - name: Run tests
         run: make test
