@@ -129,7 +129,7 @@ purpose of a buffer.  The user configuration and extended configuration
 are used anyway."
   :group 'purpose
   :type 'boolean
-  :package-version "1.2")
+  :package-version '(window-purpose . "1.2"))
 
 (defcustom purpose-user-mode-purposes nil
   "User configured alist mapping of modes to purposes.
@@ -143,7 +143,7 @@ If you set this variable in elisp-code, you should call the function
            (prog1 (set-default symbol value)
              (purpose-compile-user-configuration)))
   :initialize 'custom-initialize-default
-  :package-version "1.2")
+  :package-version '(window-purpose . "1.2"))
 
 (defcustom purpose-user-name-purposes nil
   "User configured alist mapping of names to purposes.
@@ -157,7 +157,7 @@ If you set this variable in elisp-code, you should call the function
            (prog1 (set-default symbol value)
              (purpose-compile-user-configuration)))
   :initialize 'custom-initialize-default
-  :package-version "1.2")
+  :package-version '(window-purpose . "1.2"))
 
 (defcustom purpose-user-regexp-purposes nil
   "User configured alist mapping of regexps to purposes.
@@ -171,7 +171,7 @@ If you set this variable in elisp-code, you should call the function
            (prog1 (set-default symbol value)
              (purpose-compile-user-configuration)))
   :initialize 'custom-initialize-default
-  :package-version "1.2")
+  :package-version '(window-purpose . "1.2"))
 
 (defvar purpose-extended-configuration nil
   "A plist containing `purpose-conf' objects.
