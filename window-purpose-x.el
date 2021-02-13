@@ -215,22 +215,40 @@ imenu."
                     (magit-wazzup-mode . magit-wazzup)))
   "Configuration that gives each magit major mode its own purpose.")
 
+(defvar purpose-x-old-magit-display-buffer-function nil
+  "Stores `magit-display-buffer-function'.
+
+The value of `magit-display-buffer-function' at the time
+`purpose-x-magit-single-on' or `purpose-x-magit-multi-on' is
+invoked.")
+
+(defun purpose-x-magit-display-buffer-function (buffer)
+  "Integrate `magit' with `window-purpose'."
+  (let ((display-buffer-overriding-action '(purpose--action-function . nil)))
+    (funcall purpose-x-old-magit-display-buffer-function buffer)))
+
 ;;;###autoload
 (defun purpose-x-magit-single-on ()
   "Turn on magit-single purpose configuration."
   (interactive)
+  (setq purpose-x-old-magit-display-buffer-function magit-display-buffer-function
+        magit-display-buffer-function 'purpose-x-magit-display-buffer-function)
   (purpose-set-extension-configuration :magit purpose-x-magit-single-conf))
 
 ;;;###autoload
 (defun purpose-x-magit-multi-on ()
   "Turn on magit-multi purpose configuration."
   (interactive)
+  (setq purpose-x-old-magit-display-buffer-function magit-display-buffer-function
+        magit-display-buffer-function 'purpose-x-magit-display-buffer-function)
   (purpose-set-extension-configuration :magit purpose-x-magit-multi-conf))
 
 (defun purpose-x-magit-off ()
   "Turn off magit purpose configuration (single or multi)."
   (interactive)
-  (purpose-del-extension-configuration :magit))
+  (purpose-del-extension-configuration :magit)
+  (setq magit-display-buffer-function purpose-x-old-magit-display-buffer-function
+        purpose-x-old-magit-display-buffer-function nil))
 
 ;;; --- purpose-x-magit ends here ---
 
@@ -302,7 +320,7 @@ compatible with `display-buffer'."
                  (const left)
                  (const right)
                  function)
-  :package-version "1.4")
+  :package-version '(window-purpose . "1.4"))
 
 (defcustom purpose-x-popwin-width 0.4
   "Width of popup window when displayed at left or right.
@@ -311,7 +329,7 @@ Can have the same values as `purpose-display-at-left-width' and
   :group 'purpose
   :type '(choice number
                  (const nil))
-  :package-version "1.4")
+  :package-version '(window-purpose . "1.4"))
 
 (defcustom purpose-x-popwin-height 0.35
   "Height of popup window when displayed at top or bottom.
@@ -320,7 +338,7 @@ Can have the same values as `purpose-display-at-top-height' and
   :group 'purpose
   :type '(choice number
                  (const nil))
-  :package-version "1.4")
+  :package-version '(window-purpose . "1.4"))
 
 (defcustom purpose-x-popwin-major-modes '(help-mode
                                           compilation-mode
@@ -334,7 +352,7 @@ When changing the value of this variable in elisp code, you should call
            (prog1 (set-default symbol value)
              (purpose-x-popwin-update-conf)))
   :initialize 'custom-initialize-default
-  :package-version "1.4")
+  :package-version '(window-purpose . "1.4"))
 
 (defcustom purpose-x-popwin-buffer-names '("*Shell Command Output*")
   "List of buffer names that should be opened as popup windows.
@@ -348,7 +366,7 @@ When changing the value of this variable in elisp code, you should call
            (prog1 (set-default symbol value)
              (purpose-x-popwin-update-conf)))
   :initialize 'custom-initialize-default
-  :package-version "1.4")
+  :package-version '(window-purpose . "1.4"))
 
 (defcustom purpose-x-popwin-buffer-name-regexps nil
   "List of regexp that should be opened as popup windows.
@@ -362,7 +380,7 @@ When changing the value of this variable in elisp code, you should call
            (prog1 (set-default symbol value)
              (purpose-x-popwin-update-conf)))
   :initialize 'custom-initialize-default
-  :package-version "1.4")
+  :package-version '(window-purpose . "1.4"))
 
 (defun purpose-x-popupify-purpose (purpose &optional display-fn)
   "Set up a popup-like behavior for buffers with purpose PURPOSE.

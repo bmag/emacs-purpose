@@ -55,20 +55,20 @@ Any other value is treated the same as nil."
                  (const error)
                  (const nil)
                  function)
-  :package-version "1.4")
+  :package-version '(window-purpose . "1.4"))
 
 (defcustom purpose-display-buffer-functions nil
   "Hook to run after displaying a buffer with `purpose--action-function'.
 This hook is called with one argument - the window used for display."
   :group 'purpose
   :type 'hook
-  :package-version "1.4")
+  :package-version '(window-purpose . "1.4"))
 
 (defcustom purpose-select-buffer-hook nil
   "Hook to run after selecting a buffer with `purpose-select-buffer'."
   :group 'purpose
   :type 'hook
-  :package-version "1.2")
+  :package-version '(window-purpose . "1.2"))
 
 (defvar purpose--active-p nil
   "When nil, Purpose's advices and `purpose--action-function' are not
@@ -139,7 +139,7 @@ case, `purpose-display-at-top-height' is ignored."
   :group 'purpose
   :type '(choice number
                  (const nil))
-  :package-version "1.4")
+  :package-version '(window-purpose . "1.4"))
 
 (defcustom purpose-display-at-bottom-height 8
   "Height for new windows created by `purpose-display-at-bottom'.
@@ -153,7 +153,7 @@ this case, `purpose-display-at-bottom-height' is ignored."
   :group 'purpose
   :type '(choice number
                  (const nil))
-  :package-version "1.4")
+  :package-version '(window-purpose . "1.4"))
 
 (defcustom purpose-display-at-left-width 32
   "Width for new windows created by `purpose-display-at-left'.
@@ -166,7 +166,7 @@ case, `purpose-display-at-left-width' is ignored."
   :group 'purpose
   :type '(choice number
                  (const nil))
-  :package-version "1.4")
+  :package-version '(window-purpose . "1.4"))
 
 (defcustom purpose-display-at-right-width 32
   "Width for new windows created by `purpose-display-at-right'.
@@ -180,7 +180,7 @@ this case, `purpose-display-at-right-width' is ignored."
   :group 'purpose
   :type '(choice number
                  (const nil))
-  :package-version "1.4")
+  :package-version '(window-purpose . "1.4"))
 
 
 

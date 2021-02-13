@@ -32,7 +32,7 @@
 Toggling this on will cause Purpose to produce some debug messages."
   :group 'purpose
   :type 'boolean
-  :package-version "1.2")
+  :package-version '(window-purpose . "1.2"))
 
 (defun purpose-message (format-string &rest args)
   "Produce a message if `purpose-message-on-p' is non-nil.

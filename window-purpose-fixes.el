@@ -29,7 +29,33 @@
 (require 'window-purpose-switch)
 (require 'window-purpose-configuration)
 
+(defun purpose--fix-edebug ()
+  "Integrates Edebug with Purpose."
 
+  (with-eval-after-load 'edebug
+    (defun purpose--edebug-pop-to-buffer-advice (buffer &optional window)
+      "Reimplements `edebug-pop-to-buffer' using `pop-to-buffer'
+
+Since `edebug-pop-to-buffer' simply splits the last selected
+window before the minibuffer was popped up, the window it picks
+to display a edebug buffer does not respect `window-purpose' as
+all.  This advice reimplements it by replacing the window
+spliting logic with `pop-to-buffer'."
+      (setq window
+            (cond
+             ((and (edebug-window-live-p window)
+                   (eq (window-buffer window) buffer))
+              window)
+             ((eq (window-buffer) buffer)
+              (selected-window))
+             ((get-buffer-window buffer 0))
+             (t (get-buffer-window (pop-to-buffer buffer)))))
+      (set-window-buffer window buffer)
+      (select-window window)
+      (unless (memq (framep (selected-frame)) '(nil t pc))
+        (x-focus-frame (selected-frame)))
+      (set-window-hscroll window 0))
+    (advice-add 'edebug-pop-to-buffer :override 'purpose--edebug-pop-to-buffer-advice)))
 
 ;;; `compilation-next-error-function' sometimes hides the compilation buffer
 ;;; when Purpose is on. Solution: make the buffer's window dedicated while
@@ -56,6 +82,23 @@ This function should be advised around
 Prevents `isearch-describe-*' commands from bypassing purpose."
   (with-eval-after-load 'isearch
     (setq isearch--display-help-action '(purpose--action-function . nil))))
+
+
+(defun purpose--fix-next-error ()
+  "Integrate `window-purpose' and `next-error'.
+
+Under `next-error-follow-minor-mode', `next-error-no-select' will
+override window-purpose's `display-buffer-overriding-action'.
+This will result in source buffers not displaying in the
+purpose-dedicated window for source code in complex window
+layouts.  This fix makes sure `next-error' works with
+window-purpose."
+  (defun purpose--next-error (oldfun &rest args)
+    "Make sure `next-error' respects `purspose--action-function'."
+    (interactive (lambda (spec) (advice-eval-interactive-spec spec)))
+    (let ((display-buffer-overriding-action '(purpose--action-function . nil)))
+      (apply oldfun args)))
+  (advice-add 'next-error :around 'purpose--next-error))
 
 
 ;;; Hydra's *LV* buffer should be ignored by Purpose
@@ -254,28 +297,49 @@ Don't call this function before `popwin' is loaded."
     (add-to-list 'purpose-special-action-sequences
                  '(Zone display-buffer-same-window))))
 
+
+(defun purpose--fix-whitespace ()
+  "Integrate `window-purpose' with `whitespace'."
+  (with-eval-after-load 'whitespace
+    (defun purpose--whitespace-display-window-advice (buffer)
+      "Stops `whitespace-display-window' from splitting and shrinking windows."
+      (with-current-buffer buffer
+        (special-mode)
+        (goto-char (point-min)))
+      (switch-to-buffer buffer))
+    (advice-add 'whitespace-display-window :override
+                'purpose--whitespace-display-window-advice)))
+
+
 ;;; install fixes
 
 (defun purpose-fix-install (&rest exclude)
   "Install fixes for integrating Purpose with other features.
 EXCLUDE is a list of integrations to skip.  Known members of EXCLUDE
 are:
+- 'edebug : don't integrate with edebug
 - 'compilation-next-error-function : don't integrate with
   `compilation-next-error-function'.
 - 'isearch : don't integrate with isearch
+- 'next-error : don't integrate with `next-error'
 - 'lv : don't integrate with lv (hydra)
 - 'helm : don't integrate with helm
 - 'neotree : don't integrate with neotree
 - 'org : don't integrate with org
 - 'popwin : don't integrate with popwin
 - 'guide-key : don't integrate with guide-key
-- 'which-key : don't integrate with which-key"
+- 'which-key : don't integrate with which-key
+- 'whitespace : don't integrate with whitespace"
   (interactive)
+  (unless (member 'edebug exclude)
+    (purpose--fix-edebug))
   (unless (member 'compilation-next-error-function exclude)
     (advice-add 'compilation-next-error-function
                 :around #'purpose--fix-compilation-next-error))
   (unless (member 'isearch exclude)
     (purpose--fix-isearch))
+  (unless (member 'next-error exclude)
+    (purpose--fix-next-error))
   (unless (member 'lv exclude)
     (purpose--fix-hydra-lv))
   (unless (member 'helm exclude)
@@ -293,7 +357,9 @@ are:
   (unless (member 'magit-popup exclude)
     (purpose--fix-magit-popup))
   (unless (member 'zone exclude)
-    (purpose--fix-zone)))
+    (purpose--fix-zone))
+  (unless (member 'whitespace exclude)
+    (purpose--fix-whitespace)))
 
 (provide 'window-purpose-fixes)
 ;;; window-purpose-fixes.el ends here
