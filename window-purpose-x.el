@@ -507,11 +507,9 @@ the popup window doesn't need to close."
 
 (defun purpose-x-popwin-quit-restore-window-advice (fn &optional window bury-or-kill)
   "Close pop up window when there aren't previous buffers can be shown in it."
-  (when-let* ((window (ignore-errors (window-normalize-window window t)))
-              (is-popup (eq 'popup (purpose-window-purpose window))))
+  (when-let* ((window (ignore-errors (window-normalize-window window t))))
     (funcall fn window bury-or-kill)
-    (when (and is-popup
-               (window-live-p window)
+    (when (and (window-live-p window)
                ;; quit-restore-window did not kill window
                (null (window-parameter window 'quit-restore))
                (not (window-prev-buffers window)))
