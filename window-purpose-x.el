@@ -581,6 +581,18 @@ the popup window doesn't need to close."
         (purpose-x-popwin-close-windows)
       (purpose-x-popwin-remove-hooks))))
 
+(defun purpose-x-popwin-quit-restore-window-advice (fn &optional window bury-or-kill)
+  "Close pop up window when there aren't previous buffers can be shown in it."
+  (when-let* ((window (ignore-errors (window-normalize-window window t)))
+              (is-popup (eq 'popup (purpose-window-purpose window))))
+    (funcall fn window bury-or-kill)
+    (when (and is-popup
+               (window-live-p window)
+               ;; quit-restore-window did not kill window
+               (null (window-parameter window 'quit-restore))
+               (not (window-prev-buffers window)))
+      (ignore-errors (delete-window window)))))
+
 ;;;###autoload
 (defun purpose-x-popwin-setup ()
   "Activate `popwin' emulation.
@@ -597,14 +609,16 @@ Look at `purpose-x-popwin-*' variables and functions to learn more."
   (purpose-x-popwin-update-conf)
   (setq purpose-special-action-sequences
         (cl-delete 'popup purpose-special-action-sequences :key #'car))
-  (purpose-x-popupify-purpose 'popup #'purpose-x-popwin-display-buffer))
+  (purpose-x-popupify-purpose 'popup #'purpose-x-popwin-display-buffer)
+  (advice-add 'quit-restore-window :around 'purpose-x-popwin-quit-restore-window-advice))
 
 (defun purpose-x-popwin-unset ()
   "Deactivate `popwin' emulation."
   (interactive)
   (purpose-del-extension-configuration :popwin)
   (purpose-x-unpopupify-purpose 'popup)
-  (purpose-x-popwin-remove-hooks))
+  (purpose-x-popwin-remove-hooks)
+  (advice-remove 'quit-restore-window 'purpose-x-popwin-quit-restore-window-advice))
 
 ;;; --- purpose-x-popup ends here ---
 
