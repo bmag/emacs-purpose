@@ -231,24 +231,27 @@ invoked.")
 (defun purpose-x-magit-single-on ()
   "Turn on magit-single purpose configuration."
   (interactive)
-  (setq purpose-x-old-magit-display-buffer-function magit-display-buffer-function
-        magit-display-buffer-function 'purpose-x-magit-display-buffer-function)
+  (with-eval-after-load 'magit
+    (setq purpose-x-old-magit-display-buffer-function magit-display-buffer-function
+          magit-display-buffer-function 'purpose-x-magit-display-buffer-function))
   (purpose-set-extension-configuration :magit purpose-x-magit-single-conf))
 
 ;;;###autoload
 (defun purpose-x-magit-multi-on ()
   "Turn on magit-multi purpose configuration."
   (interactive)
-  (setq purpose-x-old-magit-display-buffer-function magit-display-buffer-function
-        magit-display-buffer-function 'purpose-x-magit-display-buffer-function)
+  (with-eval-after-load 'magit
+    (setq purpose-x-old-magit-display-buffer-function magit-display-buffer-function
+          magit-display-buffer-function 'purpose-x-magit-display-buffer-function))
   (purpose-set-extension-configuration :magit purpose-x-magit-multi-conf))
 
 (defun purpose-x-magit-off ()
   "Turn off magit purpose configuration (single or multi)."
   (interactive)
   (purpose-del-extension-configuration :magit)
-  (setq magit-display-buffer-function purpose-x-old-magit-display-buffer-function
-        purpose-x-old-magit-display-buffer-function nil))
+  (with-eval-after-load 'magit
+    (setq magit-display-buffer-function purpose-x-old-magit-display-buffer-function
+          purpose-x-old-magit-display-buffer-function nil)))
 
 ;;; --- purpose-x-magit ends here ---
 
