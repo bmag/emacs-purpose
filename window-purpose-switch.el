@@ -80,7 +80,7 @@ used.  This is an internal variable, don't set it yourself.")
 it yourself.")
 
 (defvar purpose-action-sequences
-  '((switch-to-buffer . (purpose-display-reuse-window-buffer
+  '((switch-to-buffer . (;;purpose-display-reuse-window-buffer
                          purpose-display-reuse-window-purpose
                          purpose-display-maybe-same-window
                          purpose-display-maybe-other-window
