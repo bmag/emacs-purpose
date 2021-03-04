@@ -232,8 +232,13 @@ invoked.")
   "Turn on magit-single purpose configuration."
   (interactive)
   (with-eval-after-load 'magit
-    (setq purpose-x-old-magit-display-buffer-function magit-display-buffer-function
-          magit-display-buffer-function 'purpose-x-magit-display-buffer-function))
+    ;; if `purpose-x-old-magit-display-buffer-function' is non-nil, then it
+    ;; means magit-single-on was activated while magit-single-on or
+    ;; magit-multi-on is already active. Magit's variable is already backed up,
+    ;; so "backing it up" again will actually override it with a wrong value.
+    (unless purpose-x-old-magit-display-buffer-function
+      (setq purpose-x-old-magit-display-buffer-function magit-display-buffer-function))
+    (setq magit-display-buffer-function 'purpose-x-magit-display-buffer-function))
   (purpose-set-extension-configuration :magit purpose-x-magit-single-conf))
 
 ;;;###autoload
@@ -241,8 +246,13 @@ invoked.")
   "Turn on magit-multi purpose configuration."
   (interactive)
   (with-eval-after-load 'magit
-    (setq purpose-x-old-magit-display-buffer-function magit-display-buffer-function
-          magit-display-buffer-function 'purpose-x-magit-display-buffer-function))
+    ;; if `purpose-x-old-magit-display-buffer-function' is non-nil, then it
+    ;; means magit-multi-on was activated while magit-single-on or
+    ;; magit-multi-on is already active. Magit's variable is already backed up,
+    ;; so "backing it up" again will actually override it with a wrong value.
+    (unless purpose-x-old-magit-display-buffer-function
+      (setq purpose-x-old-magit-display-buffer-function magit-display-buffer-function))
+    (setq magit-display-buffer-function 'purpose-x-magit-display-buffer-function))
   (purpose-set-extension-configuration :magit purpose-x-magit-multi-conf))
 
 (defun purpose-x-magit-off ()
@@ -250,8 +260,9 @@ invoked.")
   (interactive)
   (purpose-del-extension-configuration :magit)
   (with-eval-after-load 'magit
-    (setq magit-display-buffer-function purpose-x-old-magit-display-buffer-function
-          purpose-x-old-magit-display-buffer-function nil)))
+    (when purpose-x-old-magit-display-buffer-function
+      (setq magit-display-buffer-function purpose-x-old-magit-display-buffer-function))
+    (setq purpose-x-old-magit-display-buffer-function nil)))
 
 ;;; --- purpose-x-magit ends here ---
 
