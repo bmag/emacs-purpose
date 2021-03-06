@@ -29,6 +29,33 @@
 (require 'window-purpose-switch)
 (require 'window-purpose-configuration)
 
+(defvar purpose-fix-togglers nil
+  "List of functions that toggle fixes.
+Each function in the list is responsible to toggle a fix. Each
+function should take no argument, and enable its fix if
+`purpose-mode' is non-nil, and disable it if `purpose-mode' is
+nil. Functions should be added to this variable via `add-hook'.")
+
+;; variable `purpose-mode' may not be defined yet, so declare it here (without a
+;; value) to satisfy the byte-compiler.
+(defvar purpose-mode)
+
+(defun purpose-sync-advice (symbol where function)
+  "Add advice or remove advice, depending on the value of `purpose-mode'.
+If `purpose-mode' is active, then add FUNCTION to SYMBOL
+according to WHERE, otherwise remove FUNCTION from SYMBOL. Refer
+to `advice-add' and `advice-remove' for further details of
+SYMBOL, WHERE and FUNCTION."
+  (if purpose-mode
+      (advice-add symbol where function)
+    (advice-remove symbol function)))
+
+(defmacro purpose-advice-syncer (symbol where function)
+  "Return a function that adds or removes an advice, depending on
+  the value of `purpose-mode'."
+  `(lambda ()
+     (purpose-sync-advice ,symbol ,where ,function)))
+
 (defun purpose--fix-edebug ()
   "Integrates Edebug with Purpose."
 
@@ -55,7 +82,11 @@ spliting logic with `pop-to-buffer'."
       (unless (memq (framep (selected-frame)) '(nil t pc))
         (x-focus-frame (selected-frame)))
       (set-window-hscroll window 0))
-    (advice-add 'edebug-pop-to-buffer :override 'purpose--edebug-pop-to-buffer-advice)))
+
+    (purpose-sync-advice 'edebug-pop-to-buffer :override 'purpose--edebug-pop-to-buffer-advice)
+    (add-hook 'purpose-fix-togglers
+              (purpose-advice-syncer 'edebug-pop-to-buffer :override
+                                     'purpose--edebug-pop-to-buffer-advice))))
 
 ;;; `compilation-next-error-function' sometimes hides the compilation buffer
 ;;; when Purpose is on. Solution: make the buffer's window dedicated while
@@ -98,7 +129,10 @@ window-purpose."
     (interactive (lambda (spec) (advice-eval-interactive-spec spec)))
     (let ((display-buffer-overriding-action '(purpose--action-function . nil)))
       (apply oldfun args)))
-  (advice-add 'next-error :around 'purpose--next-error))
+
+  (purpose-sync-advice 'next-error :around 'purpose--next-error)
+  (add-hook 'purpose-fix-togglers
+            (purpose-advice-syncer 'next-error :around 'purpose--next-error)))
 
 
 ;;; Hydra's *LV* buffer should be ignored by Purpose
@@ -187,10 +221,17 @@ When `purpose--active-p' is nil, call original `neo-global--create-window'."
                '(Neotree purpose-display-reuse-window-buffer
                          purpose-display-reuse-window-purpose
                          purpose--fix-display-neotree))
-  (advice-add 'neo-global--create-window
-              :around 'purpose-fix-neotree-create-window-advice)
-  (advice-add 'neo-open-file
-              :around 'purpose-fix-neotree-open-file-advice))
+
+  (purpose-sync-advice 'neo-global--create-window
+                       :around 'purpose-fix-neotree-create-window-advice)
+  (add-hook 'purpose-fix-togglers
+            (purpose-advice-syncer 'neo-global--create-window
+                                   :around 'purpose-fix-neotree-create-window-advice))
+  (purpose-sync-advice 'neo-open-file
+                       :around 'purpose-fix-neotree-open-file-advice)
+  (add-hook 'purpose-fix-togglers
+            (purpose-advice-syncer 'neo-open-file
+                                   :around 'purpose-fix-neotree-open-file-advice)))
 
 (defun purpose--fix-neotree ()
   "Call `purpose--fix-neotree-1' after `neotree' is loaded."
@@ -213,10 +254,17 @@ Don't call this function before `org' is loaded."
   (defun purpose--fix-org-get-location (oldfun &rest args)
     "Make Purpose inactive during `org-get-location'."
     (without-purpose (apply oldfun args)))
-  (advice-add 'org-switch-to-buffer-other-window
-              :around 'purpose--fix-org-switch-to-buffer-other-window)
-  (advice-add 'org-get-location
-              :around 'purpose--fix-org-get-location))
+
+  (purpose-sync-advice 'org-switch-to-buffer-other-window
+                       :around 'purpose--fix-org-switch-to-buffer-other-window)
+  (add-hook 'purpose-fix-togglers
+            (purpose-advice-syncer 'org-switch-to-buffer-other-window
+                                   :around 'purpose--fix-org-switch-to-buffer-other-window))
+  (purpose-sync-advice 'org-get-location
+                       :around 'purpose--fix-org-get-location)
+  (add-hook 'purpose-fix-togglers
+            (purpose-advice-syncer 'org-get-location
+                                   :around 'purpose--fix-org-get-location)))
 
 (defun purpose--fix-org-no-popups ()
   "Call `purpose--fix-org-no-popups-1' after `org' is loaded."
@@ -233,8 +281,12 @@ Don't call this function before `popwin' is loaded."
   (defun purpose--fix-popwin-replicate (oldfun &rest args)
     "Make Purpose inactive during `popwin:replicate-window-config'."
     (without-purpose (apply oldfun args)))
-  (advice-add 'popwin:replicate-window-config
-              :around 'purpose--fix-popwin-replicate))
+
+  (purpose-sync-advice 'popwin:replicate-window-config
+                       :around 'purpose--fix-popwin-replicate)
+  (add-hook 'purpose-fix-togglers
+            (purpose-advice-syncer 'popwin:replicate-window-config
+                                   :around 'purpose--fix-popwin-replicate)))
 
 (defun purpose--fix-popwin ()
   "Call `purpose--fix-popwin-1' after `popwin' is loaded."
@@ -280,10 +332,17 @@ Don't call this function before `popwin' is loaded."
     (defun purpose--fix-magit-popup-help (oldfun &rest args)
       "Make Purpose inactive during `magit-popup-manpage'."
       (without-purpose (apply oldfun args)))
-    (advice-add 'magit-popup-describe-function
-                :around 'purpose--fix-magit-popup-help)
-    (advice-add 'magit-popup-manpage
-                :around 'purpose--fix-magit-popup-help)))
+
+    (purpose-sync-advice 'magit-popup-describe-function
+                         :around 'purpose--fix-magit-popup-help)
+    (add-hook 'purpose-fix-togglers
+              (purpose-advice-syncer 'magit-popup-describe-function
+                                     :around 'purpose--fix-magit-popup-help))
+    (purpose-sync-advice 'magit-popup-manpage
+                         :around 'purpose--fix-magit-popup-help)
+    (add-hook 'purpose-fix-togglers
+              (purpose-advice-syncer 'magit-popup-manpage
+                                     :around 'purpose--fix-magit-popup-help))))
 
 
 
@@ -307,8 +366,12 @@ Don't call this function before `popwin' is loaded."
         (special-mode)
         (goto-char (point-min)))
       (switch-to-buffer buffer))
-    (advice-add 'whitespace-display-window :override
-                'purpose--whitespace-display-window-advice)))
+
+    (purpose-sync-advice 'whitespace-display-window :override
+                         'purpose--whitespace-display-window-advice)
+    (add-hook 'purpose-fix-togglers
+              (purpose-advice-syncer 'whitespace-display-window :override
+                                     'purpose--whitespace-display-window-advice))))
 
 
 ;;; install fixes
@@ -334,8 +397,11 @@ are:
   (unless (member 'edebug exclude)
     (purpose--fix-edebug))
   (unless (member 'compilation-next-error-function exclude)
-    (advice-add 'compilation-next-error-function
-                :around #'purpose--fix-compilation-next-error))
+    (purpose-sync-advice 'compilation-next-error-function
+                         :around #'purpose--fix-compilation-next-error)
+    (add-hook 'purpose-fix-togglers
+              (purpose-advice-syncer 'compilation-next-error-function
+                                     :around #'purpose--fix-compilation-next-error)))
   (unless (member 'isearch exclude)
     (purpose--fix-isearch))
   (unless (member 'next-error exclude)
