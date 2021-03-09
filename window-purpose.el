@@ -298,13 +298,13 @@ This function is called when `purpose-mode' is deactivated."
         (setq display-buffer-overriding-action
               '(purpose--action-function . nil))
         (setq purpose--active-p t)
-        (unless purpose-fix-togglers
+        (unless purpose-fix-togglers-hook
           (purpose-fix-install))
-        (run-hooks 'purpose-fix-togglers))
+        (run-hooks 'purpose-fix-togglers-hook))
 
     (purpose--remove-advices)
     (setq purpose--active-p nil)
-    (run-hooks 'purpose-fix-togglers)))
+    (run-hooks 'purpose-fix-togglers-hook)))
 
 (push '(purpose-dedicated . writable) window-persistent-parameters)
 (provide 'window-purpose)
