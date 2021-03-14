@@ -52,17 +52,18 @@ SYMBOL, WHERE and FUNCTION."
 
 (defmacro purpose-fix-install-advice-toggler (symbol where function)
   "Creates an advice toggler and optionally toggle on the advice.
-SYMBOL needs not be quoted, WHERE and FUNCTION have the same
-meaning as `advice-add'."
+SYMBOL WHERE and FUNCTION have the same meaning as `advice-add'."
   (declare (debug (functionp symbolp function-form)))
-  (let ((symbol-name (cond ((symbolp symbol) symbol)
-                           ((consp symbol) (cadr symbol))))
-        (toggler-name (intern (format "purpose--fix-%s-advice-toggler" (cadr symbol)))))
+  (let* ((symbol-name (cond ((symbolp symbol) symbol)
+                            ((consp symbol) (cadr symbol))))
+         (toggler-name (intern (format "purpose--fix-%s-advice-toggler"
+                                       symbol-name))))
     `(progn
        (purpose-fix-toggle-advice ,symbol ,where ,function)
-       (add-hook 'purpose-fix-togglers-hook
-                 (defun ,toggler-name ()
-                   (purpose-fix-toggle-advice ,symbol ,where ,function))))))
+       (unless (fboundp #',toggler-name)
+         (defun ,toggler-name ()
+           (purpose-fix-toggle-advice ,symbol ,where ,function)))
+       (add-hook 'purpose-fix-togglers-hook #',toggler-name))))
 
 (defun purpose--fix-edebug ()
   "Integrates Edebug with Purpose."
@@ -100,19 +101,27 @@ spliting logic with `pop-to-buffer'."
 ;;; when Purpose is on. Solution: make the buffer's window dedicated while
 ;;; executing `compilation-next-error-function'
 
-(defun purpose--fix-compilation-next-error (oldfun &rest args)
-  "Integrate Purpose and `compilation-next-error-function'.
-Advice that prevents `compilation-next-error-function' from hiding the
-compilation buffer.  This is done by ensuring that the buffer is
-dedicated for the duration of the function.
-This function should be advised around
-`compilation-next-error-function'."
-  (let* ((compilation-window (get-buffer-window (marker-buffer (point-marker))))
-         (old-window-dedicated-p (window-dedicated-p compilation-window)))
-    (set-window-dedicated-p compilation-window t)
-    (unwind-protect
-        (apply oldfun args)
-      (set-window-dedicated-p compilation-window old-window-dedicated-p))))
+(defun purpose--fix-compilation-next-error-function ()
+  "Integrate Purpose and `compilation-next-error-function'."
+
+  (with-eval-after-load 'compile
+    (defun purpose--compilation-next-error-function (oldfun &rest args)
+      "Prevents `compilation-next-error-function'from hiding the compilation buffer.
+
+This is done by ensuring that the buffer is dedicated for the
+duration of the function."
+
+      (let* ((compilation-window (get-buffer-window (marker-buffer (point-marker))))
+             (old-window-dedicated-p (window-dedicated-p compilation-window)))
+        (set-window-dedicated-p compilation-window t)
+        (unwind-protect
+            (apply oldfun args)
+          (set-window-dedicated-p compilation-window old-window-dedicated-p))))
+
+    (purpose-fix-install-advice-toggler
+     #'compilation-next-error-function
+     :around
+     #'purpose--compilation-next-error-function)))
 
 
 (defun purpose--fix-isearch ()
@@ -395,8 +404,7 @@ are:
   (unless (member 'edebug exclude)
     (purpose--fix-edebug))
   (unless (member 'compilation-next-error-function exclude)
-    (purpose-install-advice-toggler 'compilation-next-error-function
-                                    :around #'purpose--fix-compilation-next-error))
+    (purpose--fix-compilation-next-error-function))
   (unless (member 'isearch exclude)
     (purpose--fix-isearch))
   (unless (member 'next-error exclude)
