@@ -77,7 +77,7 @@ SYMBOL WHERE and FUNCTION have the same meaning as `advice-add'."
                      (funcall pop-to-buffer-definition buffer))))
           (apply fn args))))
 
-    (purpose-install-advice-toggler 'debug :around 'purpose--debug)))
+    (purpose-fix-install-advice-toggler #'debug :around #'purpose--debug)))
 
 (defun purpose--fix-edebug ()
   "Integrates Edebug with Purpose."
