@@ -25,7 +25,7 @@ jobs:
           - '27.1'
         include:
           - emacs_version: snapshot
-            allow_failures: true
+            continue-on-error: true
         cask_version:
           - 'snapshot'
       fail-fast: false
