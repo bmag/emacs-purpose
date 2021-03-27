@@ -17,17 +17,20 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
       matrix:
         emacs_version:
           - '25.3'
           - '26.3'
           - '27.1'
+        experimental: [false]
         include:
           - emacs_version: snapshot
-            allow_failures: true
+            experimental: true
         cask_version:
           - 'snapshot'
+      fail-fast: false
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
