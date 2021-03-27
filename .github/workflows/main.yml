@@ -17,17 +17,15 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.experimental }}
     strategy:
       matrix:
         emacs_version:
           - '25.3'
           - '26.3'
           - '27.1'
-        experimental: [false]
         include:
           - emacs_version: snapshot
-            experimental: true
+            continue-on-error: true
         cask_version:
           - 'snapshot'
       fail-fast: false
