@@ -28,6 +28,7 @@ jobs:
             allow_failures: true
         cask_version:
           - 'snapshot'
+      fail-fast: false
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
