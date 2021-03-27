@@ -11,7 +11,26 @@
 
     Those who use purpoxe-x-magit via ~purpose-x-magit-multi-on~ are
     not affected by this change.
+** Enhancements
+*** [[https://github.com/bmag/emacs-purpose/pull/172][#172]]: Rework Travis CI tests configuration and add Emacsen up to 27.1
+*** [[https://github.com/bmag/emacs-purpose/issues/149][#149]], [[https://github.com/bmag/emacs-purpose/pull/152][#152]]: Lower memeory usage when calculating a buffer's purpose
 ** Bug Fixes
+*** [[https://github.com/bmag/emacs-purpose/pull/182][#182]]: Prevent ~debug~ command from bypassing purpose
+*** [[https://github.com/bmag/emacs-purpose/issues/166][#166]], [[https://github.com/bmag/emacs-purpose/pull/180][#180]]: Toggle integration fixes when ~purpose-mode~ is toggled
+Previously, the integration fixes would remain active even when ~purpose-mode~
+was disabled, disrupting the normal display behavior of integrated packages and
+features.
+*** [[https://github.com/bmag/emacs-purpose/issues/153][#153]], [[https://github.com/bmag/emacs-purpose/pull/177][#177]]: purpose-x-popwin extension: quit-window closes popup window when no previous buffers can be shown in it
+*** [[https://github.com/bmag/emacs-purpose/pull/171][#171]]: Reimplement ~whitespace-display-window~ using purposes
+Original ~whitespace-display-window~ doesn't go through ~display-buffer~, thus
+disregarding ~window-purpose~ entirely.
+*** [[https://github.com/bmag/emacs-purpose/pull/170][#170]]: Reimplement ~edebug-pop-to-buffer~ using purposes
+Original ~edebug-pop-to-buffer~ doesn't go through ~display-buffer~, thus
+disregarding ~window-purpose~ entirely.
+*** [[https://github.com/bmag/emacs-purpose/pull/169][#169]]: Prevent Isearch help commands from bypassing purpose
+*** [[https://github.com/bmag/emacs-purpose/pull/168][#168]]: purpose-x-magit extension: prevent ~magit-display-buffer-function~ from bypassing purpose
+*** [[https://github.com/bmag/emacs-purpose/pull/167][#167]]: Prevent ~next-error~ from bypassing purpose
+*** [[https://github.com/bmag/emacs-purpose/pull/166][#166]]: Properly format defcustom package-version
 *** [[https://github.com/bmag/emacs-purpose/issues/133][#133]]: Neotree fix honors ~neo-window-position~
 *** [[https://github.com/bmag/emacs-purpose/issues/137][#137]]: ~purpose-change-buffer~ to ignore ~dedicated~ argument in new Emacsen
     As of Emacs 27.0.50, the function ~window--display-buffer~ no longer accepts
