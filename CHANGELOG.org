@@ -1,6 +1,7 @@
 #+TITLE: Changelog
 
 * Not Part of a Tagged Release Yet
+* Release 1.8
 ** Breaking Changes
 *** [[https://github.com/bmag/emacs-purpose/issues/144][#144]]: purpose-x-magit extension: replace ~magit~ purpose with ~Magit~
     When using the purpose-x-magit extension via
