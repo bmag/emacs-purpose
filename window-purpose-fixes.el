@@ -71,11 +71,14 @@ SYMBOL WHERE and FUNCTION have the same meaning as `advice-add'."
   (with-eval-after-load 'debug
     (defun purpose--debug (fn &rest args)
       "Ignore `pop-to-buffer' display actions given by `debug'."
-      (let ((pop-to-buffer-definition (symbol-function 'pop-to-buffer)))
-        (cl-letf (((symbol-function 'pop-to-buffer)
-                   (lambda (buffer &optional _action _record)
-                     (funcall pop-to-buffer-definition buffer))))
-          (apply fn args))))
+      ;; no recursion here, because `cl-flet' binds the new definition locally
+      ;; in such a way that the new definition is not visible from within its
+      ;; own body. It is only visible from within the forms after the new
+      ;; definition. For comparison, see also `cl-labels', `cl-letf', and
+      ;; https://stackoverflow.com/questions/39550578/in-emacs-what-is-the-difference-between-cl-flet-and-cl-letf
+      (cl-flet ((pop-to-buffer (buffer &optional _action _record)
+                               (pop-to-buffer buffer)))
+        (apply fn args)))
 
     (purpose-fix-install-advice-toggler #'debug :around #'purpose--debug)))
 
