@@ -281,6 +281,9 @@ Don't call this function before `org' is loaded."
   (defun purpose--fix-org-get-location (oldfun &rest args)
     "Make Purpose inactive during `org-get-location'."
     (without-purpose (apply oldfun args)))
+  (defun purpose--fix-org-goto-location (oldfun &rest args)
+    "Make Purpose inactive during `org-goto-location'."
+    (without-purpose (apply oldfun args)))
 
   (purpose-fix-install-advice-toggler
    #'org-switch-to-buffer-other-window
@@ -289,7 +292,11 @@ Don't call this function before `org' is loaded."
   (purpose-fix-install-advice-toggler
    #'org-get-location
    :around
-   #'purpose--fix-org-get-location))
+   #'purpose--fix-org-get-location)
+  (purpose-fix-install-advice-toggler
+   #'org-goto-location
+   :around
+   #'purpose--fix-org-goto-location))
 
 (defun purpose--fix-org-no-popups ()
   "Call `purpose--fix-org-no-popups-1' after `org' is loaded."
