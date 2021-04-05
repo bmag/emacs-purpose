@@ -65,20 +65,6 @@ SYMBOL WHERE and FUNCTION have the same meaning as `advice-add'."
            (purpose-fix-toggle-advice ,symbol ,where ,function)))
        (add-hook 'purpose-fix-togglers-hook #',toggler-name))))
 
-(defun purpose--fix-debug ()
-  "Integrates `debug' with Purpose."
-
-  (with-eval-after-load 'debug
-    (defun purpose--debug (fn &rest args)
-      "Ignore `pop-to-buffer' display actions given by `debug'."
-      (let ((pop-to-buffer-definition (symbol-function 'pop-to-buffer)))
-        (cl-letf (((symbol-function 'pop-to-buffer)
-                   (lambda (buffer &optional _action _record)
-                     (funcall pop-to-buffer-definition buffer))))
-          (apply fn args))))
-
-    (purpose-fix-install-advice-toggler #'debug :around #'purpose--debug)))
-
 (defun purpose--fix-edebug ()
   "Integrates Edebug with Purpose."
 
@@ -408,7 +394,6 @@ Don't call this function before `popwin' is loaded."
   "Install fixes for integrating Purpose with other features.
 EXCLUDE is a list of integrations to skip.  Known members of EXCLUDE
 are:
-- 'debug : don't integrate with debug
 - 'edebug : don't integrate with edebug
 - 'compilation-next-error-function : don't integrate with
   `compilation-next-error-function'.
@@ -423,8 +408,6 @@ are:
 - 'which-key : don't integrate with which-key
 - 'whitespace : don't integrate with whitespace"
   (interactive)
-  (unless (member 'debug exclude)
-    (purpose--fix-debug))
   (unless (member 'edebug exclude)
     (purpose--fix-edebug))
   (unless (member 'compilation-next-error-function exclude)
