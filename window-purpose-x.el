@@ -143,7 +143,7 @@ Uses `frame-or-buffer-changed-p' to determine whether the frame or
 buffer had changed."
   (when (frame-or-buffer-changed-p 'purpose-x-code1-buffers-changed)
     (purpose-x-code1-update-dired)
-    (imenu-list-update-safe)))
+    (imenu-list-update)))
 
 ;;;###autoload
 (defun purpose-x-code1-setup ()
