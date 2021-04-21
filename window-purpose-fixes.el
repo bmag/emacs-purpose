@@ -113,10 +113,12 @@ duration of the function."
 
       (let* ((compilation-window (get-buffer-window (marker-buffer (point-marker))))
              (old-window-dedicated-p (window-dedicated-p compilation-window)))
-        (set-window-dedicated-p compilation-window t)
-        (unwind-protect
+        (if (not compilation-window)
             (apply oldfun args)
-          (set-window-dedicated-p compilation-window old-window-dedicated-p))))
+          (set-window-dedicated-p compilation-window t)
+          (unwind-protect
+              (apply oldfun args)
+            (set-window-dedicated-p compilation-window old-window-dedicated-p)))))
 
     (purpose-fix-install-advice-toggler
      #'compilation-next-error-function
