@@ -317,24 +317,10 @@ Fill `purpose--extended-mode-purposes',
 
 ;;; convenient API functions
 
-(defun purpose-validate-conf (modes names regexps)
-  "Ensure that MODES, NAMES and REGEXPS are valid configuration alists.
-MODES must be a valid alist mapping major modes to purposes.
-NAMES must be a valid alist mapping names to purposes.
-REGEXPS must be a valid alist mapping regexps to purposes.
-If any of the arguments is malformed, a `user-error' is raised."
-  (unless (purpose-mode-alist-p modes)
-    (user-error "Malformed modes alist: %s" modes))
-  (unless (purpose-name-alist-p names)
-    (user-error "Malformed names alist: %s" names))
-  (unless (purpose-regexp-alist-p regexps)
-    (user-error "Malformed regexps alist: %s" regexps)))
-
 (cl-defmethod purpose-conf-add-purposes ((config purpose-conf) modes names regexps)
   "Add purposes to a `purpose-conf' object.
 MODES, NAMES and REGEXPS must be valid configuration alists as described in
-`purpose-validate-conf'."
-  (purpose-validate-conf modes names regexps)
+`purpose-mode-alist-p', `purpose-name-alist-p' and `purpose-regexp-alist-p'."
   (setf (slot-value config :mode-purposes)
         (append modes (slot-value config :mode-purposes)))
   (setf (slot-value config :name-purposes)
@@ -401,9 +387,9 @@ done."
 
 (cl-defun purpose-add-extension-purposes (ext-keyword &key modes names regexps)
   "Add purposes to an extension's purpose configuration.
-EXT-KEYWORD is the same as in `purpose-set-extension-configuration'.
-MODES, NAMES and REGEXPS must be valid configuration alists as described in
-`purpose-validate-conf'.
+EXT-KEYWORD is the same as in `purpose-set-extension-configuration'.  MODES,
+NAMES and REGEXPS must be valid configuration alists as described in
+`purpose-mode-alist-p', `purpose-name-alist-p' and `purpose-regexp-alist-p'.
 This function calls `purpose-compile-extended-configuration'.
 
 Example:
@@ -417,9 +403,9 @@ Example:
 
 (cl-defun purpose-remove-extension-purposes (ext-keyword &key modes names regexps)
   "Remove purposes from an extension's purpose configuration.
-EXT-KEYWORD is the same as in `purpose-set-extension-configuration'.
-MODES, NAMES and REGEXPS must be valid configuration alists as described in
-`purpose-validate-conf'.
+EXT-KEYWORD is the same as in `purpose-set-extension-configuration'.  MODES,
+NAMES and REGEXPS must be valid configuration alists as described in
+`purpose-mode-alist-p', `purpose-name-alist-p' and `purpose-regexp-alist-p'.
 This function calls `purpose-compile-extended-configuration'.
 
 Example:
@@ -446,7 +432,6 @@ Example:
                                      (help-mode . popup))
                             :names '((\"*scratch*\" . popup))
                             :regexps '((\"^\\*foo\" . terminal)))"
-  (purpose-validate-conf modes names regexps)
   (setq purpose-user-mode-purposes (append modes purpose-user-mode-purposes)
         purpose-user-name-purposes (append names purpose-user-name-purposes)
         purpose-user-regexp-purposes (append regexps purpose-user-regexp-purposes))
