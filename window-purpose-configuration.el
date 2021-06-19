@@ -59,18 +59,6 @@
 
 ;;; Types
 
-;;;###autoload
-(defclass purpose-conf ()
-  ((mode-purposes :initarg :mode-purposes
-                  :initform '()
-                  :type purpose-mode-alist)
-   (name-purposes :initarg :name-purposes
-                  :initform '()
-                  :type purpose-name-alist)
-   (regexp-purposes :initarg :regexp-purposes
-                    :initform '()
-                    :type purpose-regexp-alist)))
-
 (defmacro define-purpose-list-checker (name entry-pred)
   "Create a function named NAME to check the content of a list.
 The generated function receives parameter OBJ, and checks that it is a
@@ -118,7 +106,17 @@ valid regexp.")
 (define-purpose-list-checker purpose-regexp-alist-p
   #'purpose-regexp-alist-entry-p)
 
-
+;;;###autoload
+(defclass purpose-conf ()
+  ((mode-purposes :initarg :mode-purposes
+                  :initform '()
+                  :type (satisfies purpose-mode-alist-p))
+   (name-purposes :initarg :name-purposes
+                  :initform '()
+                  :type (satisfies purpose-name-alist-p))
+   (regexp-purposes :initarg :regexp-purposes
+                    :initform '()
+                    :type (satisfies purpose-regexp-alist-p))))
 
 ;;; Variables
 
@@ -276,13 +274,13 @@ Fill `purpose--extended-mode-purposes',
   ;; populate compiled purposes
   (mapc #'(lambda (extension-config)
             (purpose--fill-hash purpose--extended-mode-purposes
-                                (oref extension-config :mode-purposes)
+                                (slot-value extension-config :mode-purposes)
                                 t)
             (purpose--fill-hash purpose--extended-name-purposes
-                                (oref extension-config :name-purposes)
+                                (slot-value extension-config :name-purposes)
                                 t)
             (purpose--fill-hash purpose--extended-regexp-purposes
-                                (oref extension-config :regexp-purposes)
+                                (slot-value extension-config :regexp-purposes)
                                 t))
         (delq nil (purpose-plist-values purpose-extended-configuration))))
 
@@ -332,37 +330,37 @@ If any of the arguments is malformed, a `user-error' is raised."
   (unless (purpose-regexp-alist-p regexps)
     (user-error "Malformed regexps alist: %s" regexps)))
 
-(defmethod purpose-conf-add-purposes ((config purpose-conf) modes names regexps)
+(cl-defmethod purpose-conf-add-purposes ((config purpose-conf) modes names regexps)
   "Add purposes to a `purpose-conf' object.
 MODES, NAMES and REGEXPS must be valid configuration alists as described in
 `purpose-validate-conf'."
   (purpose-validate-conf modes names regexps)
-  (oset config :mode-purposes
-        (append modes (oref config :mode-purposes)))
-  (oset config :name-purposes
-        (append names (oref config :name-purposes)))
-  (oset config :regexp-purposes
-        (append regexps (oref config :regexp-purposes))))
+  (setf (slot-value config :mode-purposes)
+        (append modes (slot-value config :mode-purposes)))
+  (setf (slot-value config :name-purposes)
+        (append names (slot-value config :name-purposes)))
+  (setf (slot-value config :regexp-purposes)
+        (append regexps (slot-value config :regexp-purposes))))
 
-(defmethod purpose-conf-remove-purposes ((config purpose-conf) modes names regexps)
+(cl-defmethod purpose-conf-remove-purposes ((config purpose-conf) modes names regexps)
   "Remove purposes from a `purpose-conf' object.
 MODES must be a list of major modes.
 NAMES must be a list names.
 REGEXPS must be a list regexps."
   ;; let-bind before setq-ing, so we don't apply partial changes if one
   ;; of MODES, NAMES or REGEXPS is malformed
-  (let ((new-modes (cl-set-difference (oref config :mode-purposes) modes
+  (let ((new-modes (cl-set-difference (slot-value config :mode-purposes) modes
                                       :test (lambda (entry mode)
                                               (eql (car entry) mode))))
-        (new-names (cl-set-difference (oref config :name-purposes) names
+        (new-names (cl-set-difference (slot-value config :name-purposes) names
                                       :test (lambda (entry name)
                                               (string= (car entry) name))))
-        (new-regexps (cl-set-difference (oref config :regexp-purposes) regexps
+        (new-regexps (cl-set-difference (slot-value config :regexp-purposes) regexps
                                         :test (lambda (entry regexp)
                                                 (string= (car entry) regexp)))))
-    (oset config :mode-purposes new-modes)
-    (oset config :name-purposes new-names)
-    (oset config :regexp-purposes new-regexps)))
+    (setf (slot-value config :mode-purposes) new-modes)
+    (setf (slot-value config :name-purposes) new-names)
+    (setf (slot-value config :regexp-purposes) new-regexps)))
 
 ;;;###autoload
 (defun purpose-set-extension-configuration (ext-keyword config)

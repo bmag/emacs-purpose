@@ -35,15 +35,12 @@
       '((prog-mode . prog) (c-mode . c) (text-mode . text))
       nil nil
     (with-temp-buffer
-      (let ((c++-mode-hook nil)
-            (c-mode-hook nil)
-            (text-mode-hook nil))
-        (c++-mode)
-        (should (equal (purpose-buffer-purpose (current-buffer)) 'prog))
-        (c-mode)
-        (should (equal (purpose-buffer-purpose (current-buffer)) 'c))
-        (text-mode)
-        (should (equal (purpose-buffer-purpose (current-buffer)) 'text))))))
+      (c++-mode)
+      (should (equal (purpose-buffer-purpose (current-buffer)) 'prog))
+      (c-mode)
+      (should (equal (purpose-buffer-purpose (current-buffer)) 'c))
+      (text-mode)
+      (should (equal (purpose-buffer-purpose (current-buffer)) 'text)))))
 
 (ert-deftest purpose-test-name-purpose ()
   "Test `purpose--buffer-purpose-name' returns correct values."
@@ -75,8 +72,7 @@
       '(("foo" . foo-by-name) ("*foo bar*" . foo-bar))
       '(("^\\*foo" . foo-by-regexp))
     (with-temp-buffer
-      (let ((c-mode-hook nil)
-            (default-purpose 'some-default))
+      (let ((default-purpose 'some-default))
         (should (equal (purpose-buffer-purpose (current-buffer)) default-purpose))
         (c-mode)
         (should (equal (purpose-buffer-purpose (current-buffer)) 'c))
