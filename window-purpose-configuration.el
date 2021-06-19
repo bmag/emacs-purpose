@@ -110,13 +110,13 @@ valid regexp.")
 (defclass purpose-conf ()
   ((mode-purposes :initarg :mode-purposes
                   :initform '()
-                  :type purpose-mode-alist)
+                  :type (satisfies purpose-mode-alist-p))
    (name-purposes :initarg :name-purposes
                   :initform '()
-                  :type purpose-name-alist)
+                  :type (satisfies purpose-name-alist-p))
    (regexp-purposes :initarg :regexp-purposes
                     :initform '()
-                    :type purpose-regexp-alist)))
+                    :type (satisfies purpose-regexp-alist-p))))
 
 ;;; Variables
 
