@@ -311,7 +311,8 @@ Fill `purpose--extended-mode-purposes',
                         ("*shell*" . terminal)))
 
   (purpose--fill-hash purpose--default-regexp-purposes
-                      '(("^ \\*Minibuf-[0-9]*\\*$" . minibuf))))
+                      '(("^ \\*Minibuf-[0-9]*\\*$" . minibuf)
+                        ("^[ ]?\\*ein: .*" . edit))))
 
 
 
