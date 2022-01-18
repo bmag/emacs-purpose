@@ -80,16 +80,16 @@ All windows are purpose-dedicated.")
 (defvar purpose-x-code1-buffers-changed nil
   "Internal variable for use with `frame-or-buffer-changed-p'.")
 
-(define-ibuffer-filter purpose-x-code1-ibuffer-files-only
+(define-ibuffer-filter purpose-ibuffer-files-only
     "Display only buffers that are bound to files."
   ()
   (buffer-file-name buf))
 
-(defun purpose-x-code1--setup-ibuffer ()
+(defun purpose-code--setup-ibuffer ()
   "Set up ibuffer settings."
   (add-hook 'ibuffer-mode-hook
             #'(lambda ()
-                (ibuffer-filter-by-purpose-x-code1-ibuffer-files-only nil)))
+                (ibuffer-filter-by-purpose-ibuffer-files-only nil)))
   (add-hook 'ibuffer-mode-hook #'ibuffer-auto-mode)
   (setq ibuffer-formats '((mark " " name)))
   (setq ibuffer-display-summary nil)
@@ -101,11 +101,11 @@ All windows are purpose-dedicated.")
   (save-selected-window
     (ibuffer-list-buffers)))
 
-(defun purpose-x-code1--unset-ibuffer ()
+(defun purpose-code--unset-ibuffer ()
   "Unset ibuffer settings."
   (remove-hook 'ibuffer-mode-hook
                #'(lambda ()
-                   (ibuffer-filter-by-purpose-x-code1-ibuffer-files-only nil)))
+                   (ibuffer-filter-by-purpose-ibuffer-files-only nil)))
   (remove-hook 'ibuffer-mode-hook #'ibuffer-auto-mode)
   (setq ibuffer-formats '((mark modified read-only " "
                                 (name 18 18 :left :elide)
@@ -159,8 +159,8 @@ files, using `ibuffer'.
 imenu."
   (interactive)
   (purpose-set-extension-configuration :purpose-x-code1 purpose-x-code1-purpose-config)
-  (purpose-x-code1--setup-ibuffer)
-  (purpose-x-code1-update-dired)
+  (purpose-code--setup-ibuffer)
+  (purpose-update-dired)
   (imenu-list-minor-mode)
   (frame-or-buffer-changed-p 'purpose-x-code1-buffers-changed)
   (add-hook 'post-command-hook #'purpose-x-code1-update-changed)
@@ -170,7 +170,7 @@ imenu."
   "Unset purpose-x-code1."
   (interactive)
   (purpose-del-extension-configuration :purpose-x-code1)
-  (purpose-x-code1--unset-ibuffer)
+  (purpose-code--unset-ibuffer)
   (imenu-list-minor-mode -1)
   (remove-hook 'post-command-hook #'purpose-x-code1-update-changed))
 
@@ -768,6 +768,114 @@ This is implemented by overriding `replace-buffer-in-windows' with
   (remove-hook 'purpose-mode-hook 'purpose-x-kill-sync))
 
 ;;; --- purpose-x-kill ends here ---
+
+
+;;; --- purpose-full-ide ---
+
+(defvar purpose-full-ide-buffers-changed nil
+  "Internal variable for use with `frame-or-buffer-changed-p'.")
+
+(defun purpose-full-ide-update-changed ()
+  "Update auxiliary buffers if frame/buffer had changed.
+Uses `frame-or-buffer-changed-p' to determine whether the frame or
+buffer had changed."
+  (when (frame-or-buffer-changed-p 'purpose-full-ide-buffers-changed)
+    (imenu-list-update-safe)))
+
+(defvar purpose-full-ide--window-layout
+  '(nil
+    (0 0 225 50)
+    (t
+      (0 0 45 50)
+      (:purpose Neotree :purpose-dedicated t :width 0.2 :height 0.5098039215686274 :edges (0.0 0.0 0.2 0.5098039215686274))
+      (:purpose buffers :purpose-dedicated t :width 0.2 :height 0.47058823529411764 :edges (0.0 0.0 0.2 0.9803921568627451)))
+    (t
+      (45 0 187 50)
+      (:purpose edit :purpose-dedicated t :width 0.63 :height 0.8823529411764706 :edges (0.20 0.0 0.83 0.8823529411764706))
+      (:purpose misc :purpose-dedicated t :width 0.63 :height 0.09803921568627451 :edges (0.2 0.8823529411764706 0.83 0.9803921568627451)))
+    (t
+      (187 0 225 50)
+      (:purpose ilist :purpose-dedicated t :width 0.17 :height 0.9803921568627451 :edges (0.83 0.0 1 0.9803921568627451))))
+  "Window layout for purpose-full-ide.
+Has a main 'edit window, and four more windows: neotree, buffers, misc, ilist.
+All windows are purpose-dedicated.")
+
+(defvar purpose-full-ide-purpose-config
+  (purpose-conf "purpose-full-ide"
+              :mode-purposes
+              '((neotree-mode . Neotree)
+                (inferior-python-mode . misc)
+                (python-inferior-mode . misc)
+                (org-mode . misc)
+                (grep-mode . misc)
+                (gdb-inferior-io-mode . misc)
+                (fundamental-mode . misc)
+                (compilation-mode . misc)
+                (css-mode . edit)
+                (shell-mode . misc)
+                (eshell-mode . misc)
+                (term-mode . misc)
+                (yaml-mode . edit)
+		(ibuffer-mode . buffers)
+		(imenu-list-major-mode . ilist)
+                (conf-unix-mode . edit))))
+
+;; --- todo mode!!! ---
+
+(defconst todo-mode-buffer-name "*CodeTodo*"
+  "Name of the buffer that is used to display todo entries.")
+
+(defun on-org-mode-todo-file-built (process event)
+  (find-file (concat (getenv "PWD") "/todo.org"))
+  (call-interactively 'read-only-mode))
+
+(defun build-org-mode-file-for-todo ()
+  (start-process "Building todo things" "*CodeTodo*" "bash" "-ic" "collecttodotags")
+  (set-process-sentinel (get-process "Building todo things") 'on-org-mode-todo-file-built))
+
+(defun todo-mode-get-buffer-create ()
+    "Return the todo-mode buffer.
+If it doesn't exist, create it."
+    (or (get-buffer todo-mode-buffer-name)
+        (let ((buffer (get-buffer-create todo-mode-buffer-name)))
+          (with-current-buffer buffer
+            (org-mode)
+            (build-org-mode-file-for-todo)
+            (pop-to-buffer todo-mode-buffer-name))
+          buffer)))
+
+;; --- todo mode ---
+
+(defun purpose-setup-neotree ()
+  (interactive)
+  (set 'neo-window-fixed-size nil)
+  (set 'neotree-smart-open nil)
+  (neotree-show))
+
+(defun purpose-full-ide-setup ()
+  (interactive)
+  (purpose-set-extension-configuration :purpose-full-ide purpose-full-ide-purpose-config)
+  (purpose-code--setup-ibuffer)
+  (imenu-list-minor-mode)
+  (todo-mode-get-buffer-create)
+  (frame-or-buffer-changed-p 'purpose-full-ide-buffers-changed)
+  (add-hook 'post-command-hook #'purpose-full-ide-update-changed)
+  (when (load "neotree" t t)
+    (purpose-setup-neotree))
+  (purpose-set-window-layout purpose-full-ide--window-layout))
+
+(defun purpose-full-ide-unset ()
+  "Unset purpose-full-ide."
+  (interactive)
+  (purpose-del-extension-configuration :purpose-full-ide)
+  (purpose-code--unset-ibuffer)
+  (imenu-list-minor-mode -1)
+  (when (load "neotree" t t)
+    (neotree-hide))
+  (remove-hook 'post-command-hook #'purpose-full-ide-update-changed))
+
+;;; --- purpose-full-ide ends here ---
+
 
 (provide 'window-purpose-x)
 ;;; window-purpose-x.el ends here
