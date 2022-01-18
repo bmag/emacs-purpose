@@ -13,7 +13,7 @@ Purpose ("window-purpose" on MELPA) provides a new window management system for
 Emacs, which gives you a better control over where Emacs displays buffers.
 
 With Purpose, each buffer has a configurable "purpose" and each window
-can interactivaly be dedicated to a certain "purpose". When you dedicate
+can interactively be dedicated to a certain "purpose". When you dedicate
 a window (<kbd>C-c , d</kbd>), Purpose makes sure that this window will be used
 only for buffers which have the same purpose as the buffer that is
 currently displayed in that window. The purpose of a buffer can be
@@ -66,7 +66,7 @@ In init file:
 |             | `purpose-save-window-layout`: save current layout (by name)                                                                |
 |             | `purpose-load-window-layout`: load layout (by name)                                                                       |
 |             | `purpose-save-window-layout-file`: save current layout directly to file                                                                |
-|             | `purpose-load-window-layout`: load layout directly from file                                                                       |
+|             | `purpose-load-window-layout-file`: load layout directly from file                                                                  |
 |             | `purpose-reset-window-layout`: reload previously loaded layout                                                            |
 
 ### Example: Simple Python Layout
@@ -166,9 +166,13 @@ All of the window layout commands have frame layout equivalents, e.g.
 ## Customizing Purpose
 
 ### Prompts
-With `purpose-preferred-prompt`, you can choose whether you want Purpose to use
-IDO or Helm when it needs information from the user. By default, when both IDO
-and Helm are enabled, Purpose prefers IDO.
+In the past, the variable `purpose-preferred-prompt`, allowed you to choose whether you want Purpose to use
+IDO or Helm when it needs information from the user. This variable has been removed. Instead, the prompt
+relies on the normal mechanism. For Helm prompts enable `helm-mode`, for Ivy mode enable `ivy-mode`, for
+IDO prompts enable `ido-mode`, etc. If using `ido-mode`, note that because how IDO works it doesn't
+cover all commands, and some commands won't have an IDO prompt. To work around that, please see the
+package [ido-completion-read+](https://github.com/DarwinAwardWinner/ido-completing-read-plus) (formerly
+ido-ubiquitous).
 
 ### Changing purpose configuration
 Purpose lets you define your own purposes. You can do so by using the variables
@@ -199,7 +203,7 @@ frame. This means you will get a "popup" frame for help buffers.
 
 ### Respect purposes when killing a buffer
 When killing a visible buffer, Emacs has to decide which buffer to show instead.
-Enabling the `purpose-x-kill` extension will make Emacs consider the purpoes of
+Enabling the `purpose-x-kill` extension will make Emacs consider the purpose of
 the window that needs to show a new buffer. If the window is purpose-dedicated,
 the killed buffer is replaced with another buffer with the same purpose. If there
 are no buffers with the same purpose as the killed buffer, the window is deleted.

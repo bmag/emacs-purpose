@@ -1,6 +1,6 @@
 ;;; test-helper --- Test helper for window-purpose -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015, 2016 Bar Magal
+;; Copyright (C) 2015-2018 Bar Magal & contributors
 
 ;; Author: Bar Magal
 ;; Package: purpose
@@ -28,6 +28,9 @@
 
 (require 'cl-lib)
 (require 'f)
+;; seq.el was introduced in Emacs 25.1
+(unless (version< emacs-version "25")
+  (require 'seq))
 
 (defvar cpt-path
   (f-parent (f-this-file)))
@@ -206,10 +209,10 @@ The buffers created have the names \"xxx-p0-0\", \"xxx-p0-1\",
             (should-error (funcall delete-fn))))
       (purpose-kill-buffers-safely "xxx-test"))))
 
-(defun purpose-test-sort-symbols (symbols)
-  "Sorts list of symbols alphabetically according to their names.
-This is a destructive function; it reuses SYMBOLS' storage if possible."
-  (cl-sort symbols #'string< :key #'symbol-name))
+(defun purpose-set-equal-p (o1 o2)
+  (if (fboundp 'seq-set-equal-p)
+      (seq-set-equal-p o1 o2)
+    (equal (sort o1 #'string<) (sort o2 #'string<))))
 
 (message "done defining helpers")
 ;; (provide 'test-helper) ; https://github.com/rejeep/ert-runner.el/issues/38

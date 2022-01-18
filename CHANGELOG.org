@@ -1,5 +1,92 @@
 #+TITLE: Changelog
 
+* Not Part of a Tagged Release Yet
+* Release 1.8
+** Breaking Changes
+*** [[https://github.com/bmag/emacs-purpose/issues/144][#144]]: purpose-x-magit extension: replace ~magit~ purpose with ~Magit~
+    When using the purpose-x-magit extension via
+    ~purpose-x-magit-single-on~, the extension no longer defines a
+    ~magit~ purpose. Instead it defines an identical purpose named
+    ~Magit~. This way, the purpose can be used as a condition in
+    ~purpose-special-action-sequences~.
+
+    Those who use purpoxe-x-magit via ~purpose-x-magit-multi-on~ are
+    not affected by this change.
+** Enhancements
+*** [[https://github.com/bmag/emacs-purpose/pull/172][#172]]: Rework Travis CI tests configuration and add Emacsen up to 27.1
+*** [[https://github.com/bmag/emacs-purpose/issues/149][#149]], [[https://github.com/bmag/emacs-purpose/pull/152][#152]]: Lower memeory usage when calculating a buffer's purpose
+** Bug Fixes
+*** [[https://github.com/bmag/emacs-purpose/pull/182][#182]]: Prevent ~debug~ command from bypassing purpose
+*** [[https://github.com/bmag/emacs-purpose/issues/166][#166]], [[https://github.com/bmag/emacs-purpose/pull/180][#180]]: Toggle integration fixes when ~purpose-mode~ is toggled
+Previously, the integration fixes would remain active even when ~purpose-mode~
+was disabled, disrupting the normal display behavior of integrated packages and
+features.
+*** [[https://github.com/bmag/emacs-purpose/issues/153][#153]], [[https://github.com/bmag/emacs-purpose/pull/177][#177]]: purpose-x-popwin extension: quit-window closes popup window when no previous buffers can be shown in it
+*** [[https://github.com/bmag/emacs-purpose/pull/171][#171]]: Reimplement ~whitespace-display-window~ using purposes
+Original ~whitespace-display-window~ doesn't go through ~display-buffer~, thus
+disregarding ~window-purpose~ entirely.
+*** [[https://github.com/bmag/emacs-purpose/pull/170][#170]]: Reimplement ~edebug-pop-to-buffer~ using purposes
+Original ~edebug-pop-to-buffer~ doesn't go through ~display-buffer~, thus
+disregarding ~window-purpose~ entirely.
+*** [[https://github.com/bmag/emacs-purpose/pull/169][#169]]: Prevent Isearch help commands from bypassing purpose
+*** [[https://github.com/bmag/emacs-purpose/pull/168][#168]]: purpose-x-magit extension: prevent ~magit-display-buffer-function~ from bypassing purpose
+*** [[https://github.com/bmag/emacs-purpose/pull/167][#167]]: Prevent ~next-error~ from bypassing purpose
+*** [[https://github.com/bmag/emacs-purpose/pull/166][#166]]: Properly format defcustom package-version
+*** [[https://github.com/bmag/emacs-purpose/issues/133][#133]]: Neotree fix honors ~neo-window-position~
+*** [[https://github.com/bmag/emacs-purpose/issues/137][#137]]: ~purpose-change-buffer~ to ignore ~dedicated~ argument in new Emacsen
+    As of Emacs 27.0.50, the function ~window--display-buffer~ no longer accepts
+    a ~dedicated~ argument, and instead relies on ~alist~ and
+    ~display-buffer-mark-dedicated~ to decide dedication state of the window. As
+    result, ~purpose-change-buffer~ ignores the ~dedicated~ argument when using
+    Emacs version 27 or newer. Older Emacs versions are not affected.
+*** [[https://github.com/bmag/emacs-purpose/pull/134][#134]]: add support for Zone
+*** [[https://github.com/bmag/emacs-purpose/issues/78#issuecomment-467664376][#78 (comment)]] purpose-x-persp extension: ~persp-curr~ is now a function 
+* Release 1.7
+** Breaking Changes
+*** removed support for Emacs 24.3
+    Supported versions are Emacs 24.4 and newer (up to 26.1 at the
+    time of writing). The branch ~release-1.6~ will continue to
+    support Emacs 24.3 and is available for those who need it.
+** Bug Fixes
+*** [[https://github.com/bmag/emacs-purpose/pull/116][#116]]: honor ~display-buffer-mark-dedicated~
+* Release 1.6.1
+** Breaking Changes
+*** [[https://github.com/bmag/emacs-purpose/issues/84][#84]], [[https://github.com/bmag/emacs-purpose/pull/125][#125]]:  remove option ~purpose-preferred-prompt~ and prompts shims.
+    Removed ~completing-read~ and ~read-file-name~ shims, thus the
+    custom variable ~purpose-preferred-prompt~ has been removed. From the README:
+    #+BEGIN_QUOTE
+    In the past, the variable `purpose-preferred-prompt`, allowed you
+    to choose whether you want Purpose to use IDO or Helm when it
+    needs information from the user. This variable has been
+    removed. Instead, the prompt relies on the normal mechanism. For
+    Helm prompts enable `helm-mode`, for Ivy mode enable `ivy-mode`,
+    for IDO prompts enable `ido-mode`, etc. If using `ido-mode`, note
+    that because how IDO works it doesn't cover all commands, and some
+    commands won't have an IDO prompt. To work around that, please see
+    the package
+    [ido-completion-read+](https://github.com/DarwinAwardWinner/ido-completing-read-plus)
+    (formerly ido-ubiquitous).
+    #+END_QUOTE
+** Enhancements
+*** [[https://github.com/bmag/emacs-purpose/issues/113][#113]], [[https://github.com/bmag/emacs-purpose/pull/114][#114]]: default to ~edit~ purpose for buffers visiting files
+    If a buffer is visiting a file, its default purpose (if no other
+    purpose matches) will be ~edit~.
+*** Emacsen 25.1, 25.3 and 26.1 added to Travis CI tests
+    Emacs 25.2 not added, because it is almost exactly the same as
+    25.3, and the difference doesn't affect Purpose's behavior.
+** Bug Fixes
+*** added some missing default purposes for some modes
+    - css-mode: edit
+    - eshell-mode, term-mode: terminal
+*** [[https://github.com/bmag/emacs-purpose/issues/110][#110]]: wrong window layout after using magit-popup's help system
+    Added a fix in ~window-purpose-fixes.el~.
+*** [[https://github.com/bmag/emacs-purpose/issues/111][#111]]: wrong layout when using org-goto
+    Added a fix in ~window-purpose-fixes.el~.
+*** [[https://github.com/bmag/emacs-purpose/pull/123][#123]] purpose-x-popwin: fix custom type mismatches
+*** [[https://github.com/bmag/emacs-purpose/issues/127][#127]], [[https://github.com/bmag/emacs-purpose/pull/128][#128]]: purpose-x-code1: correctly create and display dired buffer
+*** [[https://github.com/bmag/emacs-purpose/pull/118][#118]]: fix typos in README
+*** [[https://github.com/bmag/emacs-purpose/pull/121][#121]]: prefer the selected window even with multiple frames
+*** [[https://github.com/bmag/emacs-purpose/issues/120][#120]]: pop-up-frames takes precedence over pop-up-windows
 * Release 1.6
 ** New Features
 *** New functions for easier purpose configuration

@@ -1,6 +1,6 @@
 ;;; window-purpose-prefix-overload.el --- Bind several commands to the same key -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015, 2016 Bar Magal
+;; Copyright (C) 2015-2021 Bar Magal & contributors
 
 ;; Author: Bar Magal
 ;; Package: purpose

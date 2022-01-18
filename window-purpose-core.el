@@ -1,6 +1,6 @@
 ;;; window-purpose-core.el --- Core functions for Purpose -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015, 2016 Bar Magal
+;; Copyright (C) 2015-2021 Bar Magal & contributors
 
 ;; Author: Bar Magal
 ;; Package: purpose
@@ -27,33 +27,25 @@
 ;;; Code:
 
 (require 'window-purpose-configuration)
+(eval-when-compile (require 'subr-x))
 
 (defgroup purpose nil
   "purpose-mode configuration"
   :group 'windows
   :prefix "purpose-"
-  :package-version "1.2")
+  :package-version '(window-purpose . "1.2"))
 
 (defcustom default-purpose 'general
   "The default purpose for buffers which didn't get another purpose."
   :group 'purpose
   :type 'symbol
-  :package-version "1.2")
+  :package-version '(window-purpose . "1.2"))
 
-(defcustom purpose-preferred-prompt 'auto
-  "Which interface should Purpose use when prompting the user.
-Available options are: 'auto - use IDO when `ido-mode' is enabled,
-otherwise Helm when `helm-mode' is enabled, otherwise use default Emacs
-prompts; 'ido - use IDO; 'helm - use Helm; 'vanilla - use default Emacs
-prompts."
+(defcustom default-file-purpose 'edit
+  "The default purpose for buffers visiting a file which didn't get a purpose."
   :group 'purpose
-  :type '(choice (const auto)
-                 (const ido)
-                 (const helm)
-                 (const vanilla))
-  :package-version "1.4")
-
-
+  :type 'symbol
+  :package-version '(window-purpose . "1.6.1"))
 
 ;;; utilities
 
@@ -80,50 +72,6 @@ dummy buffer with the purpose 'edit."
                (string= "*" (substring name -1)))
       ;; 10 = (length "*pu-dummy-")
       (intern (substring name 10 -1)))))
-
-(defun purpose-get-read-function (ido-method helm-method vanilla-method)
-  "Get function to read something from the user.
-Return value depends on `purpose-preferred-prompt', `ido-mode' and
-`helm-mode'.
-| `purpose-preferred-prompt' | `ido-mode' | `helm-mode' | method  |
-|----------------------------+------------+-------------+---------|
-| auto                       | t          | any         | ido     |
-| auto                       | nil        | t           | helm    |
-| auto                       | nil        | nil         | vanilla |
-| ido                        | any        | any         | ido     |
-| helm                       | any        | any         | helm    |
-| vanilla                    | any        | any         | vanilla |"
-  (cl-case purpose-preferred-prompt
-    ('auto (cond ((bound-and-true-p ido-mode) ido-method)
-                 ((bound-and-true-p helm-mode) helm-method)
-                 (t vanilla-method)))
-    ('ido ido-method)
-    ('helm helm-method)
-    (t vanilla-method)))
-
-(defun purpose-get-completing-read-function ()
-  "Intelligently choose a function to perform completing read.
-The returned function is chosen according to the rules of
-`purpose-get-read-function'.
-ido method: `ido-completing-read'
-helm method: `completing-read' (this is on purpose)
-vanilla method: `completing-read'"
-  (purpose-get-read-function #'ido-completing-read
-                             #'completing-read
-                             #'completing-read))
-
-(defun purpose-get-read-file-name-function ()
-  "Intelligently choose a function to read a file name.
-The returned function is chosen according to the rules of
-`purpose-get-read-function'.
-ido method: `ido-read-file-name'
-helm method: `read-file-name'
-vanilla method: `read-file-name'"
-  (purpose-get-read-function #'ido-read-file-name
-                             #'read-file-name
-                             #'read-file-name))
-
-
 
 ;;; simple purpose-finding operations for `purpose-buffer-purpose'
 (defun purpose--buffer-purpose-mode (buffer-or-name mode-conf)
@@ -159,13 +107,14 @@ regexp REGEXP."
   "Return the purpose of buffer BUFFER-OR-NAME, as determined by the
 regexps matched by its name.
 REGEXP-CONF is a hash table mapping name regexps to purposes."
-  (car (remove nil
-               (purpose--iter-hash
-                #'(lambda (regexp purpose)
-                    (purpose--buffer-purpose-name-regexp-1 buffer-or-name
-                                                           regexp
-                                                           purpose))
-                regexp-conf))))
+  (catch 'found
+    (maphash
+     #'(lambda (regexp purpose)
+         (when (purpose--buffer-purpose-name-regexp-1 buffer-or-name
+                                                      regexp
+                                                      purpose)
+           (throw 'found purpose)))
+     regexp-conf)))
 
 (defun purpose-buffer-purpose (buffer-or-name)
   "Get the purpose of buffer BUFFER-OR-NAME.
@@ -212,12 +161,15 @@ If no purpose was determined, return `default-purpose'."
      (purpose--buffer-purpose-mode buffer-or-name
                                    purpose--default-mode-purposes)))
 
+   ;; if the buffer is visiting a file, fallback to 'edit purpose
+   (and (buffer-file-name (get-buffer buffer-or-name))
+        default-file-purpose)
    ;; fallback to default purpose
    default-purpose))
 
 (defun purpose-buffers-with-purpose (purpose)
   "Return a list of all existing buffers with purpose PURPOSE."
-  (cl-remove-if-not #'(lambda (buffer)
+  (cl-delete-if-not #'(lambda (buffer)
                         (and (eql purpose (purpose-buffer-purpose buffer))
                              (not (minibufferp buffer))))
                     (buffer-list)))
@@ -240,7 +192,7 @@ FRAME defaults to the selected frame."
   (delete-dups
    (append (list default-purpose)
            (purpose-flatten
-            (mapcar #'purpose-hash-table-values
+            (mapcar #'hash-table-values
                     (append (when purpose-use-default-configuration
                               (list purpose--default-name-purposes
                                     purpose--default-mode-purposes
@@ -260,14 +212,13 @@ defaults to all defined purposes.
 REQUIRE-MATCH and INITIAL-OUTPUT have the same meaning as in
 `completing-read'."
   (let ((purpose-strings (mapcar #'symbol-name
-                                 (or purposes (purpose-get-all-purposes))))
-        (reader-function (purpose-get-completing-read-function)))
-    (intern (funcall reader-function
-                     prompt
-                     purpose-strings
-                     nil
-                     require-match
-                     initial-output))))
+                                 (or purposes (purpose-get-all-purposes)))))
+    (intern (completing-read
+             prompt
+             purpose-strings
+             nil
+             require-match
+             initial-output))))
 
 
 ;;; purpose-aware buffer low-level functions

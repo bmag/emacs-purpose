@@ -1,6 +1,6 @@
 ;;; core-test.el --- Tests for window-purpose-core.el -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015, 2016 Bar Magal
+;; Copyright (C) 2015-2018 Bar Magal & contributors
 
 ;; Author: Bar Magal
 ;; Package: purpose
@@ -35,15 +35,12 @@
       '((prog-mode . prog) (c-mode . c) (text-mode . text))
       nil nil
     (with-temp-buffer
-      (let ((c++-mode-hook nil)
-            (c-mode-hook nil)
-            (text-mode-hook nil))
-        (c++-mode)
-        (should (equal (purpose-buffer-purpose (current-buffer)) 'prog))
-        (c-mode)
-        (should (equal (purpose-buffer-purpose (current-buffer)) 'c))
-        (text-mode)
-        (should (equal (purpose-buffer-purpose (current-buffer)) 'text))))))
+      (c++-mode)
+      (should (equal (purpose-buffer-purpose (current-buffer)) 'prog))
+      (c-mode)
+      (should (equal (purpose-buffer-purpose (current-buffer)) 'c))
+      (text-mode)
+      (should (equal (purpose-buffer-purpose (current-buffer)) 'text)))))
 
 (ert-deftest purpose-test-name-purpose ()
   "Test `purpose--buffer-purpose-name' returns correct values."
@@ -75,8 +72,7 @@
       '(("foo" . foo-by-name) ("*foo bar*" . foo-bar))
       '(("^\\*foo" . foo-by-regexp))
     (with-temp-buffer
-      (let ((c-mode-hook nil)
-            (default-purpose 'some-default))
+      (let ((default-purpose 'some-default))
         (should (equal (purpose-buffer-purpose (current-buffer)) default-purpose))
         (c-mode)
         (should (equal (purpose-buffer-purpose (current-buffer)) 'c))
@@ -214,39 +210,6 @@ Functions tested are:
 (unless (boundp 'helm-mode)
   (defvar helm-mode))
 
-(ert-deftest purpose-test-preferred-prmopt ()
-  "Test user gets his preferred prompt method.
-The prompt is chosen according to `purpose-preferred-prompt'."
-  (let ((purpose-preferred-prompt 'ido))
-    (should (purpose-test-preferred-prompt-checker ido)))
-  (let ((purpose-preferred-prompt 'helm))
-    (should (purpose-test-preferred-prompt-checker helm)))
-  (let ((purpose-preferred-prompt 'vanilla))
-    (should (purpose-test-preferred-prompt-checker vanilla)))
-  (let ((purpose-preferred-prompt 'auto))
-    (let ((ido-mode nil)
-          (helm-mode nil))
-      (should (purpose-test-preferred-prompt-checker vanilla)))
-    (let ((ido-mode nil)
-          (helm-mode t))
-      (should (purpose-test-preferred-prompt-checker helm)))
-    (let ((ido-mode t)
-          (helm-mode nil))
-      (should (purpose-test-preferred-prompt-checker ido)))
-    (let ((ido-mode t)
-          (helm-mode t))
-      (should (purpose-test-preferred-prompt-checker ido)))))
-
-(ert-deftest purpose-test-preferred-completing-read ()
-  "Test `purpose-get-completing-read-function' sanity."
-  (let ((purpose-preferred-prompt 'ido))
-    (should (equal (purpose-get-completing-read-function) 'ido-completing-read))))
-
-(ert-deftest purpose-test-preferred-read-file-name ()
-  "Test `purpose-get-read-file-name-function' sanity."
-  (let ((purpose-preferred-prompt 'ido))
-    (should (equal (purpose-get-read-file-name-function) 'ido-read-file-name))))
-
 (ert-deftest purpose-test-get-all-purposes ()
   "Test `purpose-get-all-purposes'."
   (purpose-with-temp-config
@@ -260,6 +223,22 @@ The prompt is chosen according to `purpose-preferred-prompt'."
   "Test that `purpose-read-purpose' return correct purpose."
   (purpose-insert-user-input "foo")
   (should (equal (purpose-read-purpose "Purpose: " '(foo bar baz)) 'foo)))
+
+(ert-deftest purpose-test-default-file-purpose ()
+  "Test that the default purpose for a buffer visiting a file is 'edit.
+Also test that if there was a predefined purpose for that buffer
+it gets that one, and that the default purpose for a buffer not
+visiting a file is still `default-purpose'."
+  (unwind-protect
+      (purpose-with-temp-config
+          nil '(("foo" . yolo)) nil
+        (find-file-noselect "foo")
+        (should (equal (purpose-buffer-purpose (get-buffer "foo")) 'yolo))
+        (find-file-noselect "bar")
+        (should (equal (purpose-buffer-purpose (get-buffer "bar")) 'edit))
+        (get-buffer-create "baz")
+        (should (equal (purpose-buffer-purpose (get-buffer "baz")) default-purpose)))
+    (purpose-kill-buffers-safely "foo" "bar" "baz")))
 
 (provide 'core-test)
 

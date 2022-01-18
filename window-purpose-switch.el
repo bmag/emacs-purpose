@@ -1,6 +1,6 @@
 ;;; window-purpose-switch.el --- Purpose-aware display handling -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015, 2016 Bar Magal
+;; Copyright (C) 2015-2021 Bar Magal & contributors
 
 ;; Author: Bar Magal
 ;; Package: purpose
@@ -55,20 +55,20 @@ Any other value is treated the same as nil."
                  (const error)
                  (const nil)
                  function)
-  :package-version "1.4")
+  :package-version '(window-purpose . "1.4"))
 
 (defcustom purpose-display-buffer-functions nil
   "Hook to run after displaying a buffer with `purpose--action-function'.
 This hook is called with one argument - the window used for display."
   :group 'purpose
   :type 'hook
-  :package-version "1.4")
+  :package-version '(window-purpose . "1.4"))
 
 (defcustom purpose-select-buffer-hook nil
   "Hook to run after selecting a buffer with `purpose-select-buffer'."
   :group 'purpose
   :type 'hook
-  :package-version "1.2")
+  :package-version '(window-purpose . "1.2"))
 
 (defvar purpose--active-p nil
   "When nil, Purpose's advices and `purpose--action-function' are not
@@ -97,10 +97,12 @@ it yourself.")
     (force-same-window . (purpose-display-maybe-same-window))
     (prefer-other-window . (purpose-display-reuse-window-buffer
                             purpose-display-reuse-window-purpose
-                            purpose-display-maybe-other-window
-                            purpose-display-maybe-pop-up-window
-                            purpose-display-maybe-other-frame
+			    ;; only pops if `pop-up-frames' says so
                             purpose-display-maybe-pop-up-frame
+			    ;; only pops when sensible (`split-window-sensibly')
+                            purpose-display-maybe-pop-up-window
+                            purpose-display-maybe-other-window
+                            purpose-display-maybe-other-frame
                             purpose-display-maybe-same-window))
     (prefer-other-frame . (purpose-display-reuse-window-buffer-other-frame
                            purpose-display-reuse-window-purpose-other-frame
@@ -137,7 +139,7 @@ case, `purpose-display-at-top-height' is ignored."
   :group 'purpose
   :type '(choice number
                  (const nil))
-  :package-version "1.4")
+  :package-version '(window-purpose . "1.4"))
 
 (defcustom purpose-display-at-bottom-height 8
   "Height for new windows created by `purpose-display-at-bottom'.
@@ -151,7 +153,7 @@ this case, `purpose-display-at-bottom-height' is ignored."
   :group 'purpose
   :type '(choice number
                  (const nil))
-  :package-version "1.4")
+  :package-version '(window-purpose . "1.4"))
 
 (defcustom purpose-display-at-left-width 32
   "Width for new windows created by `purpose-display-at-left'.
@@ -164,7 +166,7 @@ case, `purpose-display-at-left-width' is ignored."
   :group 'purpose
   :type '(choice number
                  (const nil))
-  :package-version "1.4")
+  :package-version '(window-purpose . "1.4"))
 
 (defcustom purpose-display-at-right-width 32
   "Width for new windows created by `purpose-display-at-right'.
@@ -178,7 +180,7 @@ this case, `purpose-display-at-right-width' is ignored."
   :group 'purpose
   :type '(choice number
                  (const nil))
-  :package-version "1.4")
+  :package-version '(window-purpose . "1.4"))
 
 
 
@@ -194,11 +196,21 @@ this case, `purpose-display-at-right-width' is ignored."
 ;; maybe-pop-up-window: display buffer in a new window in the selected frame, if possible (window can be split)
 ;; pop-up-frame: display buffer in a new frame
 
-(defun purpose-change-buffer (buffer window type alist)
+(defun purpose-change-buffer (buffer window type &optional alist dedicated)
   "Display BUFFER in WINDOW, but don't select it.
-BUFFER, WINDOW, TYPE and ALIST have the same meaning as
-`window--display-buffer'.'"
-  (window--display-buffer buffer window type alist))
+BUFFER, WINDOW, TYPE, ALIST and DEDICATED have the same meaning
+as in `window--display-buffer'.
+
+DEDICATED is ignored for Emacs versions in which
+`window--display-buffer' doesn't support a DEDICATED
+argument (i.e. version 27)."
+  (if (version< emacs-version "27")
+      (window--display-buffer buffer window type alist dedicated)
+    ;; optional argument `dedicated' was removed in emacs 27 development branch
+    ;; (as of 2019-01-14). This is a temporary fix to be re-evaluated once emacs
+    ;; 27 development reaches the pretest phase. (docstring to be re-evaluated
+    ;; as well)
+    (window--display-buffer buffer window type alist)))
 
 (defun purpose-window-buffer-reusable-p (window buffer)
   "Return non-nil if WINDOW can be reused to display BUFFER.
@@ -248,6 +260,10 @@ terminal if it's non-nil."
                       reusable-frames)
              nil)))))
 
+(defun purpose--pick-selected-or-any-window (windows)
+  (car (or (memq (selected-window) windows)
+	   windows)))
+
 (defun purpose-display-reuse-window-buffer (buffer alist)
   "Return a window that is already displaying BUFFER.
 Return nil if no usable window is found.
@@ -281,7 +297,7 @@ that frame."
                      windows))
       (when .inhibit-same-window
         (setq windows (delq (selected-window) windows)))
-      (setq window (car windows))
+      (setq window (purpose--pick-selected-or-any-window windows))
       (when window
         (purpose-change-buffer buffer window 'reuse alist))
       window)))
@@ -321,7 +337,7 @@ that a window on another frame is chosen, avoid raising that frame."
                      windows))
       (when .inhibit-same-window
         (setq windows (delq (selected-window) windows)))
-      (setq window (car windows))
+      (setq window (purpose--pick-selected-or-any-window windows))
       (when window
         (purpose-change-buffer buffer window 'reuse alist))
       window)))
@@ -492,8 +508,10 @@ used window, split the selected window."
          (new-window (or (split-window-sensibly old-window)
                          (and force-split
                               (split-window old-window)))))
-    (purpose-change-buffer buffer new-window 'window alist)
-    new-window))
+    (when new-window
+      (purpose-change-buffer buffer new-window 'window alist
+			     display-buffer-mark-dedicated)
+      new-window)))
 
 (defun purpose-display-pop-up-window (buffer alist)
   "Display BUFFER in a new window.
@@ -506,8 +524,8 @@ used window, split the selected window."
 
 (defun purpose-display-maybe-pop-up-window (buffer alist)
   "Display BUFFER in a new window, if possible.
-The display is possible if `pop-up-windows' is non-nil.
-The display is done with `display-buffer-pop-up-window'."
+The display is possible if `pop-up-windows' is non-nil.  The
+display is done similar to `display-buffer-pop-up-window'."
   (when pop-up-windows
     (purpose-display-pop-up-window--internal buffer alist nil)))
 
@@ -532,7 +550,8 @@ both.  In case of conflict, `pop-up-frame-parameters' takes precedence."
                       (funcall pop-up-frame-function))))
            (window (and frame (frame-selected-window frame))))
       (when window
-        (purpose-change-buffer buffer window 'frame alist)))))
+        (purpose-change-buffer buffer window 'frame alist
+			       display-buffer-mark-dedicated)))))
 
 (defun purpose-display-maybe-pop-up-frame (buffer alist)
   "Display BUFFER in a new frame, if possible.
@@ -910,170 +929,98 @@ list of functions, as described in `display-buffer'.  In such case,
 treat the funcion(s) as an action sequence."
   (when (listp action)
     (let ((fn (car action)))
-      (if (listp fn)
-          fn
-        (list fn)))))
+      (cond
+       ((functionp fn) (list fn))
+       ((listp fn) fn)
+       (t (error "Unrecognized display action '%s'" action))))))
 
-(define-purpose-compatible-advice 'display-buffer
-    :around purpose-display-buffer-advice
-    (buffer-or-name &optional action frame)
-    "Update `purpose--alist' when calling `display-buffer'."
-  ;; new style advice
-  ((let ((action-order (purpose-display--action-to-order action))
-         (user-action-sequence (purpose-display--action-to-sequence action))
-         (purpose--alist purpose--alist))
-     (when action-order
-       (setq purpose--alist
-             (purpose-alist-set 'action-order action-order purpose--alist)))
-     (when user-action-sequence
-       (setq purpose--alist (purpose-alist-set 'user-action-sequence
-                                               user-action-sequence
-                                               purpose--alist)))
-     (funcall oldfun buffer-or-name action frame)))
+(defun purpose-display-buffer-advice
+    (oldfun buffer-or-name &optional action frame)
+  "Update `purpose--alist' when calling `display-buffer'."
+  (let ((action-order (purpose-display--action-to-order action))
+        (user-action-sequence (purpose-display--action-to-sequence action))
+        (purpose--alist purpose--alist))
+    (when action-order
+      (setq purpose--alist
+            (purpose-alist-set 'action-order action-order purpose--alist)))
+    (when user-action-sequence
+      (setq purpose--alist (purpose-alist-set 'user-action-sequence
+                                              user-action-sequence
+                                              purpose--alist)))
+    (funcall oldfun buffer-or-name action frame)))
 
-  ;; old style advice
-  ((let* ((action-order (purpose-display--action-to-order action))
-          (user-action-sequence (purpose-display--action-to-sequence action))
-          (purpose--alist purpose--alist))
-     (when action-order
-       (setq purpose--alist
-             (purpose-alist-set 'action-order action-order purpose--alist)))
-     (when user-action-sequence
-       (setq purpose--alist (purpose-alist-set 'user-action-sequence
-                                               user-action-sequence
-                                               purpose--alist)))
-     ad-do-it)))
-
-(define-purpose-compatible-advice 'switch-to-buffer
-    :around purpose-switch-to-buffer-advice
-    (buffer-or-name &optional norecord force-same-window)
-    "Advice for overriding `switch-to-buffer' conditionally.
+(defun purpose-switch-to-buffer-advice
+    (oldfun buffer-or-name &optional norecord force-same-window)
+  "Advice for overriding `switch-to-buffer' conditionally.
 If Purpose is active (`purpose--active-p' is non-nil), call
 `purpose-switch-buffer', otherwise call `switch-to-buffer'."
-  ;; new style advice
-  ((purpose-message "switch-to-buffer advice")
-   ;; check the full `purpose--use-action-function-p' here, because
-   ;; if purpose shouldn't be used for some reason (such as
-   ;; `purpose-action-function-ignore-buffer-names'), then we want
-   ;; to fallback to `switch-to-buffer', instead of
-   ;; `display-buffer'
-   (if (purpose--use-action-function-p (window-normalize-buffer-to-switch-to
-                                        buffer-or-name)
-                                       nil)
-       (purpose-switch-buffer buffer-or-name
-                              norecord
-                              ;; when `switch-to-buffer' is called
-                              ;; interactively force-same-window is non-nil,
-                              ;; but want it to be nil, so we check
-                              ;; `called-interactively-p' as well
-                              (and force-same-window
-                                   (not (called-interactively-p 'interactive))
-                                   ;; `ivy--switch-buffer-action' replicates the
-                                   ;; interactive behavior, so handle the same as
-                                   ;; an interactive call
-                                   (not (member 'ivy--switch-buffer-action
-                                                (purpose--function-stack)))))
-     (funcall oldfun buffer-or-name norecord force-same-window)))
+  (purpose-message "switch-to-buffer advice")
+  ;; check the full `purpose--use-action-function-p' here, because
+  ;; if purpose shouldn't be used for some reason (such as
+  ;; `purpose-action-function-ignore-buffer-names'), then we want
+  ;; to fallback to `switch-to-buffer', instead of
+  ;; `display-buffer'
+  (if (purpose--use-action-function-p (window-normalize-buffer-to-switch-to
+                                       buffer-or-name)
+                                      nil)
+      (purpose-switch-buffer buffer-or-name
+                             norecord
+                             ;; when `switch-to-buffer' is called
+                             ;; interactively force-same-window is non-nil,
+                             ;; but want it to be nil, so we check
+                             ;; `called-interactively-p' as well
+                             (and force-same-window
+                                  (not (called-interactively-p 'interactive))
+                                  ;; `ivy--switch-buffer-action' replicates the
+                                  ;; interactive behavior, so handle the same as
+                                  ;; an interactive call
+                                  (not (member 'ivy--switch-buffer-action
+                                               (purpose--function-stack)))))
+    (funcall oldfun buffer-or-name norecord force-same-window)))
 
-  ;; old style advice
-  ((purpose-message "switch-to-buffer advice")
-   (if (purpose--use-action-function-p
-        (window-normalize-buffer-to-switch-to buffer-or-name) nil)
-       (setq ad-return-value
-             (purpose-switch-buffer buffer-or-name
-                                    norecord
-                                    ;; when `switch-to-buffer' is called
-                                    ;; interactively force-same-window is non-nil,
-                                    ;; but want it to be nil, so we check
-                                    ;; `called-interactively-p' as well
-                                    (and force-same-window
-                                         (not (called-interactively-p 'interactive))
-                                         ;; `ivy--switch-buffer-action' replicates the
-                                         ;; interactive behavior, so handle the same as
-                                         ;; an interactive call
-                                         (not (member 'ivy--switch-buffer-action
-                                                      (purpose--function-stack))))))
-     ad-do-it)))
-
-(define-purpose-compatible-advice 'switch-to-buffer-other-window
-    :around purpose-switch-to-buffer-other-window-advice
-    (buffer-or-name &optional norecord)
-    "Advice for overriding `switch-to-buffer-other-window' conditionally.
+(defun purpose-switch-to-buffer-other-window-advice
+    (oldfun buffer-or-name &optional norecord)
+  "Advice for overriding `switch-to-buffer-other-window' conditionally.
 If Purpose is active (`purpose--active-p' is non-nil), call
 `purpose-switch-buffer-other-window', otherwise call
 `switch-to-buffer-other-window'."
-  ;; new style advice
-  ((purpose-message "switch-to-buffer-other-window advice")
-   (if purpose--active-p
-       (purpose-switch-buffer-other-window buffer-or-name norecord)
-     (funcall oldfun buffer-or-name norecord)))
+  (purpose-message "switch-to-buffer-other-window advice")
+  (if purpose--active-p
+      (purpose-switch-buffer-other-window buffer-or-name norecord)
+    (funcall oldfun buffer-or-name norecord)))
 
-  ;; old style advice
-  ((purpose-message "switch-to-buffer-other-window advice")
-   (if purpose--active-p
-       (setq ad-return-value
-             (purpose-switch-buffer-other-window buffer-or-name norecord))
-     ad-do-it)))
-
-(define-purpose-compatible-advice 'switch-to-buffer-other-frame
-    :around purpose-switch-to-buffer-other-frame-advice
-    (buffer-or-name &optional norecord)
-    "Advice for overriding `switch-to-buffer-other-frame' conditionally.
+(defun purpose-switch-to-buffer-other-frame-advice
+    (oldfun buffer-or-name &optional norecord)
+  "Advice for overriding `switch-to-buffer-other-frame' conditionally.
 If Purpose is active (`purpose--active-p' is non-nil), call
 `purpose-switch-buffer-other-frame', otherwise call
 `switch-to-buffer-other-frame'."
-  ;; new style advice
-  ((purpose-message "switch-to-buffer-other-frame advice")
-   (if purpose--active-p
-       (purpose-switch-buffer-other-frame buffer-or-name norecord)
-     (funcall oldfun buffer-or-name norecord)))
+  (purpose-message "switch-to-buffer-other-frame advice")
+  (if purpose--active-p
+      (purpose-switch-buffer-other-frame buffer-or-name norecord)
+    (funcall oldfun buffer-or-name norecord)))
 
-  ;; old style advice
-  ((purpose-message "switch-to-buffer-other-frame advice")
-   (if purpose--active-p
-       (setq ad-return-value
-             (purpose-switch-buffer-other-frame buffer-or-name norecord))
-     ad-do-it)))
-
-(define-purpose-compatible-advice 'pop-to-buffer
-    :around purpose-pop-to-buffer-advice
-    (buffer-or-name &optional action norecord)
-    "Advice for overriding `pop-to-buffer' conditionally.
+(defun purpose-pop-to-buffer-advice
+    (oldfun buffer-or-name &optional action norecord)
+  "Advice for overriding `pop-to-buffer' conditionally.
 If Purpose is active (`purpose--active-p' is non-nil) and ACTION is nil,
 call `purpose-pop-buffer', otherwise call `pop-to-buffer'."
-  ;; new style advice
-  ((purpose-message "pop-to-buffer advice")
-   (if (and purpose--active-p
-            (not action))
-       (purpose-pop-buffer buffer-or-name norecord)
-     (funcall oldfun buffer-or-name action norecord)))
+  (purpose-message "pop-to-buffer advice")
+  (if (and purpose--active-p
+           (not action))
+      (purpose-pop-buffer buffer-or-name norecord)
+    (funcall oldfun buffer-or-name action norecord)))
 
-  ;; old style advice
-  ((purpose-message "pop-to-buffer advice")
-   (if (and purpose--active-p
-            (not action))
-       (setq ad-return-value (purpose-pop-buffer buffer-or-name norecord))
-     ad-do-it)))
-
-(define-purpose-compatible-advice 'pop-to-buffer-same-window
-    :around purpose-pop-to-buffer-same-window-advice
-    (buffer-or-name &optional norecord)
-    "Advice for overriding `pop-to-buffer-same-window' conditionally.
+(defun purpose-pop-to-buffer-same-window-advice
+    (oldfun buffer-or-name &optional norecord)
+  "Advice for overriding `pop-to-buffer-same-window' conditionally.
 If Purpose is active (`purpose--active-p' is non-nil), call
 `purpose-pop-buffer-same-window', otherwise call
 `pop-to-buffer-same-window'."
-  ;; new style advice
-  ((purpose-message "pop-to-buffer-same-window advice")
-   (if purpose--active-p
-       (purpose-pop-buffer-same-window buffer-or-name norecord)
-     (funcall oldfun buffer-or-name norecord)))
-
-  ;; old style advice
-  ((purpose-message "pop-to-buffer-same-window advice")
-   (if purpose--active-p
-       (setq ad-return-value
-             (purpose-pop-buffer-same-window buffer-or-name norecord))
-     ad-do-it)))
+  (purpose-message "pop-to-buffer-same-window advice")
+  (if purpose--active-p
+      (purpose-pop-buffer-same-window buffer-or-name norecord)
+    (funcall oldfun buffer-or-name norecord)))
 
 ;; anti-override:
 
@@ -1100,11 +1047,11 @@ This works internally by using `without-purpose' and
 
 (defun purpose-read-buffers-with-purpose (purpose)
   "Prompt the user for a buffer with purpose PURPOSE."
-  (funcall (purpose-get-completing-read-function)
-           "[PU] Buffer: "
-           (mapcar #'buffer-name
-                   (delq (current-buffer)
-                         (purpose-buffers-with-purpose purpose)))))
+  (completing-read
+   "[PU] Buffer: "
+   (mapcar #'buffer-name
+           (delq (current-buffer)
+                 (purpose-buffers-with-purpose purpose)))))
 
 ;;;###autoload
 (defun purpose-switch-buffer-with-purpose (&optional purpose)

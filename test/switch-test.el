@@ -1,6 +1,6 @@
 ;;; switch-test.el --- Tests for window-purpose-switch.el -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015, 2016 Bar Magal
+;; Copyright (C) 2015-2018 Bar Magal & contributors
 
 ;; Author: Bar Magal
 ;; Package: purpose
@@ -197,6 +197,36 @@
             (purpose-mode -1)))
       (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p0-1" "xxx-p1-0"))))
 
+(ert-deftest purpose-test-mark-dedicated ()
+  "Test `purpose-change-buffer' honors `display-buffer-mark-dedicated'."
+  (save-window-excursion
+    (unwind-protect
+	(let ((purpose-message-on-p t))
+	  (purpose-with-temp-config
+	      nil nil '(("^xxx-p0-" . p0) ("^xxx-p1-" . p1))
+	    (purpose-create-buffers-for-test :p0 1 :p1 1)
+	    (message "testing mark-dedicated nil...")
+	    (delete-other-windows)
+	    (set-window-buffer nil "xxx-p0-0")
+	    (set-window-dedicated-p nil nil)
+	    (let* ((display-buffer-mark-dedicated nil))
+	      (purpose-pop-buffer "xxx-p1-0")
+	      (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p1-0"))
+	      (should (string= "xxx-p1-0" (buffer-name (window-buffer))))
+	      (should-not (window-dedicated-p)))
+
+	    (message "testing mark-dedicated t...")
+	    (delete-other-windows)
+	    (set-window-buffer nil "xxx-p0-0")
+	    (set-window-dedicated-p nil nil)
+	    (let* ((display-buffer-mark-dedicated t))
+	      (purpose-pop-buffer "xxx-p1-0")
+	      (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p1-0"))
+	      (should (string= "xxx-p1-0" (buffer-name (window-buffer))))
+	      (should (window-dedicated-p)))))
+
+      (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p1-0"))))
+
 (ert-deftest purpose-test-pop-buffer-same-window ()
   "Test variations of `purpose-pop-buffer-same-window'.
 - 1 windows, switch to other purpose
@@ -293,26 +323,24 @@
 (ert-deftest purpose-test-display-no-buffer ()
   "Test `display-buffer-no-window' works with `purpose-mode'.
 Window layout should be unchanged."
-  ;; `display-buffer-no-window' isn't defined in Emacs 24.3 and older
-  (when (fboundp 'display-buffer-no-window)
-    (save-window-excursion
-      (unwind-protect
-          (let ((purpose-message-on-p t))
-            (purpose-create-buffers-for-test :p0 2)
-            (purpose-mode 1)
-            (delete-other-windows)
-            (set-window-buffer nil "xxx-p0-0")
-            (split-window)
-            (message "testing buffer not displayed ...")
-            (should-not (display-buffer "xxx-p0-1" '(display-buffer-no-window (allow-no-window . t))))
-            (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-0"))
-            (message "testing buffer not displayed (2) ...")
-            (should-not (display-buffer "xxx-p0-1" '((display-buffer-no-window
-                                                      purpose-display-maybe-other-window)
-                                                     (allow-no-window . t))))
-            (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-0")))
-        (purpose-mode -1)
-        (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p0-1")))))
+  (save-window-excursion
+    (unwind-protect
+        (let ((purpose-message-on-p t))
+          (purpose-create-buffers-for-test :p0 2)
+          (purpose-mode 1)
+          (delete-other-windows)
+          (set-window-buffer nil "xxx-p0-0")
+          (split-window)
+          (message "testing buffer not displayed ...")
+          (should-not (display-buffer "xxx-p0-1" '(display-buffer-no-window (allow-no-window . t))))
+          (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-0"))
+          (message "testing buffer not displayed (2) ...")
+          (should-not (display-buffer "xxx-p0-1" '((display-buffer-no-window
+                                                    purpose-display-maybe-other-window)
+                                                   (allow-no-window . t))))
+          (purpose-check-displayed-buffers '("xxx-p0-0" "xxx-p0-0")))
+      (purpose-mode -1)
+      (purpose-kill-buffers-safely "xxx-p0-0" "xxx-p0-1"))))
 
 (ert-deftest purpose-test-display-fallback-pop-window ()
   "Test value `pop-up-window' for `purpose-display-fallback'.

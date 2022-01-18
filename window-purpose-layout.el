@@ -1,6 +1,6 @@
 ;;; window-purpose-layout.el --- Save and load window layout -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015, 2016 Bar Magal
+;; Copyright (C) 2015-2021 Bar Magal & contributors
 
 ;; Author: Bar Magal
 ;; Package: purpose
@@ -29,6 +29,7 @@
 (require 'cl-lib)
 (require 'ring)
 (require 'window-purpose-core)
+(eval-when-compile (require 'subr-x))
 
 (defconst purpose--built-in-layouts-dir
   (when load-file-name
@@ -39,21 +40,21 @@
   "If nil, don't use layouts from `purpose--built-in-layouts-dir'."
   :group 'purpose
   :type 'boolean
-  :package-version "1.6")
+  :package-version '(window-purpose . "1.6"))
 
 (defcustom purpose-default-layout-file
   (concat user-emacs-directory ".purpose-layout")
   "Default file for saving/loading purpose layout."
   :group 'purpose
   :type 'file
-  :package-version "1.2")
+  :package-version '(window-purpose . "1.2"))
 
 (defcustom purpose-layout-dirs
   (list (locate-user-emacs-file "layouts/"))
   "List of directories containing layout files."
   :group 'purpose
   :type '(repeat file)
-  :package-version "1.5")
+  :package-version '(window-purpose . "1.5"))
 
 (defcustom purpose-get-extra-window-params-functions nil
   "If non-nil, this variable should be a list of functions.
@@ -61,7 +62,7 @@ This variable is used by `purpose-window-params'.  See
 `purpose-window-params' for more details."
   :group 'purpose
   :type 'hook
-  :package-version "1.4")
+  :package-version '(window-purpose . "1.4"))
 
 (defcustom purpose-set-window-properties-functions nil
   "Hook to run after calling `purpose-set-window-properties'.
@@ -74,7 +75,7 @@ WINDOW is nil, your function should act on the selected window
 instead."
   :group 'purpose
   :type 'hook
-  :package-version "1.2")
+  :package-version '(window-purpose . "1.2"))
 
 (defvar purpose-recent-window-layouts (make-ring 50)
   "Most recently used window layouts.
@@ -233,8 +234,8 @@ WINDOW must be a live window and defaults to the selected one."
   "Get a list of all filenames that end in SUFFIX in DIRECTORY.
 The base filenames without the suffix are returned."
   (cl-loop for filename in (directory-files directory nil nil t)
-           if (purpose--suffix-p suffix filename)
-           collect (purpose--remove-suffix suffix filename)))
+           if (string-suffix-p suffix filename)
+           collect (string-remove-suffix suffix filename)))
 
 (defun purpose--file-with-suffix (name suffix directory)
   "Get file with basename NAME and suffix SUFFIX in DIRECTORY.
@@ -414,11 +415,11 @@ This function doesn't change the selected frame (uses
   "Save window layout of current frame to file FILENAME.
 If FILENAME is nil, use `purpose-default-layout-file' instead."
   (interactive
-   (list (funcall (purpose-get-read-file-name-function)
-                  "[PU] Save window layout to file: "
-                  (file-name-directory purpose-default-layout-file)
-                  nil nil
-                  (file-name-nondirectory purpose-default-layout-file))))
+   (list (read-file-name
+          "[PU] Save window layout to file: "
+          (file-name-directory purpose-default-layout-file)
+          nil nil
+          (file-name-nondirectory purpose-default-layout-file))))
   (with-temp-file (or filename purpose-default-layout-file)
     ;; "%S" - print as S-expression - this allows us to read the value with
     ;; `read' later in `purpose-load-window-layout-file'
@@ -429,11 +430,11 @@ If FILENAME is nil, use `purpose-default-layout-file' instead."
   "Load window layout from file FILENAME.
 If FILENAME is nil, use `purpose-default-layout-file' instead."
   (interactive
-   (list (funcall (purpose-get-read-file-name-function)
-                  "[PU] Load window layout from file: "
-                  (file-name-directory purpose-default-layout-file)
-                  nil nil
-                  (file-name-nondirectory purpose-default-layout-file))))
+   (list (read-file-name
+          "[PU] Load window layout from file: "
+          (file-name-directory purpose-default-layout-file)
+          nil nil
+          (file-name-nondirectory purpose-default-layout-file))))
   (purpose-set-window-layout
    (with-temp-buffer
      (insert-file-contents (or filename purpose-default-layout-file))
@@ -450,9 +451,9 @@ DIRECTORY is the directory in which to save the layout."
          (user-error (concat "No directory is set for user layouts. "
                              "Please add a directory to `purpose-layouts-dir'"))
        (list (read-string "[PU] save layout name: ")
-             (funcall (purpose-get-completing-read-function)
-                      "[PU] save to directory: "
-                      layout-dirs nil t)))))
+             (completing-read
+              "[PU] save to directory: "
+              layout-dirs nil t)))))
   (let ((layout-file (concat (file-name-as-directory directory)
                              name ".window-layout")))
     (unless (file-exists-p directory)
@@ -472,13 +473,13 @@ then `purpose--built-in-layouts-dir' is also searched.  See
 To load a window layout from a specific file, use
 `purpose-load-window-layout-file'."
   (interactive)
-  (let ((name (or name (funcall (purpose-get-completing-read-function)
-                                "[PU] Load window layout:"
-                                (purpose-all-window-layouts layout-dirs
-                                                            purpose-use-built-in-layouts)
-                                nil t))))
+  (let ((name (or name (completing-read
+                        "[PU] Load window layout:"
+                        (purpose-all-window-layouts layout-dirs
+                                                    purpose-use-built-in-layouts)
+                        nil t))))
     ;; layout with NAME is guaranteed to exist because of non-nil REQUIRE-MATCH
-    ;; argument to (purpose-get-completing-read-function).
+    ;; argument to (completing-read).
     (purpose-load-window-layout-file (purpose-find-window-layout name layout-dirs))))
 
 (defun purpose-reset-window-layout ()
@@ -523,11 +524,11 @@ specified by LAYOUT."
   "Save frame layout of Emacs to file FILENAME.
 If FILENAME is nil, use `purpose-default-layout-file' instead."
   (interactive
-   (list (funcall (purpose-get-read-file-name-function)
-                  "[PU] Save frame layout to file: "
-                  (file-name-directory purpose-default-layout-file)
-                  nil nil
-                  (file-name-nondirectory purpose-default-layout-file))))
+   (list (read-file-name
+          "[PU] Save frame layout to file: "
+          (file-name-directory purpose-default-layout-file)
+          nil nil
+          (file-name-nondirectory purpose-default-layout-file))))
   (with-temp-file (or filename purpose-default-layout-file)
     ;; "%S" - print as S-expression - this allows us to read the value with
     ;; `read' later in `purpose-load-window-layout-file'
@@ -538,11 +539,11 @@ If FILENAME is nil, use `purpose-default-layout-file' instead."
   "Load frame layout from file FILENAME.
 If FILENAME is nil, use `purpose-default-layout-file' instead."
   (interactive
-   (list (funcall (purpose-get-read-file-name-function)
-                  "[PU] Load frame layout from file: "
-                  (file-name-directory purpose-default-layout-file)
-                  nil nil
-                  (file-name-nondirectory purpose-default-layout-file))))
+   (list (read-file-name
+          "[PU] Load frame layout from file: "
+          (file-name-directory purpose-default-layout-file)
+          nil nil
+          (file-name-nondirectory purpose-default-layout-file))))
   (purpose-set-frame-layout
    (with-temp-buffer
      (insert-file-contents (or filename purpose-default-layout-file))
@@ -559,9 +560,9 @@ DIRECTORY is the directory in which to save the layout."
          (user-error (concat "No directory is set for user layouts. "
                              "Please add a directory to `purpose-layouts-dir'"))
        (list (read-string "[PU] save layout name: ")
-             (funcall (purpose-get-completing-read-function)
-                      "[PU] save to directory: "
-                      layout-dirs nil t)))))
+             (completing-read
+              "[PU] save to directory: "
+              layout-dirs nil t)))))
   (let ((layout-file (concat (file-name-as-directory directory)
                              name ".frame-layout")))
     (unless (file-exists-p directory)
@@ -581,13 +582,13 @@ then `purpose--built-in-layouts-dir' is also searched.  See
 To load a frame layout from a specific file, use
 `purpose-load-frame-layout-file'."
   (interactive)
-  (let ((name (or name (funcall (purpose-get-completing-read-function)
-                                "[PU] Load frame layout:"
-                                (purpose-all-frame-layouts layout-dirs
-                                                           purpose-use-built-in-layouts)
-                                nil t))))
+  (let ((name (or name (completing-read
+                        "[PU] Load frame layout:"
+                        (purpose-all-frame-layouts layout-dirs
+                                                   purpose-use-built-in-layouts)
+                        nil t))))
     ;; layout with NAME is guaranteed to exist because of non-nil REQUIRE-MATCH
-    ;; argument to (purpose-get-completing-read-function).
+    ;; argument to (completing-read).
     (purpose-load-frame-layout-file (purpose-find-frame-layout name layout-dirs))))
 
 (defun purpose-reset-frame-layout ()

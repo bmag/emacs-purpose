@@ -1,6 +1,6 @@
 ;;; window-purpose-x.el --- Extensions for Purpose -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015, 2016 Bar Magal
+;; Copyright (C) 2015-2021 Bar Magal & contributors
 
 ;; Author: Bar Magal
 ;; Package: purpose
@@ -68,7 +68,8 @@
 Has a main 'edit window, and two side windows - 'dired and 'buffers.
 All windows are purpose-dedicated.")
 
-;; the name arg ("purpose-x-code1") is necessary for Emacs 24.3 and older
+;; the name arg ("purpose-x-code1") is necessary for Emacs 24.5 and older
+;; (omitting it produces an "Invalid slot name" error)
 (defvar purpose-x-code1-purpose-config
   (purpose-conf "purpose-x-code1"
                 :mode-purposes
@@ -119,7 +120,7 @@ All windows are purpose-dedicated.")
   (setq ibuffer-display-summary t)
   (setq ibuffer-use-header-line t))
 
-(defun purpose-update-dired ()
+(defun purpose-x-code1-update-dired ()
   "Update free dired window with current buffer's directory.
 If a non-buffer-dedicated window with purpose 'dired exists, display
 the directory of the current buffer in that window, using `dired'.
@@ -129,9 +130,11 @@ If current buffer doesn't have a filename, do nothing."
              (cl-delete-if #'window-dedicated-p
                            (purpose-windows-with-purpose 'dired)))
     (save-selected-window
-      (dired (file-name-directory (buffer-file-name)))
-      (when (fboundp 'dired-hide-details-mode)
-        (dired-hide-details-mode))
+      (let ((buffer (dired-noselect (file-name-directory (buffer-file-name)))))
+        (with-current-buffer buffer
+          (when (fboundp 'dired-hide-details-mode)
+            (dired-hide-details-mode)))
+        (display-buffer buffer))
       (bury-buffer (current-buffer)))))
 
 (defun purpose-x-code1-update-changed ()
@@ -139,8 +142,8 @@ If current buffer doesn't have a filename, do nothing."
 Uses `frame-or-buffer-changed-p' to determine whether the frame or
 buffer had changed."
   (when (frame-or-buffer-changed-p 'purpose-x-code1-buffers-changed)
-    (purpose-update-dired)
-    (imenu-list-update-safe)))
+    (purpose-x-code1-update-dired)
+    (imenu-list-update)))
 
 ;;;###autoload
 (defun purpose-x-code1-setup ()
@@ -179,7 +182,7 @@ imenu."
 ;;; purpose-x-magit extension provides purpose configuration for magit.
 ;;; Two configurations available:
 ;;; - `purpose-x-magit-single-conf': all magit windows have the same purpose
-;;;                                  ('magit)
+;;;                                  ('Magit)
 ;;; - `purpose-x-magit-multi-conf': each magit major-mode has a seperate
 ;;;                                 purpose ('magit-status, 'magit-diff, ...)
 ;;; Use these commands to enable and disable magit's purpose configurations:
@@ -189,7 +192,13 @@ imenu."
 
 (defvar purpose-x-magit-single-conf
   (purpose-conf "magit-single"
-                :regexp-purposes '(("^\\*magit" . magit)))
+                ;; using `magit' as a condition in
+                ;; `purpose-special-action-sequences' is interpreted
+                ;; as a predicate function (for buffer's without a
+                ;; `magit' purpose). `Magit' doesn't have the same
+                ;; problem (no function is named Magit), so that's why
+                ;; we call the purpose `Magit' and not `magit'.
+                :mode-purposes '((magit-mode . Magit)))
   "Configuration that gives each magit major mode the same purpose.")
 
 (defvar purpose-x-magit-multi-conf
@@ -206,22 +215,54 @@ imenu."
                     (magit-wazzup-mode . magit-wazzup)))
   "Configuration that gives each magit major mode its own purpose.")
 
+(defvar purpose-x-old-magit-display-buffer-function nil
+  "Stores `magit-display-buffer-function'.
+
+The value of `magit-display-buffer-function' at the time
+`purpose-x-magit-single-on' or `purpose-x-magit-multi-on' is
+invoked.")
+
+(defun purpose-x-magit-display-buffer-function (buffer)
+  "Integrate `magit' with `window-purpose'."
+  (let ((display-buffer-overriding-action '(purpose--action-function . nil)))
+    (funcall purpose-x-old-magit-display-buffer-function buffer)))
+
 ;;;###autoload
 (defun purpose-x-magit-single-on ()
   "Turn on magit-single purpose configuration."
   (interactive)
+  (with-eval-after-load 'magit
+    ;; if `purpose-x-old-magit-display-buffer-function' is non-nil, then it
+    ;; means magit-single-on was activated while magit-single-on or
+    ;; magit-multi-on is already active. Magit's variable is already backed up,
+    ;; so "backing it up" again will actually override it with a wrong value.
+    (unless purpose-x-old-magit-display-buffer-function
+      (setq purpose-x-old-magit-display-buffer-function magit-display-buffer-function))
+    (setq magit-display-buffer-function 'purpose-x-magit-display-buffer-function))
   (purpose-set-extension-configuration :magit purpose-x-magit-single-conf))
 
 ;;;###autoload
 (defun purpose-x-magit-multi-on ()
   "Turn on magit-multi purpose configuration."
   (interactive)
+  (with-eval-after-load 'magit
+    ;; if `purpose-x-old-magit-display-buffer-function' is non-nil, then it
+    ;; means magit-multi-on was activated while magit-single-on or
+    ;; magit-multi-on is already active. Magit's variable is already backed up,
+    ;; so "backing it up" again will actually override it with a wrong value.
+    (unless purpose-x-old-magit-display-buffer-function
+      (setq purpose-x-old-magit-display-buffer-function magit-display-buffer-function))
+    (setq magit-display-buffer-function 'purpose-x-magit-display-buffer-function))
   (purpose-set-extension-configuration :magit purpose-x-magit-multi-conf))
 
 (defun purpose-x-magit-off ()
   "Turn off magit purpose configuration (single or multi)."
   (interactive)
-  (purpose-del-extension-configuration :magit))
+  (purpose-del-extension-configuration :magit)
+  (with-eval-after-load 'magit
+    (when purpose-x-old-magit-display-buffer-function
+      (setq magit-display-buffer-function purpose-x-old-magit-display-buffer-function))
+    (setq purpose-x-old-magit-display-buffer-function nil)))
 
 ;;; --- purpose-x-magit ends here ---
 
@@ -293,7 +334,7 @@ compatible with `display-buffer'."
                  (const left)
                  (const right)
                  function)
-  :package-version "1.4")
+  :package-version '(window-purpose . "1.4"))
 
 (defcustom purpose-x-popwin-width 0.4
   "Width of popup window when displayed at left or right.
@@ -302,7 +343,7 @@ Can have the same values as `purpose-display-at-left-width' and
   :group 'purpose
   :type '(choice number
                  (const nil))
-  :package-version "1.4")
+  :package-version '(window-purpose . "1.4"))
 
 (defcustom purpose-x-popwin-height 0.35
   "Height of popup window when displayed at top or bottom.
@@ -311,7 +352,7 @@ Can have the same values as `purpose-display-at-top-height' and
   :group 'purpose
   :type '(choice number
                  (const nil))
-  :package-version "1.4")
+  :package-version '(window-purpose . "1.4"))
 
 (defcustom purpose-x-popwin-major-modes '(help-mode
                                           compilation-mode
@@ -320,12 +361,12 @@ Can have the same values as `purpose-display-at-top-height' and
 When changing the value of this variable in elisp code, you should call
 `purpose-x-popwin-update-conf' for the change to take effect."
   :group 'purpose
-  :type 'list
+  :type '(repeat symbol)
   :set #'(lambda (symbol value)
            (prog1 (set-default symbol value)
              (purpose-x-popwin-update-conf)))
   :initialize 'custom-initialize-default
-  :package-version "1.4")
+  :package-version '(window-purpose . "1.4"))
 
 (defcustom purpose-x-popwin-buffer-names '("*Shell Command Output*")
   "List of buffer names that should be opened as popup windows.
@@ -334,12 +375,12 @@ windows.
 When changing the value of this variable in elisp code, you should call
 `purpose-x-popwin-update-conf' for the change to take effect."
   :group 'purpose
-  :type 'list
+  :type '(repeat string)
   :set #'(lambda (symbol value)
            (prog1 (set-default symbol value)
              (purpose-x-popwin-update-conf)))
   :initialize 'custom-initialize-default
-  :package-version "1.4")
+  :package-version '(window-purpose . "1.4"))
 
 (defcustom purpose-x-popwin-buffer-name-regexps nil
   "List of regexp that should be opened as popup windows.
@@ -348,12 +389,12 @@ windows.
 When changing the value of this variable in elisp code, you should call
 `purpose-x-popwin-update-conf' for the change to take effect."
   :group 'purpose
-  :type 'list
+  :type '(repeat string)
   :set #'(lambda (symbol value)
            (prog1 (set-default symbol value)
              (purpose-x-popwin-update-conf)))
   :initialize 'custom-initialize-default
-  :package-version "1.4")
+  :package-version '(window-purpose . "1.4"))
 
 (defun purpose-x-popupify-purpose (purpose &optional display-fn)
   "Set up a popup-like behavior for buffers with purpose PURPOSE.
@@ -475,6 +516,16 @@ the popup window doesn't need to close."
         (purpose-x-popwin-close-windows)
       (purpose-x-popwin-remove-hooks))))
 
+(defun purpose-x-popwin-quit-restore-window-advice (fn &optional window bury-or-kill)
+  "Close pop up window when there aren't previous buffers can be shown in it."
+  (when-let* ((window (ignore-errors (window-normalize-window window t))))
+    (funcall fn window bury-or-kill)
+    (when (and (window-live-p window)
+               ;; quit-restore-window did not kill window
+               (null (window-parameter window 'quit-restore))
+               (not (window-prev-buffers window)))
+      (ignore-errors (delete-window window)))))
+
 ;;;###autoload
 (defun purpose-x-popwin-setup ()
   "Activate `popwin' emulation.
@@ -491,14 +542,16 @@ Look at `purpose-x-popwin-*' variables and functions to learn more."
   (purpose-x-popwin-update-conf)
   (setq purpose-special-action-sequences
         (cl-delete 'popup purpose-special-action-sequences :key #'car))
-  (purpose-x-popupify-purpose 'popup #'purpose-x-popwin-display-buffer))
+  (purpose-x-popupify-purpose 'popup #'purpose-x-popwin-display-buffer)
+  (advice-add 'quit-restore-window :around 'purpose-x-popwin-quit-restore-window-advice))
 
 (defun purpose-x-popwin-unset ()
   "Deactivate `popwin' emulation."
   (interactive)
   (purpose-del-extension-configuration :popwin)
   (purpose-x-unpopupify-purpose 'popup)
-  (purpose-x-popwin-remove-hooks))
+  (purpose-x-popwin-remove-hooks)
+  (advice-remove 'quit-restore-window 'purpose-x-popwin-quit-restore-window-advice))
 
 ;;; --- purpose-x-popup ends here ---
 
@@ -523,7 +576,7 @@ To add/remove entries, use:
 
 (defun purpose-x-persp-activate ()
   "Activate current perspective's purpose configuration."
-  (let ((conf (gethash (persp-name persp-curr) purpose-x-persp-confs)))
+  (let ((conf (gethash (persp-name (persp-curr)) purpose-x-persp-confs)))
     (if conf
         (purpose-set-extension-configuration :perspective conf)
       (purpose-x-persp-remove))))
@@ -565,7 +618,7 @@ purpose configurations."
 (defun purpose-x-persp-get-buffer-names ()
   "Get names of all buffers with same purpose and perspective as current buffer.
 The returned list doesn't contain the current buffer."
-  (let ((persp-buffers (persp-buffers persp-curr)))
+  (let ((persp-buffers (persp-buffers (persp-curr))))
     (mapcar #'buffer-name
             (cl-delete-if-not (lambda (buffer) (member buffer persp-buffers))
                               (delete (current-buffer)
@@ -644,13 +697,21 @@ This function removes the buffer denoted by BUFFER-OR-NAME from all
 window-local buffer lists."
   (interactive "bBuffer to replace: ")
   (let* ((buffer (window-normalize-buffer buffer-or-name))
-         (purpose (purpose-buffer-purpose buffer))
-         (other-buffers (delete buffer (purpose-buffers-with-purpose purpose))))
+         ;; Delay calculating other-buffers until we need it
+         ;; This prevents unnecessary calculations on temporary
+         ;; buffers created by `with-temp-buffer' and other likewise
+         ;; non-displayed buffers
+         (other-buffers-calculated nil)
+         (other-buffers nil))
     (dolist (window (window-list-1 nil nil t))
       (if (eq (window-buffer window) buffer)
           (unless (window--delete window t t)
-            (let ((dedicated (purpose-window-purpose-dedicated-p window))
-                  (deletable (window-deletable-p window)))
+            (let* ((purpose (purpose-buffer-purpose buffer))
+                   (dedicated (purpose-window-purpose-dedicated-p window))
+                   (deletable (window-deletable-p window)))
+              (unless other-buffers-calculated
+                (setq other-buffers (delete buffer (purpose-buffers-with-purpose purpose))
+                      other-buffers-calculated t))
               (cond
                ((and dedicated other-buffers)
                 ;; dedicated, so replace with a buffer with the same purpose
@@ -671,12 +732,9 @@ window-local buffer lists."
         ;; Unrecord BUFFER in WINDOW.
         (unrecord-window-buffer window buffer)))))
 
-(define-purpose-compatible-advice 'replace-buffer-in-windows
-    :override purpose-x-replace-buffer-in-windows
-    (&optional buffer-or-name)
-    "Override `replace-buffer-in-windows' with a purpose-aware version."
-  ((purpose-x-replace-buffer-in-windows-1 buffer-or-name))
-  ((setq ad-return-value (purpose-x-replace-buffer-in-windows-1 buffer-or-name))))
+(defun purpose-x-replace-buffer-in-windows (&optional buffer-or-name)
+  "Override `replace-buffer-in-windows' with a purpose-aware version."
+  (purpose-x-replace-buffer-in-windows-1 buffer-or-name))
 
 (defun purpose-x-kill-sync ()
   "Synchronize `replace-buffer-in-windows' with `purpose-mode'.
@@ -684,8 +742,8 @@ If `purpose-mode' is enabled, override `replace-buffer-in-windows' with
 `purpose-x-replace-buffer-in-windows'.  If `purpose-mode' is disabled,
 cancel the override of `replace-buffer-in-windows'."
   (if purpose-mode
-      (purpose-advice-add 'replace-buffer-in-windows :override 'purpose-x-replace-buffer-in-windows)
-    (purpose-advice-remove 'replace-buffer-in-windows :override 'purpose-x-replace-buffer-in-windows)))
+      (advice-add 'replace-buffer-in-windows :override 'purpose-x-replace-buffer-in-windows)
+    (advice-remove 'replace-buffer-in-windows 'purpose-x-replace-buffer-in-windows)))
 
 ;;;###autoload
 (defun purpose-x-kill-setup ()
@@ -706,7 +764,7 @@ This is implemented by overriding `replace-buffer-in-windows' with
 (defun purpose-x-kill-unset ()
   "Deactivate purpose-x-kill extension."
   (interactive)
-  (purpose-advice-remove 'replace-buffer-in-windows :override 'purpose-x-replace-buffer-in-windows)
+  (advice-remove 'replace-buffer-in-windows 'purpose-x-replace-buffer-in-windows)
   (remove-hook 'purpose-mode-hook 'purpose-x-kill-sync))
 
 ;;; --- purpose-x-kill ends here ---

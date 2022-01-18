@@ -1,0 +1,61 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the action will run. 
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      matrix:
+        emacs_version:
+          - '25.3'
+          - '26.3'
+          - '27.1'
+        experimental: [false]
+        include:
+          - emacs_version: snapshot
+            experimental: true
+        cask_version:
+          - 'snapshot'
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+          architecture: 'x64'
+      - uses: purcell/setup-emacs@master
+        with:
+          version: ${{ matrix.emacs_version }}
+
+      - uses: conao3/setup-cask@master
+        with:
+          version: 'snapshot'
+
+      - name: Run tests
+        env:
+          COVERALLS_FLAG_NAME: Emacs ${{ matrix.emacs_version }}
+          COVERALLS_PARALLEL: 1
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          make install
+          make test
+  send-coverage-report:
+    runs-on: ubuntu-latest
+    if: always()
+    needs: test
+    steps:
+      - run: curl "https://coveralls.io/webhook?repo_name=$GITHUB_REPOSITORY&repo_token=${{ secrets.GITHUB_TOKEN }}" -d "payload[build_num]=$GITHUB_RUN_NUMBER&payload[status]=done"
