@@ -224,6 +224,15 @@ the purpose PURPOSE."
   (and (not (window-dedicated-p window))
        (eql purpose (purpose-window-purpose window))))
 
+(defun purpose--frame-list ()
+  "Return a list of all live frames.
+Similar to `frame-list', the only difference being that the
+initial, hidden, frame which is kept around when Emacs is run as
+a daemon is excluded."
+  (if (daemonp)
+      (delq terminal-frame (frame-list))
+    (frame-list)))
+
 (defun purpose--reusable-frames (alist)
   "Return a list of reusable frames.
 If ALIST contains a `reusable-frames' entry, its value determines which
@@ -252,9 +261,9 @@ terminal if it's non-nil."
              (cl-remove-if-not
               #'(lambda (frame)
                   (eql (frame-terminal frame) (frame-terminal)))
-              (frame-list)))
+              (purpose--frame-list)))
             ((eql reusable-frames t)
-             (frame-list))
+             (purpose--frame-list))
             (t
              (message "Bad value for reusable-frames in ALIST: %S"
                       reusable-frames)
@@ -489,7 +498,7 @@ This function doesn't raise the new frame."
                      (mapcar
                       #'(lambda (frame)
                           (purpose-display--frame-usable-windows frame buffer))
-                      (remove (selected-frame) (frame-list)))))
+                      (remove (selected-frame) (purpose--frame-list)))))
            (window (car windows)))
       (when window
         (purpose-change-buffer buffer window 'reuse alist)
