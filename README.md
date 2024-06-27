@@ -56,18 +56,18 @@ In init file:
 ```
 
 ### Useful Commands
-| Key         | Command                                                                                                                   |
-| :---------- | :------------------------------------------------------------------------------------------------------------------------ |
+| Key                  | Command                                                                                                                   |
+| :----------          | :------------------------------------------------------------------------------------------------------------------------ |
 | <kbd>C-c , b</kbd>   | `purpose-switch-buffer-with-purpose`: switch to a buffer with the same purpose as the current one                         |
 | <kbd>C-u C-x b</kbd> | `switch-buffer-without-purpose`: switch to a buffer, but don't use Purpose for it. Handy for changing the current layout. |
 | <kbd>C-c , d</kbd>   | `purpose-toggle-window-purpose-dedicated`                                                                                 |
 | <kbd>C-c , D</kbd>   | `purpose-toggle-window-buffer-dedicated`                                                                                  |
 | <kbd>C-c , 1</kbd>   | `purpose-delete-non-dedicated-windows`                                                                                    |
-|             | `purpose-save-window-layout`: save current layout (by name)                                                                |
-|             | `purpose-load-window-layout`: load layout (by name)                                                                       |
-|             | `purpose-save-window-layout-file`: save current layout directly to file                                                                |
-|             | `purpose-load-window-layout-file`: load layout directly from file                                                                  |
-|             | `purpose-reset-window-layout`: reload previously loaded layout                                                            |
+|                      | `purpose-save-window-layout`: save current layout (by name)                                                               |
+|                      | `purpose-load-window-layout`: load layout (by name)                                                                       |
+|                      | `purpose-save-window-layout-file`: save current layout directly to file                                                   |
+|                      | `purpose-load-window-layout-file`: load layout directly from file                                                         |
+|                      | `purpose-reset-window-layout`: reload previously loaded layout                                                            |
 
 ### Example: Simple Python Layout
 How to get a simple and persistent layout for coding in Python that
