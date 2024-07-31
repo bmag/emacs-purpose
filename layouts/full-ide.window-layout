@@ -1,0 +1,13 @@
+(nil
+    (0 0 225 50)
+    (t
+      (0 0 45 50)
+      (:purpose Neotree :purpose-dedicated t :width 0.2 :height 0.5098039215686274 :edges (0.0 0.0 0.2 0.5098039215686274))
+      (:purpose buffers :purpose-dedicated t :width 0.2 :height 0.47058823529411764 :edges (0.0 0.0 0.2 0.9803921568627451)))
+    (t
+      (45 0 187 50)
+      (:purpose edit :purpose-dedicated t :width 0.63 :height 0.8823529411764706 :edges (0.20 0.0 0.83 0.8823529411764706))
+      (:purpose misc :purpose-dedicated t :width 0.63 :height 0.09803921568627451 :edges (0.2 0.8823529411764706 0.83 0.9803921568627451)))
+    (t
+      (187 0 225 50)
+      (:purpose ilist :purpose-dedicated t :width 0.17 :height 0.9803921568627451 :edges (0.83 0.0 1 0.9803921568627451))))
