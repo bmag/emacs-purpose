@@ -2,14 +2,14 @@
 
 name: CI
 
-# Controls when the action will run. 
+# Controls when the action will run.
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
     branches:
-      - '*'
+      - "*"
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -21,29 +21,31 @@ jobs:
     strategy:
       matrix:
         emacs_version:
-          - '25.3'
-          - '26.3'
-          - '27.1'
+          - "25.3"
+          - "26.3"
+          - "27.2"
+          - "28.2"
+          - "29.4"
         experimental: [false]
         include:
           - emacs_version: snapshot
             experimental: true
         cask_version:
-          - 'snapshot'
+          - "snapshot"
       fail-fast: false
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-          python-version: '3.9'
-          architecture: 'x64'
+          python-version: "3.9"
+          architecture: "x64"
       - uses: purcell/setup-emacs@master
         with:
           version: ${{ matrix.emacs_version }}
 
       - uses: conao3/setup-cask@master
         with:
-          version: 'snapshot'
+          version: "snapshot"
 
       - name: Run tests
         env:
