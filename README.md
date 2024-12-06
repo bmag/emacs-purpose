@@ -22,8 +22,6 @@ customized via the variables `purpose-user-mode-purposes`,
 `purpose-use-default-configuration` (see the
 [wiki](https://github.com/bmag/emacs-purpose/wiki/Purpose-Configuration)).
 
-### Supported Emacs Versions
-Purpose is tested with Emacs versions 24.3, 24.4 and 24.5. Backward-compatibility for earlier versions might be added in the future - if you want such support, contact me.
 
 ## Quickstart
 
