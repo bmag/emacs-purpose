@@ -2,7 +2,7 @@
 
 [![MELPA](http://melpa.org/packages/window-purpose-badge.svg)](http://melpa.org/#/window-purpose)
 [![MELPA Stable](http://stable.melpa.org/packages/window-purpose-badge.svg)](http://stable.melpa.org/#/window-purpose)
-[![Build Status](https://travis-ci.org/bmag/emacs-purpose.svg?branch=master)](https://travis-ci.org/bmag/emacs-purpose)
+[![Build Status](https://github.com/bmag/emacs-purpose/actions/workflows/main.yml/badge.svg)](https://github.com/bmag/emacs-purpose/actions)
 [![Coverage Status](https://coveralls.io/repos/bmag/emacs-purpose/badge.svg?branch=master)](https://coveralls.io/r/bmag/emacs-purpose?branch=master)
 
 **Note: a full explanation can be found in the [GitHub wiki](https://github.com/bmag/emacs-purpose/wiki).**
