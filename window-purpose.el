@@ -88,7 +88,7 @@
 The lambda calls IDO-FN interactively when `ido-mode' is on, otherwise
 it calls OTHER-FN interactively.
 Example:
-  (purpose-ido-caller #'ido-find-file #'find-file)"
+  (purpose-ido-caller #\\='ido-find-file #\\='find-file)"
   (declare (indent nil) (debug (function-form function-form)))
   `(lambda (&rest _args)
      (interactive)
@@ -259,11 +259,11 @@ modeline.  The basic form of the string is \"[<purpose>]\".  If the
 window is purpose-dedicated, add a \"!\" before \"]\".  If the window is
 buffer-dedicated, add a \"#\" before \"]\".
 Some examples:
-\"[edit]\": window's purpose is 'edit, and it is not dedicated.
-\"[edit!]\": window is dedicated to 'edit purpose.
-\"[edit#]\": window's purpose is 'edit, and it is dedicated to its
+\"[edit]\": window's purpose is `edit', and it is not dedicated.
+\"[edit!]\": window is dedicated to `edit' purpose.
+\"[edit#]\": window's purpose is `edit', and it is dedicated to its
            current buffer.
-\"[edit!#]\": window is dedicated to 'edit purpose and to its current buffer."
+\"[edit!#]\": window is dedicated to `edit' purpose and to its current buffer."
   (format " [%s%s%s]"
           (purpose-window-purpose)
           (if (purpose-window-purpose-dedicated-p) "!" "")

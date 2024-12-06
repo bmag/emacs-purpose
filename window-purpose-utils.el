@@ -77,8 +77,8 @@ This doesn't change the original alist, but returns a modified copy."
   "Combine ALISTS into one alist.
 If several alists have the same key, the entry from the first alist with
 that key is used.  Example:
-  (purpose-alist-combine '((a . 1) (b . 2)) '((a . 3) (c . 4)))
-  => '((a . 1) (b . 2) (c . 4))"
+  (purpose-alist-combine \\='((a . 1) (b . 2)) \\='((a . 3) (c . 4)))
+  => \\='((a . 1) (b . 2) (c . 4))"
   ;; (purpose-flatten alists)
   (let ((result nil))
     (dolist (alist alists)
@@ -93,7 +93,7 @@ that key is used.  Example:
   "Return only the values of PLIST, as a list.
 PLIST is a property list.
 Example:
- (plist-values '(:foo 1 :bar 2)) -> (1 2)"
+ (plist-values \\='(:foo 1 :bar 2)) -> (1 2)"
   (cl-loop for i from 0
            for item in plist
            when (cl-oddp i) collect item))
