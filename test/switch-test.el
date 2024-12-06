@@ -577,7 +577,7 @@ This one tests `purpose-with-temp-display-actions' and
       (should (equal purpose-special-action-sequences (list (car new-actions)))))
     (should (equal purpose-special-action-sequences original-actions))))
 
-(ert-deftest purpose-test-temp-actions-1 ()
+(ert-deftest purpose-test-temp-actions-2 ()
   "Test macros for changing `purpose-special-action-sequences' temporarily.
 This one tests `purpose-with-additional-display-actions' and
 `purpose-with-additional-display-action'."
