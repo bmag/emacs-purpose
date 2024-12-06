@@ -357,8 +357,7 @@ configuration.
 Example:
  (purpose-set-extension-configuration
      :python
-     (purpose-conf \"py\"
-                   :mode-purposes
+     (purpose-conf :mode-purposes
                    '((python-mode . python)
                      (inferior-python-mode . interpreter))))
 
