@@ -57,26 +57,25 @@ hash tables for the uncompiled alists."
 This tests that `purpose-compile-extended-configuration' creates the
 correct hash tables for the uncompiled alists."
   (purpose-with-empty-config
-    (let
-        ((purpose-extended-conf
-          (purpose-conf "test"
-                        :mode-purposes '((prog-mode . edit)
-                                         (dired-mode . dired))
-                        :name-purposes '(("editor" . edit)
-                                         ("foo" . bar))
-                        :regexp-purposes '(("^\\*" . common)))))
-      (purpose-set-extension-configuration :test purpose-extended-conf)
-      (should (purpose-set-equal-p (hash-table-keys purpose--extended-mode-purposes) '(dired-mode prog-mode)))
-      (should (purpose-set-equal-p (hash-table-values purpose--extended-mode-purposes) '(dired edit)))
-      (should (purpose-set-equal-p (hash-table-keys purpose--extended-name-purposes) '("foo" "editor")))
-      (should (purpose-set-equal-p (hash-table-values purpose--extended-name-purposes) '(bar edit)))
-      (should (purpose-set-equal-p (hash-table-keys purpose--extended-regexp-purposes) '("^\\*")))
-      (should (purpose-set-equal-p (hash-table-values purpose--extended-regexp-purposes) '(common))))
-    (let (purpose-extended-configuration)
-      (purpose-compile-extended-configuration)
-      (should (equal (hash-table-count purpose--extended-mode-purposes) 0))
-      (should (equal (hash-table-count purpose--extended-name-purposes) 0))
-      (should (equal (hash-table-count purpose--extended-regexp-purposes) 0)))))
+   (let
+       ((purpose-extended-conf
+         (purpose-conf :mode-purposes '((prog-mode . edit)
+                                        (dired-mode . dired))
+                       :name-purposes '(("editor" . edit)
+                                        ("foo" . bar))
+                       :regexp-purposes '(("^\\*" . common)))))
+     (purpose-set-extension-configuration :test purpose-extended-conf)
+     (should (purpose-set-equal-p (hash-table-keys purpose--extended-mode-purposes) '(dired-mode prog-mode)))
+     (should (purpose-set-equal-p (hash-table-values purpose--extended-mode-purposes) '(dired edit)))
+     (should (purpose-set-equal-p (hash-table-keys purpose--extended-name-purposes) '("foo" "editor")))
+     (should (purpose-set-equal-p (hash-table-values purpose--extended-name-purposes) '(bar edit)))
+     (should (purpose-set-equal-p (hash-table-keys purpose--extended-regexp-purposes) '("^\\*")))
+     (should (purpose-set-equal-p (hash-table-values purpose--extended-regexp-purposes) '(common))))
+   (let (purpose-extended-configuration)
+     (purpose-compile-extended-configuration)
+     (should (equal (hash-table-count purpose--extended-mode-purposes) 0))
+     (should (equal (hash-table-count purpose--extended-name-purposes) 0))
+     (should (equal (hash-table-count purpose--extended-regexp-purposes) 0)))))
 
 
 (ert-deftest purpose-test-compile-default-config ()
@@ -129,10 +128,10 @@ correct hash tables."
 See `purpose-set-extension-configuration' and
 `purpose-del-extension-configuration'."
   (purpose-with-empty-config
-    (should-error (purpose-set-extension-configuration 'foo (purpose-conf "foo")))
-    (purpose-set-extension-configuration :foo (purpose-conf "foo"))
-    (should-error (purpose-del-extension-configuration 'foo))
-    (purpose-del-extension-configuration :foo)))
+   (should-error (purpose-set-extension-configuration 'foo (purpose-conf)))
+   (purpose-set-extension-configuration :foo (purpose-conf))
+   (should-error (purpose-del-extension-configuration 'foo))
+   (purpose-del-extension-configuration :foo)))
 
 (ert-deftest purpose-test-temp-config-1 ()
   "Test macros for changing the purpose configuration temporarily.
@@ -170,8 +169,7 @@ This one tests `purpose-with-additional-purposes'."
     (message "Testing purpose-set-extension-configuration ...")
     (purpose-set-extension-configuration
      :python
-     (purpose-conf "py"
-                   :mode-purposes '((python-mode . python)
+     (purpose-conf :mode-purposes '((python-mode . python)
                                     (inferior-python-mode . interpreter))))
     (should (purpose-set-equal-p (hash-table-keys purpose--extended-mode-purposes) '(inferior-python-mode python-mode)))
     (should (purpose-set-equal-p (hash-table-values purpose--extended-mode-purposes) '(interpreter python)))

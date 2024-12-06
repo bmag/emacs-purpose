@@ -162,8 +162,7 @@ window-purpose."
 
 ;;; Helm's buffers should be ignored, and they should have their own purpose
 (defvar purpose--helm-conf
-  (purpose-conf "helm"
-                :regexp-purposes '(("^\\*Helm" . helm)
+  (purpose-conf :regexp-purposes '(("^\\*Helm" . helm)
                                    ("^\\*helm" . helm)))
   "Purpose configuration for helm.")
 (defun purpose--fix-helm ()
@@ -233,7 +232,7 @@ When `purpose--active-p' is nil, call original `neo-global--create-window'."
   ;; `purpose--special-action-sequence' will try to call it)
   (purpose-set-extension-configuration
    :neotree
-   (purpose-conf "Neotree" :name-purposes `((,neo-buffer-name . Neotree))))
+   (purpose-conf :name-purposes `((,neo-buffer-name . Neotree))))
   (add-to-list 'purpose-special-action-sequences
                '(Neotree purpose-display-reuse-window-buffer
                          purpose-display-reuse-window-purpose
@@ -321,7 +320,6 @@ Don't call this function before `popwin' is loaded."
     (purpose-set-extension-configuration
      :guide-key
      (purpose-conf
-      "guide-key"
       :name-purposes `((,guide-key/guide-buffer-name . guide-key))))))
 
 
@@ -336,7 +334,6 @@ Don't call this function before `popwin' is loaded."
     (purpose-set-extension-configuration
      :which-key
      (purpose-conf
-      "which-key"
       :name-purposes `((,which-key-buffer-name . which-key))))))
 
 
@@ -369,7 +366,7 @@ Don't call this function before `popwin' is loaded."
   (with-eval-after-load 'zone
     (purpose-set-extension-configuration
      :zone
-     (purpose-conf "zone" :name-purposes '(("*zone*" . Zone))))
+     (purpose-conf :name-purposes '(("*zone*" . Zone))))
     (add-to-list 'purpose-special-action-sequences
                  '(Zone display-buffer-same-window))))
 

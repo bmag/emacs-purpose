@@ -71,8 +71,7 @@ All windows are purpose-dedicated.")
 ;; the name arg ("purpose-x-code1") is necessary for Emacs 24.5 and older
 ;; (omitting it produces an "Invalid slot name" error)
 (defvar purpose-x-code1-purpose-config
-  (purpose-conf "purpose-x-code1"
-                :mode-purposes
+  (purpose-conf :mode-purposes
                 '((ibuffer-mode . buffers)
                   (dired-mode . dired)
                   (imenu-list-major-mode . ilist))))
@@ -191,19 +190,15 @@ imenu."
 ;;; - `purpose-x-magit-off'
 
 (defvar purpose-x-magit-single-conf
-  (purpose-conf "magit-single"
-                ;; using `magit' as a condition in
-                ;; `purpose-special-action-sequences' is interpreted
-                ;; as a predicate function (for buffer's without a
-                ;; `magit' purpose). `Magit' doesn't have the same
-                ;; problem (no function is named Magit), so that's why
-                ;; we call the purpose `Magit' and not `magit'.
-                :mode-purposes '((magit-mode . Magit)))
+  ;; using `magit' as a condition in `purpose-special-action-sequences' is
+  ;; interpreted as a predicate function (for buffer's without a `magit'
+  ;; purpose). `Magit' doesn't have the same problem (no function is named
+  ;; Magit), so that's why we call the purpose `Magit' and not `magit'.
+  (purpose-conf :mode-purposes '((magit-mode . Magit)))
   "Configuration that gives each magit major mode the same purpose.")
 
 (defvar purpose-x-magit-multi-conf
   (purpose-conf
-   "magit-multi"
    :mode-purposes '((magit-diff-mode . magit-diff)
                     (magit-status-mode . magit-status)
                     (magit-log-mode . magit-log)
