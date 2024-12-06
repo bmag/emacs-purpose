@@ -65,7 +65,7 @@
     (:purpose ilist :purpose-dedicated t :width 0.15333333333333332 :height 0.9722222222222222 :edges
               (0.8266666666666667 0.0 1.0133333333333334 0.9722222222222222)))
   "Window layout for purpose-x-code1-dired-ibuffer.
-Has a main 'edit window, and two side windows - 'dired and 'buffers.
+Has a main `edit' window, and two side windows - `dired' and `buffers'.
 All windows are purpose-dedicated.")
 
 ;; the name arg ("purpose-x-code1") is necessary for Emacs 24.5 and older
@@ -121,10 +121,10 @@ All windows are purpose-dedicated.")
 
 (defun purpose-x-code1-update-dired ()
   "Update free dired window with current buffer's directory.
-If a non-buffer-dedicated window with purpose 'dired exists, display
-the directory of the current buffer in that window, using `dired'.
-If there is no window available, do nothing.
-If current buffer doesn't have a filename, do nothing."
+If a non-buffer-dedicated window with purpose `dired' exists,
+display the directory of the current buffer in that window, using
+`dired'.  If there is no window available, do nothing.  If
+current buffer doesn't have a filename, do nothing."
   (when (and (buffer-file-name)
              (cl-delete-if #'window-dedicated-p
                            (purpose-windows-with-purpose 'dired)))
@@ -148,13 +148,13 @@ buffer had changed."
 (defun purpose-x-code1-setup ()
   "Setup purpose-x-code1.
 This setup includes 4 windows:
-1. dedicated 'edit window
-2. dedicated 'dired window.  This window shows the current buffer's
+1. dedicated `edit' window
+2. dedicated `dired' window.  This window shows the current buffer's
 directory in a special window, using `dired' and
 `dired-hide-details-mode' (if available).
-3. dedicated 'buffers window.  This window shows the currently open
+3. dedicated `buffers' window.  This window shows the currently open
 files, using `ibuffer'.
-4. dedicated 'ilist window.  This window shows the current buffer's
+4. dedicated `ilist' window.  This window shows the current buffer's
 imenu."
   (interactive)
   (purpose-set-extension-configuration :purpose-x-code1 purpose-x-code1-purpose-config)
@@ -319,7 +319,7 @@ Add `golden-ratio' at the end of `purpose-select-buffer-hook' if
 
 (defcustom purpose-x-popwin-position 'bottom
   "Position for the popup window.
-Legal values for this variable are 'top, 'bottom, 'left and 'right.  It
+Legal values for this variable are `top', `bottom', `left' and `right.'  It
 is also possible to set this variable to a function.  That function will
 be used to create new popup windows and should be a display function
 compatible with `display-buffer'."
@@ -453,7 +453,7 @@ See `display-buffer' for the meaning of ALIST."
 (defun purpose-x-popwin-close-windows ()
   "Delete all popup windows.
 Internally, this function works be deleting all windows that have the
-'popup purpose.  It also buried all popup buffers so they don't bother
+`popup' purpose.  It also buried all popup buffers so they don't bother
 the user when switching buffers."
   (interactive)
   (mapc #'delete-window (purpose-windows-with-purpose 'popup))

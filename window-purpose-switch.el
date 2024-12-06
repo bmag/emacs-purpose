@@ -1118,12 +1118,12 @@ and EXTRA-ARGS, like so:
   (apply display-fn buffer alist extra-args).
 
 Example of how this macro might be used:
-  (defalias 'display-at-bottom-and-dedicate
+  (defalias \\='display-at-bottom-and-dedicate
             (purpose-generate-display-and-dedicate
-             'purpose-display-at-bottom))
+             \\='purpose-display-at-bottom))
 Another example:
   (add-to-list purpose-special-action-sequences
-               `(terminal ,(purpose-generate-display-and-dedicate
+               \\=`(terminal ,(purpose-generate-display-and-dedicate
                             purpose-display-at-bottom 6)))"
   (declare (indent defun) (debug (function-form &rest sexp)))
   `(lambda (buffer alist)
@@ -1144,9 +1144,9 @@ The lambda returns the window used for display, or nil if display was
 unsuccessful.
 
 Possible usage:
-  (defalias 'display-at-left-and-do-stuff
+  (defalias \\='display-at-left-and-do-stuff
             (purpose-generate-display-and-do
-              'purpose-display-at-left
+              \\='purpose-display-at-left
               (lambda (window) (message \"Let's do stuff!!\"))))"
   (declare (indent defun) (debug (function-form function-form)))
   `(lambda (buffer alist)

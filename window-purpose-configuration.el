@@ -61,14 +61,15 @@
 
 (defmacro define-purpose-list-checker (name entry-pred)
   "Create a function named NAME to check the content of a list.
-The generated function receives parameter OBJ, and checks that it is a
-list and each entry in it satisifies ENTRY-PRED."
+The generated function receives parameter OBJ, and checks that it
+is a list and each entry in it satisifies ENTRY-PRED."
   (declare (indent defun) (debug (&define name function-form)))
-  `(defun ,name (obj)
-     ,(format "Check that OBJ is a list, and each entry in it satisifies %s." entry-pred)
-     (and (listp obj)
-          (cl-loop for entry in obj
-                   always (funcall ,entry-pred entry)))))
+  (let ((pred (replace-regexp-in-string "#'" "\\\\='" (format "%s" entry-pred))))
+    `(defun ,name (obj)
+       ,(format "If OBJ is a list and every entry satisifies %s." pred)
+       (and (listp obj)
+            (cl-loop for entry in obj
+                     always (funcall ,entry-pred entry))))))
 
 (defun purpose-non-nil-symbol-p (obj)
   "Check that OBJ is a symbol and not nil."
@@ -175,10 +176,10 @@ If you set this variable in elisp-code, you should call the function
   "A plist containing `purpose-conf' objects.
 An example of `purpose-extended-configuration':
  (list :python (purpose-conf
-                :mode-purposes '((python-mode . python)
+                :mode-purposes \\='((python-mode . python)
                                 (python-inferior-mode . interpreter)))
        :popups (purpose-conf
-                :mode-purposes '((help-mode . right)
+                :mode-purposes \\='((help-mode . right)
                                  (occur-mode . bottom)
                                  (grep-mode . bottom))))")
 
@@ -358,7 +359,7 @@ Example:
  (purpose-set-extension-configuration
      :python
      (purpose-conf :mode-purposes
-                   '((python-mode . python)
+                   \\='((python-mode . python)
                      (inferior-python-mode . interpreter))))
 
 This function calls `purpose-compile-extended-configuration' when its
@@ -393,7 +394,7 @@ This function calls `purpose-compile-extended-configuration'.
 
 Example:
  (purpose-add-extension-purposes :python
-                                 :regexps '((\"\\.hy$\" . python)))"
+                                 :regexps \\='((\"\\.hy$\" . python)))"
   (let ((config (purpose-get-extension-configuration ext-keyword)))
     (unless config
       (user-error "Missing extension configuration: %s" ext-keyword))
@@ -409,8 +410,8 @@ This function calls `purpose-compile-extended-configuration'.
 
 Example:
  (purpose-remove-extension-purposes :python
-                                    :modes '(inferior-python-mode)
-                                    :regexps '(\"\\.hy$\"))"
+                                    :modes \\='(inferior-python-mode)
+                                    :regexps \\='(\"\\.hy$\"))"
   (let ((config (purpose-get-extension-configuration ext-keyword)))
     (unless config
       (user-error "Missing extension configuration: %s" ext-keyword))
@@ -427,10 +428,10 @@ This function calls `purpose-compile-user-configuration' to
 update user purposes.
 
 Example:
- (purpose-add-user-purposes :modes '((org-mode . org)
+ (purpose-add-user-purposes :modes \\='((org-mode . org)
                                      (help-mode . popup))
-                            :names '((\"*scratch*\" . popup))
-                            :regexps '((\"^\\*foo\" . terminal)))"
+                            :names \\='((\"*scratch*\" . popup))
+                            :regexps \\='((\"^\\*foo\" . terminal)))"
   (setq purpose-user-mode-purposes (append modes purpose-user-mode-purposes)
         purpose-user-name-purposes (append names purpose-user-name-purposes)
         purpose-user-regexp-purposes (append regexps purpose-user-regexp-purposes))
@@ -446,9 +447,9 @@ This function calls `purpose-compile-user-configuration' to
 update user purposes.
 
 Example:
- (purpose-remove-user-purposes :modes '(org-mode help-mode)
-                               :names '(\"*scratch*\")
-                               :regexps '(\"^\\*foo\"))"
+ (purpose-remove-user-purposes :modes \\='(org-mode help-mode)
+                               :names \\='(\"*scratch*\")
+                               :regexps \\='(\"^\\*foo\"))"
   ;; let-bind before setq-ing, so we don't apply partial changes if one
   ;; of MODES, NAMES or REGEXPS is malformed
   (let ((new-modes (cl-set-difference purpose-user-mode-purposes modes

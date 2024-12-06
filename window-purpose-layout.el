@@ -66,13 +66,14 @@ This variable is used by `purpose-window-params'.  See
 
 (defcustom purpose-set-window-properties-functions nil
   "Hook to run after calling `purpose-set-window-properties'.
-Use this to set additional properties for windows as they are created,
-when `purpose-set-window-layout' or `purpose-load-window-layout-file' is called.  Each
-function in `purpose-set-window-properties-functions' is called with two
-arguments: PROPERTIES and WINDOW.  PROPERTIES is the window's property
-list as saved in the used layout, and WINDOW is the new window.  If
-WINDOW is nil, your function should act on the selected window
-instead."
+Use this to set additional properties for windows as they are
+created, when `purpose-set-window-layout' or
+`purpose-load-window-layout-file' is called.  Each function in
+`purpose-set-window-properties-functions' is called with two
+arguments: PROPERTIES and WINDOW.  PROPERTIES is the window's
+property list as saved in the used layout, and WINDOW is the new
+window.  If WINDOW is nil, your function should act on the
+selected window instead."
   :group 'purpose
   :type 'hook
   :package-version '(window-purpose . "1.2"))

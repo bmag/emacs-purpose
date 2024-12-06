@@ -393,19 +393,19 @@ Don't call this function before `popwin' is loaded."
   "Install fixes for integrating Purpose with other features.
 EXCLUDE is a list of integrations to skip.  Known members of EXCLUDE
 are:
-- 'edebug : don't integrate with edebug
-- 'compilation-next-error-function : don't integrate with
+- `edebug' : don't integrate with edebug
+- `compilation-next-error-function' : don't integrate with
   `compilation-next-error-function'.
-- 'isearch : don't integrate with isearch
-- 'next-error : don't integrate with `next-error'
-- 'lv : don't integrate with lv (hydra)
-- 'helm : don't integrate with helm
-- 'neotree : don't integrate with neotree
-- 'org : don't integrate with org
-- 'popwin : don't integrate with popwin
-- 'guide-key : don't integrate with guide-key
-- 'which-key : don't integrate with which-key
-- 'whitespace : don't integrate with whitespace"
+- `isearch' : don't integrate with isearch
+- `next-error' : don't integrate with `next-error'
+- `lv' : don't integrate with lv (hydra)
+- `helm' : don't integrate with helm
+- `neotree' : don't integrate with neotree
+- `org' : don't integrate with org
+- `popwin' : don't integrate with popwin
+- `guide-key' : don't integrate with guide-key
+- `which-key' : don't integrate with which-key
+- `whitespace' : don't integrate with whitespace"
   (interactive)
   (unless (member 'edebug exclude)
     (purpose--fix-edebug))

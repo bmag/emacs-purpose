@@ -56,7 +56,7 @@
 
 (defun purpose--dummy-buffer-name (purpose)
   "Create the name for a dummy buffer with purpose PURPOSE.
-The name created is \"*pu-dummy-PURPOSE-*\".  e.g. for purpose 'edit,
+The name created is \"*pu-dummy-PURPOSE-*\".  e.g. for purpose `edit',
 the name is \"*pu-dummy-edit-*\"."
   (concat "*pu-dummy-" (symbol-name purpose) "*"))
 
@@ -64,7 +64,7 @@ the name is \"*pu-dummy-edit-*\"."
   "Get buffer's purpose for dummy buffers.
 A dummy buffer is a buffer with a name that starts with \"*pu-dummy-\"
 and ends with \"*\".  For example, the buffer \"*pu-dummy-edit*\" is a
-dummy buffer with the purpose 'edit."
+dummy buffer with the purpose `edit'."
   (let ((name (if (stringp buffer-or-name)
                   buffer-or-name
                 (buffer-name buffer-or-name))))
@@ -240,14 +240,14 @@ purpose PURPOSE."
 
 ;;; window purpose dedication
 (defun purpose-set-window-purpose-dedicated-p (window flag)
-  "Set window parameter 'purpose-dedicated of window WINDOW to value
+  "Set window parameter `purpose-dedicated' of window WINDOW to value
 FLAG.
 WINDOW defaults to the selected window."
   (set-window-parameter window 'purpose-dedicated flag))
 
 (defun purpose-window-purpose-dedicated-p (&optional window)
   "Return non-nil if window WINDOW is dedicated to its purpose.
-The result is determined by window parameter 'purpose-dedicated.
+The result is determined by window parameter `purpose-dedicated'.
 WINDOW defaults to the selected window."
   (window-parameter window 'purpose-dedicated))
 
