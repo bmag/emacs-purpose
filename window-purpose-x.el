@@ -418,7 +418,6 @@ The configuration is updated according to
   (interactive)
   (cl-flet ((joiner (x) (cons x 'popup)))
     (let ((conf (purpose-conf
-                 "popwin"
                  :mode-purposes (mapcar #'joiner purpose-x-popwin-major-modes)
                  :name-purposes (mapcar #'joiner purpose-x-popwin-buffer-names)
                  :regexp-purposes (mapcar #'joiner
