@@ -275,13 +275,13 @@ Fill `purpose--extended-mode-purposes',
   ;; populate compiled purposes
   (mapc #'(lambda (extension-config)
             (purpose--fill-hash purpose--extended-mode-purposes
-                                (slot-value extension-config :mode-purposes)
+                                (slot-value extension-config 'mode-purposes)
                                 t)
             (purpose--fill-hash purpose--extended-name-purposes
-                                (slot-value extension-config :name-purposes)
+                                (slot-value extension-config 'name-purposes)
                                 t)
             (purpose--fill-hash purpose--extended-regexp-purposes
-                                (slot-value extension-config :regexp-purposes)
+                                (slot-value extension-config 'regexp-purposes)
                                 t))
         (delq nil (purpose-plist-values purpose-extended-configuration))))
 
@@ -322,12 +322,12 @@ Fill `purpose--extended-mode-purposes',
   "Add purposes to a `purpose-conf' object.
 MODES, NAMES and REGEXPS must be valid configuration alists as described in
 `purpose-mode-alist-p', `purpose-name-alist-p' and `purpose-regexp-alist-p'."
-  (setf (slot-value config :mode-purposes)
-        (append modes (slot-value config :mode-purposes)))
-  (setf (slot-value config :name-purposes)
-        (append names (slot-value config :name-purposes)))
-  (setf (slot-value config :regexp-purposes)
-        (append regexps (slot-value config :regexp-purposes))))
+  (setf (slot-value config 'mode-purposes)
+        (append modes (slot-value config 'mode-purposes)))
+  (setf (slot-value config 'name-purposes)
+        (append names (slot-value config 'name-purposes)))
+  (setf (slot-value config 'regexp-purposes)
+        (append regexps (slot-value config 'regexp-purposes))))
 
 (cl-defmethod purpose-conf-remove-purposes ((config purpose-conf) modes names regexps)
   "Remove purposes from a `purpose-conf' object.
@@ -336,18 +336,18 @@ NAMES must be a list names.
 REGEXPS must be a list regexps."
   ;; let-bind before setq-ing, so we don't apply partial changes if one
   ;; of MODES, NAMES or REGEXPS is malformed
-  (let ((new-modes (cl-set-difference (slot-value config :mode-purposes) modes
+  (let ((new-modes (cl-set-difference (slot-value config 'mode-purposes) modes
                                       :test (lambda (entry mode)
                                               (eql (car entry) mode))))
-        (new-names (cl-set-difference (slot-value config :name-purposes) names
+        (new-names (cl-set-difference (slot-value config 'name-purposes) names
                                       :test (lambda (entry name)
                                               (string= (car entry) name))))
-        (new-regexps (cl-set-difference (slot-value config :regexp-purposes) regexps
+        (new-regexps (cl-set-difference (slot-value config 'regexp-purposes) regexps
                                         :test (lambda (entry regexp)
                                                 (string= (car entry) regexp)))))
-    (setf (slot-value config :mode-purposes) new-modes)
-    (setf (slot-value config :name-purposes) new-names)
-    (setf (slot-value config :regexp-purposes) new-regexps)))
+    (setf (slot-value config 'mode-purposes) new-modes)
+    (setf (slot-value config 'name-purposes) new-names)
+    (setf (slot-value config 'regexp-purposes) new-regexps)))
 
 ;;;###autoload
 (defun purpose-set-extension-configuration (ext-keyword config)
