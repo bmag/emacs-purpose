@@ -80,7 +80,7 @@ mode and MODE-CONF.
 MODE-CONF is a hash table mapping modes to purposes."
   (when (get-buffer buffer-or-name)     ; check if buffer exists
     (let* ((major-mode (purpose--buffer-major-mode buffer-or-name))
-           (derived-modes (purpose--iter-hash #'(lambda (mode conf) mode)
+           (derived-modes (purpose--iter-hash (lambda (mode &optional _) mode)
                                               mode-conf))
            (derived-mode (apply #'derived-mode-p derived-modes)))
       (when derived-mode
