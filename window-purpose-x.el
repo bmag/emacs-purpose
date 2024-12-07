@@ -189,6 +189,8 @@ imenu."
 ;;; - `purpose-x-magit-multi-on'
 ;;; - `purpose-x-magit-off'
 
+(defvar magit-display-buffer-function)
+
 (defvar purpose-x-magit-single-conf
   ;; using `magit' as a condition in `purpose-special-action-sequences' is
   ;; interpreted as a predicate function (for buffer's without a `magit'
@@ -202,12 +204,11 @@ imenu."
    :mode-purposes '((magit-diff-mode . magit-diff)
                     (magit-status-mode . magit-status)
                     (magit-log-mode . magit-log)
-                    (magit-commit-mode . magit-commit)
+                    (git-commit-mode . magit-commit)
                     (magit-cherry-mode . magit-cherry)
-                    (magit-branch-manager-mode . magit-branch-manager)
+                    (magit-refs-mode . magit-refs)
                     (magit-process-mode . magit-process)
-                    (magit-reflog-mode . magit-reflog)
-                    (magit-wazzup-mode . magit-wazzup)))
+                    (magit-reflog-mode . magit-reflog)))
   "Configuration that gives each magit major mode its own purpose.")
 
 (defvar purpose-x-old-magit-display-buffer-function nil
@@ -267,6 +268,8 @@ invoked.")
 ;;; Make `purpose-mode' and `golden-ratio-mode' work together properly.
 ;;; Basically, this adds a hook to `purpose-select-buffer-hook' so
 ;;; `golden-ratio' is called when a buffer is selected via Purpose.
+(defvar golden-ratio-mode)
+(declare-function golden-ratio "ext:golden-ratio")
 
 (defun purpose-x-sync-golden-ratio ()
   "Add/remove `golden-ratio' to `purpose-select-buffer-hook'.
@@ -299,6 +302,8 @@ Add `golden-ratio' at the end of `purpose-select-buffer-hook' if
 ;;; A command for combinining `popup-switcher' with
 ;;; `purpose-switch-buffer-with-purpose'.
 ;;; This requires package `popup-switcher'
+
+(declare-function psw-switcher "ext:popup-switcher")
 
 (when (require 'popup-switcher nil t)
   (defun purpose-x-psw-switch-buffer-with-purpose ()
@@ -428,10 +433,10 @@ The configuration is updated according to
   "Return function for creating new popup windows.
 The function is determined by the value of `purpose-x-popwin-position'."
   (or (cl-case purpose-x-popwin-position
-        ('top 'purpose-display-at-top)
-        ('bottom 'purpose-display-at-bottom)
-        ('left 'purpose-display-at-left)
-        ('right 'purpose-display-at-right))
+        (top 'purpose-display-at-top)
+        (bottom 'purpose-display-at-bottom)
+        (left 'purpose-display-at-left)
+        (right 'purpose-display-at-right))
       (and (functionp purpose-x-popwin-position)
            purpose-x-popwin-position)
       (user-error "purpose-x-popwin-position has an invalid value: %S"
@@ -559,6 +564,11 @@ Look at `purpose-x-popwin-*' variables and functions to learn more."
 ;;; purpose and perspective as the current buffer
 ;;; (`purpose-x-persp-switch-buffer', `*-other-windw', `*-other-frame').
 
+(defvar persp-mode)
+(declare-function persp-buffers "ext:persp-mode")
+(declare-function persp-name "ext:persp-mode")
+(declare-function get-current-persp "ext:persp-mode")
+
 (defvar purpose-x-persp-confs (make-hash-table :test 'equal)
   "Hash table holding perspectives' purpose configurations.
 The table maps a perspective's name to its purpose configuration.  A
@@ -570,7 +580,7 @@ To add/remove entries, use:
 
 (defun purpose-x-persp-activate ()
   "Activate current perspective's purpose configuration."
-  (let ((conf (gethash (persp-name (persp-curr)) purpose-x-persp-confs)))
+  (let ((conf (gethash (persp-name (get-current-persp)) purpose-x-persp-confs)))
     (if conf
         (purpose-set-extension-configuration :perspective conf)
       (purpose-x-persp-remove))))
@@ -612,7 +622,7 @@ purpose configurations."
 (defun purpose-x-persp-get-buffer-names ()
   "Get names of all buffers with same purpose and perspective as current buffer.
 The returned list doesn't contain the current buffer."
-  (let ((persp-buffers (persp-buffers (persp-curr))))
+  (let ((persp-buffers (persp-buffers (get-current-persp))))
     (mapcar #'buffer-name
             (cl-delete-if-not (lambda (buffer) (member buffer persp-buffers))
                               (delete (current-buffer)

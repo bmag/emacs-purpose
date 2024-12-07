@@ -60,42 +60,40 @@ SYMBOL WHERE and FUNCTION have the same meaning as `advice-add'."
                                        symbol-name))))
     `(progn
        (purpose-fix-toggle-advice ,symbol ,where ,function)
-       (unless (fboundp #',toggler-name)
+       (unless (fboundp ',toggler-name)
          (defun ,toggler-name ()
            (purpose-fix-toggle-advice ,symbol ,where ,function)))
-       (add-hook 'purpose-fix-togglers-hook #',toggler-name))))
+       (add-hook 'purpose-fix-togglers-hook ',toggler-name))))
 
 (defun purpose--fix-edebug ()
   "Integrates Edebug with Purpose."
 
-  (with-eval-after-load 'edebug
-    (defun purpose--edebug-pop-to-buffer-advice (buffer &optional window)
-      "Reimplements `edebug-pop-to-buffer' using `pop-to-buffer'
+  (defun purpose--edebug-pop-to-buffer-advice (buffer &optional window)
+    "Reimplements `edebug-pop-to-buffer' using `pop-to-buffer'
 
 Since `edebug-pop-to-buffer' simply splits the last selected
 window before the minibuffer was popped up, the window it picks
 to display a edebug buffer does not respect `window-purpose' as
 all.  This advice reimplements it by replacing the window
 spliting logic with `pop-to-buffer'."
-      (setq window
-            (cond
-             ((and (edebug-window-live-p window)
-                   (eq (window-buffer window) buffer))
-              window)
-             ((eq (window-buffer) buffer)
-              (selected-window))
-             ((get-buffer-window buffer 0))
-             (t (get-buffer-window (pop-to-buffer buffer)))))
-      (set-window-buffer window buffer)
-      (select-window window)
-      (unless (memq (framep (selected-frame)) '(nil t pc))
-        (x-focus-frame (selected-frame)))
-      (set-window-hscroll window 0))
+    (setq window
+          (cond ((and (window-live-p window)
+                      (eq (window-buffer window) buffer))
+                 window)
+                ((eq (window-buffer) buffer)
+                 (selected-window))
+                ((get-buffer-window buffer 0))
+                (t (get-buffer-window (pop-to-buffer buffer)))))
+    (set-window-buffer window buffer)
+    (select-window window)
+    (unless (memq (framep (selected-frame)) '(nil t pc))
+      (x-focus-frame (selected-frame)))
+    (set-window-hscroll window 0))
 
-    (purpose-fix-install-advice-toggler
-     #'edebug-pop-to-buffer
-     :override
-     #'purpose--edebug-pop-to-buffer-advice)))
+  (purpose-fix-install-advice-toggler
+   'edebug-pop-to-buffer
+   :override
+   'purpose--edebug-pop-to-buffer-advice))
 
 ;;; `compilation-next-error-function' sometimes hides the compilation buffer
 ;;; when Purpose is on. Solution: make the buffer's window dedicated while
@@ -104,34 +102,32 @@ spliting logic with `pop-to-buffer'."
 (defun purpose--fix-compilation-next-error-function ()
   "Integrate Purpose and `compilation-next-error-function'."
 
-  (with-eval-after-load 'compile
-    (defun purpose--compilation-next-error-function (oldfun &rest args)
-      "Prevents `compilation-next-error-function'from hiding the compilation buffer.
+  (defun purpose--compilation-next-error-function (oldfun &rest args)
+    "Prevents `compilation-next-error-function'from hiding the compilation buffer.
 
 This is done by ensuring that the buffer is dedicated for the
 duration of the function."
 
-      (let* ((compilation-window (get-buffer-window (marker-buffer (point-marker))))
-             (old-window-dedicated-p (window-dedicated-p compilation-window)))
-        (if (not compilation-window)
+    (let* ((compilation-window (get-buffer-window (marker-buffer (point-marker))))
+           (old-window-dedicated-p (window-dedicated-p compilation-window)))
+      (if (not compilation-window)
+          (apply oldfun args)
+        (set-window-dedicated-p compilation-window t)
+        (unwind-protect
             (apply oldfun args)
-          (set-window-dedicated-p compilation-window t)
-          (unwind-protect
-              (apply oldfun args)
-            (set-window-dedicated-p compilation-window old-window-dedicated-p)))))
+          (set-window-dedicated-p compilation-window old-window-dedicated-p)))))
 
-    (purpose-fix-install-advice-toggler
-     #'compilation-next-error-function
-     :around
-     #'purpose--compilation-next-error-function)))
+  (purpose-fix-install-advice-toggler
+   'compilation-next-error-function
+   :around
+   'purpose--compilation-next-error-function))
 
 
 (defun purpose--fix-isearch ()
   "Set `isearch--display-help-action'.
 
 Prevents `isearch-describe-*' commands from bypassing purpose."
-  (with-eval-after-load 'isearch
-    (setq isearch--display-help-action '(purpose--action-function . nil))))
+  (setq isearch--display-help-action '(purpose--action-function . nil)))
 
 
 (defun purpose--fix-next-error ()
@@ -149,14 +145,13 @@ window-purpose."
     (let ((display-buffer-overriding-action '(purpose--action-function . nil)))
       (apply oldfun args)))
 
-  (purpose-fix-install-advice-toggler #'next-error :around #'purpose--next-error))
+  (purpose-fix-install-advice-toggler 'next-error :around 'purpose--next-error))
 
 
 ;;; Hydra's *LV* buffer should be ignored by Purpose
 (defun purpose--fix-hydra-lv ()
   "Add hydra's LV buffer to Purpose's ignore list."
-  (with-eval-after-load 'lv
-    (add-to-list 'purpose-action-function-ignore-buffer-names "^ \\*LV\\*$")))
+  (add-to-list 'purpose-action-function-ignore-buffer-names "^ \\*LV\\*$"))
 
 
 
@@ -169,12 +164,9 @@ window-purpose."
   "Fix issues with helm.
 Add helm's buffers to Purposes's ignore list.
 Install helm's purpose configuration."
-  (with-eval-after-load 'helm
-    (add-to-list 'purpose-action-function-ignore-buffer-names "^\\*Helm"))
-  (with-eval-after-load 'helm
-    (add-to-list 'purpose-action-function-ignore-buffer-names "^\\*helm"))
-  (with-eval-after-load 'helm
-    (purpose-set-extension-configuration :helm purpose--helm-conf)))
+  (add-to-list 'purpose-action-function-ignore-buffer-names "^\\*Helm")
+  (add-to-list 'purpose-action-function-ignore-buffer-names "^\\*helm")
+  (purpose-set-extension-configuration :helm purpose--helm-conf))
 
 
 
@@ -190,6 +182,13 @@ Install helm's purpose configuration."
 ;;;   then call `neotree'. from neotree window, open an 'edit' buffer in a new
 ;;;   split (press '-' or '|'). 'general' window is split in two, the new 'edit'
 ;;;   buffer is displayed in the 'edit' window instead of the old 'edit' buffer
+
+(defvar neo-window-position)
+(defvar neo-buffer-name)
+(declare-function neo-global--get-buffer "ext:neotree")
+(declare-function neo-window--init "ext:neotree")
+(declare-function neo-global--attach "ext:neotree")
+(declare-function neo-global--reset-width "ext:neotree")
 
 (defun purpose--fix-create-neo-window ()
   "Create neotree window, with Purpose."
@@ -239,13 +238,13 @@ When `purpose--active-p' is nil, call original `neo-global--create-window'."
                          purpose--fix-display-neotree))
 
   (purpose-fix-install-advice-toggler
-   #'neo-global--create-window
+   'neo-global--create-window
    :around
-   #'purpose-fix-neotree-create-window-advice)
+   'purpose-fix-neotree-create-window-advice)
   (purpose-fix-install-advice-toggler
-   #'neo-open-file
+   'neo-open-file
    :around
-   #'purpose-fix-neotree-open-file-advice))
+   'purpose-fix-neotree-open-file-advice))
 
 (defun purpose--fix-neotree ()
   "Call `purpose--fix-neotree-1' after `neotree' is loaded."
@@ -273,22 +272,21 @@ Don't call this function before `org' is loaded."
     (without-purpose (apply oldfun args)))
 
   (purpose-fix-install-advice-toggler
-   #'org-switch-to-buffer-other-window
+   'org-switch-to-buffer-other-window
    :around
-   #'purpose--fix-org-switch-to-buffer-other-window)
+   'purpose--fix-org-switch-to-buffer-other-window)
   (purpose-fix-install-advice-toggler
-   #'org-get-location
+   'org-get-location
    :around
-   #'purpose--fix-org-get-location)
+   'purpose--fix-org-get-location)
   (purpose-fix-install-advice-toggler
-   #'org-goto-location
+   'org-goto-location
    :around
-   #'purpose--fix-org-goto-location))
+   'purpose--fix-org-goto-location))
 
 (defun purpose--fix-org-no-popups ()
   "Call `purpose--fix-org-no-popups-1' after `org' is loaded."
-  (with-eval-after-load 'org
-    (purpose--fix-org-no-popups-1)))
+  (purpose--fix-org-no-popups-1))
 
 
 
@@ -302,16 +300,15 @@ Don't call this function before `popwin' is loaded."
     (without-purpose (apply oldfun args)))
 
   (purpose-fix-install-advice-toggler
-   #'popwin:replicate-window-config
+   'popwin:replicate-window-config
    :around
-   #'purpose--fix-popwin-replicate))
+   'purpose--fix-popwin-replicate))
 
 (defun purpose--fix-popwin ()
   "Call `purpose--fix-popwin-1' after `popwin' is loaded."
-  (with-eval-after-load 'popwin
-    (purpose--fix-popwin-1)))
+  (purpose--fix-popwin-1))
 
-
+(defvar guide-key/guide-buffer-name)
 
 ;;; Use a seperate purpose for guide-key window (not 'general)
 (defun purpose--fix-guide-key ()
@@ -322,7 +319,7 @@ Don't call this function before `popwin' is loaded."
      (purpose-conf
       :name-purposes `((,guide-key/guide-buffer-name . guide-key))))))
 
-
+(defvar which-key-buffer-name)
 
 ;;; Use a seperate purpose for which-key window (not 'general), don't interfere
 ;;; with how which-key opens a window/frame
@@ -338,53 +335,29 @@ Don't call this function before `popwin' is loaded."
 
 
 
-;;; Let magit-popup use its own way of opening a help window (see https://github.com/syl20bnr/spacemacs/issues/9570)
-(defun purpose--fix-magit-popup ()
-  "Let magit-popup display help windows the way it wants."
-  (with-eval-after-load 'magit-popup
-    (defun purpose--fix-magit-popup-help (oldfun &rest args)
-      "Make Purpose inactive during `magit-popup-describe-function'."
-      (without-purpose (apply oldfun args)))
-    (defun purpose--fix-magit-popup-help (oldfun &rest args)
-      "Make Purpose inactive during `magit-popup-manpage'."
-      (without-purpose (apply oldfun args)))
-
-    (purpose-fix-install-advice-toggler
-     #'magit-popup-describe-function
-     :around
-     #'purpose--fix-magit-popup-help)
-    (purpose-fix-install-advice-toggler
-     #'magit-popup-manpage
-     :around
-     #'purpose--fix-magit-popup-help)))
-
-
-
 ;;; Zone buffers should always open in the same window
 (defun purpose--fix-zone ()
   "Zone buffers should always open in the same window."
-  (with-eval-after-load 'zone
-    (purpose-set-extension-configuration
-     :zone
-     (purpose-conf :name-purposes '(("*zone*" . Zone))))
-    (add-to-list 'purpose-special-action-sequences
-                 '(Zone display-buffer-same-window))))
+  (purpose-set-extension-configuration
+   :zone
+   (purpose-conf :name-purposes '(("*zone*" . Zone))))
+  (add-to-list 'purpose-special-action-sequences
+               '(Zone display-buffer-same-window)))
 
 
 (defun purpose--fix-whitespace ()
   "Integrate `window-purpose' with `whitespace'."
-  (with-eval-after-load 'whitespace
-    (defun purpose--whitespace-display-window-advice (buffer)
-      "Stops `whitespace-display-window' from splitting and shrinking windows."
-      (with-current-buffer buffer
-        (special-mode)
-        (goto-char (point-min)))
-      (switch-to-buffer buffer))
+  (defun purpose--whitespace-display-window-advice (buffer)
+    "Stops `whitespace-display-window' from splitting and shrinking windows."
+    (with-current-buffer buffer
+      (special-mode)
+      (goto-char (point-min)))
+    (switch-to-buffer buffer))
 
-    (purpose-fix-install-advice-toggler
-     #'whitespace-display-window
-     :override
-     #'purpose--whitespace-display-window-advice)))
+  (purpose-fix-install-advice-toggler
+   'whitespace-display-window
+   :override
+   'purpose--whitespace-display-window-advice))
 
 
 ;;; install fixes
@@ -405,6 +378,7 @@ are:
 - `popwin' : don't integrate with popwin
 - `guide-key' : don't integrate with guide-key
 - `which-key' : don't integrate with which-key
+- `zone' : don't integrate with zone
 - `whitespace' : don't integrate with whitespace"
   (interactive)
   (unless (member 'edebug exclude)
@@ -429,8 +403,6 @@ are:
     (purpose--fix-guide-key))
   (unless (member 'which-key exclude)
     (purpose--fix-which-key))
-  (unless (member 'magit-popup exclude)
-    (purpose--fix-magit-popup))
   (unless (member 'zone exclude)
     (purpose--fix-zone))
   (unless (member 'whitespace exclude)

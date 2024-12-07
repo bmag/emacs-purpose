@@ -292,6 +292,7 @@ This function is called when `purpose-mode' is deactivated."
 ;;;###autoload
 (define-minor-mode purpose-mode nil
   :global t :lighter (:eval (purpose--modeline-string))
+  :group 'purpose
   (if purpose-mode
       (progn
         (purpose--add-advices)
