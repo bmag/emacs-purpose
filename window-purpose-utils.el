@@ -100,15 +100,6 @@ Example:
 
 
 
-(defun purpose--iter-hash (function table)
-  "Like `maphash', but return a list the results of calling FUNCTION
-for each entry in hash-table TABLE."
-  (let (results)
-    (maphash (lambda (key value)
-               (push (funcall function key value) results))
-             table)
-    results))
-
 ;; taken from http://emacs.stackexchange.com/a/7405/6533, credit to Jordon Biondo
 (defun purpose--call-stack ()
   "Return the current call stack frames."
