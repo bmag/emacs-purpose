@@ -259,8 +259,8 @@ terminal if it's non-nil."
              (visible-frame-list))
             ((eql reusable-frames 0)
              (cl-remove-if-not
-              #'(lambda (frame)
-                  (eql (frame-terminal frame) (frame-terminal)))
+              (lambda (frame)
+                (eql (frame-terminal frame) (frame-terminal)))
               (purpose--frame-list)))
             ((eql reusable-frames t)
              (purpose--frame-list))
@@ -301,8 +301,8 @@ that frame."
            (windows (purpose-flatten (mapcar #'window-list frames)))
            window)
       (setq windows (cl-delete-if-not
-                     #'(lambda (window)
-                         (purpose-window-buffer-reusable-p window buffer))
+                     (lambda (window)
+                       (purpose-window-buffer-reusable-p window buffer))
                      windows))
       (when .inhibit-same-window
         (setq windows (delq (selected-window) windows)))
@@ -341,8 +341,8 @@ that a window on another frame is chosen, avoid raising that frame."
            (purpose (or purpose (purpose-buffer-purpose buffer)))
            window)
       (setq windows (cl-delete-if-not
-                     #'(lambda (window)
-                         (purpose-window-purpose-reusable-p window purpose))
+                     (lambda (window)
+                       (purpose-window-purpose-reusable-p window purpose))
                      windows))
       (when .inhibit-same-window
         (setq windows (delq (selected-window) windows)))
@@ -378,8 +378,8 @@ that frame."
          (windows (purpose-flatten (mapcar #'window-list frames)))
          window)
     (setq windows (cl-delete-if-not
-                   #'(lambda (window)
-                       (purpose-window-buffer-reusable-p window buffer))
+                   (lambda (window)
+                     (purpose-window-buffer-reusable-p window buffer))
                    windows))
     (setq window (car windows))
     (when window
@@ -418,8 +418,8 @@ that a window on another frame is chosen, avoid raising that frame."
          (purpose (or purpose (purpose-buffer-purpose buffer)))
          window)
     (setq windows (cl-delete-if-not
-                   #'(lambda (window)
-                       (purpose-window-purpose-reusable-p window purpose))
+                   (lambda (window)
+                     (purpose-window-purpose-reusable-p window purpose))
                    windows))
     (setq window (car windows))
     (when window
@@ -459,13 +459,13 @@ Possible windows to use match these requirements:
 
 FRAME defaults to the selected frame."
   (cl-remove-if-not
-   #'(lambda (window)
-       (and (or (not (window-dedicated-p window))
-                (eql (window-buffer window) buffer))
-            (or (not (purpose-window-purpose-dedicated-p window))
-                (eql (purpose-window-purpose window)
-                     (purpose-buffer-purpose buffer)))
-            (not (window-minibuffer-p window))))
+   (lambda (window)
+     (and (or (not (window-dedicated-p window))
+              (eql (window-buffer window) buffer))
+          (or (not (purpose-window-purpose-dedicated-p window))
+              (eql (purpose-window-purpose window)
+                   (purpose-buffer-purpose buffer)))
+          (not (window-minibuffer-p window))))
    (window-list frame)))
 
 (defun purpose-display-maybe-other-window (buffer alist)
@@ -496,7 +496,7 @@ This function doesn't raise the new frame."
   (let-alist alist
     (let* ((windows (purpose-flatten
                      (mapcar
-                      #'(lambda (frame)
+                      (lambda (frame)
                           (purpose-display--frame-usable-windows frame buffer))
                       (remove (selected-frame) (purpose--frame-list)))))
            (window (car windows)))
@@ -658,7 +658,7 @@ the new window is specified by `purpose-display-at-top-height'.  If
 have the default height."
   (purpose-display--at
    #'purpose-get-top-window
-   #'(lambda ()
+   (lambda ()
        (let* ((height (purpose--normalize-height
                        (or height
                            purpose-display-at-top-height)))
@@ -681,7 +681,7 @@ If `purpose-display-at-bottom-height' is also nil, then the new window
 will have the default height."
   (purpose-display--at
    #'purpose-get-bottom-window
-   #'(lambda ()
+   (lambda ()
        (let* ((height (purpose--normalize-height
                        (or height
                            purpose-display-at-bottom-height)))
@@ -703,7 +703,7 @@ new window is specified by `purpose-display-at-left-width'.  If
 have the default width."
   (purpose-display--at
    #'purpose-get-left-window
-   #'(lambda ()
+   (lambda ()
        (let* ((width (purpose--normalize-width
                       (or width
                           purpose-display-at-left-width)))
@@ -725,7 +725,7 @@ the new window is specified by `purpose-display-at-right-width'.  If
 have the default width."
   (purpose-display--at
    #'purpose-get-right-window
-   #'(lambda ()
+   (lambda ()
        (let* ((width (purpose--normalize-width
                       (or width
                           purpose-display-at-right-width)))

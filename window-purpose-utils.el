@@ -65,8 +65,8 @@ This doesn't change the original alist, but returns a modified copy."
 This doesn't change the original alist, but returns a modified copy."
   ;; we could use any value instead of 0, as long as we used it instead
   ;; of 0 in both places
-  (cl-remove-if #'(lambda (entry)
-                    (eq key (car entry)))
+  (cl-remove-if (lambda (entry)
+                  (eq key (car entry)))
                 alist))
 
 (defun purpose-flatten (seq)
@@ -104,8 +104,8 @@ Example:
   "Like `maphash', but return a list the results of calling FUNCTION
 for each entry in hash-table TABLE."
   (let (results)
-    (maphash #'(lambda (key value)
-                 (push (funcall function key value) results))
+    (maphash (lambda (key value)
+               (push (funcall function key value) results))
              table)
     results))
 

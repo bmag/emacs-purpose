@@ -87,8 +87,8 @@ All windows are purpose-dedicated.")
 (defun purpose-x-code1--setup-ibuffer ()
   "Set up ibuffer settings."
   (add-hook 'ibuffer-mode-hook
-            #'(lambda ()
-                (ibuffer-filter-by-purpose-x-code1-ibuffer-files-only nil)))
+            (lambda ()
+              (ibuffer-filter-by-purpose-x-code1-ibuffer-files-only nil)))
   (add-hook 'ibuffer-mode-hook #'ibuffer-auto-mode)
   (setq ibuffer-formats '((mark " " name)))
   (setq ibuffer-display-summary nil)
@@ -103,8 +103,8 @@ All windows are purpose-dedicated.")
 (defun purpose-x-code1--unset-ibuffer ()
   "Unset ibuffer settings."
   (remove-hook 'ibuffer-mode-hook
-               #'(lambda ()
-                   (ibuffer-filter-by-purpose-x-code1-ibuffer-files-only nil)))
+               (lambda ()
+                 (ibuffer-filter-by-purpose-x-code1-ibuffer-files-only nil)))
   (remove-hook 'ibuffer-mode-hook #'ibuffer-auto-mode)
   (setq ibuffer-formats '((mark modified read-only " "
                                 (name 18 18 :left :elide)
@@ -362,9 +362,9 @@ When changing the value of this variable in elisp code, you should call
 `purpose-x-popwin-update-conf' for the change to take effect."
   :group 'purpose
   :type '(repeat symbol)
-  :set #'(lambda (symbol value)
-           (prog1 (set-default symbol value)
-             (purpose-x-popwin-update-conf)))
+  :set (lambda (symbol value)
+         (prog1 (set-default symbol value)
+           (purpose-x-popwin-update-conf)))
   :initialize 'custom-initialize-default
   :package-version '(window-purpose . "1.4"))
 
@@ -376,9 +376,9 @@ When changing the value of this variable in elisp code, you should call
 `purpose-x-popwin-update-conf' for the change to take effect."
   :group 'purpose
   :type '(repeat string)
-  :set #'(lambda (symbol value)
-           (prog1 (set-default symbol value)
-             (purpose-x-popwin-update-conf)))
+  :set (lambda (symbol value)
+         (prog1 (set-default symbol value)
+           (purpose-x-popwin-update-conf)))
   :initialize 'custom-initialize-default
   :package-version '(window-purpose . "1.4"))
 
@@ -390,9 +390,9 @@ When changing the value of this variable in elisp code, you should call
 `purpose-x-popwin-update-conf' for the change to take effect."
   :group 'purpose
   :type '(repeat string)
-  :set #'(lambda (symbol value)
-           (prog1 (set-default symbol value)
-             (purpose-x-popwin-update-conf)))
+  :set (lambda (symbol value)
+         (prog1 (set-default symbol value)
+           (purpose-x-popwin-update-conf)))
   :initialize 'custom-initialize-default
   :package-version '(window-purpose . "1.4"))
 

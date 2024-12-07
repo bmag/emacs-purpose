@@ -109,11 +109,11 @@ regexps matched by its name.
 REGEXP-CONF is a hash table mapping name regexps to purposes."
   (catch 'found
     (maphash
-     #'(lambda (regexp purpose)
-         (when (purpose--buffer-purpose-name-regexp-1 buffer-or-name
-                                                      regexp
-                                                      purpose)
-           (throw 'found purpose)))
+     (lambda (regexp purpose)
+       (when (purpose--buffer-purpose-name-regexp-1 buffer-or-name
+                                                    regexp
+                                                    purpose)
+         (throw 'found purpose)))
      regexp-conf)))
 
 (defun purpose-buffer-purpose (buffer-or-name)
@@ -169,9 +169,9 @@ If no purpose was determined, return `default-purpose'."
 
 (defun purpose-buffers-with-purpose (purpose)
   "Return a list of all existing buffers with purpose PURPOSE."
-  (cl-delete-if-not #'(lambda (buffer)
-                        (and (eql purpose (purpose-buffer-purpose buffer))
-                             (not (minibufferp buffer))))
+  (cl-delete-if-not (lambda (buffer)
+                      (and (eql purpose (purpose-buffer-purpose buffer))
+                           (not (minibufferp buffer))))
                     (buffer-list)))
 
 (defun purpose-window-purpose (&optional window)
@@ -183,8 +183,8 @@ WINDOW defaults to the selected window."
 (defun purpose-windows-with-purpose (purpose &optional frame)
   "Return a list of all live windows with purpose PURPOSE in FRAME.
 FRAME defaults to the selected frame."
-  (cl-remove-if-not #'(lambda (window)
-                        (eql purpose (purpose-window-purpose window)))
+  (cl-remove-if-not (lambda (window)
+                      (eql purpose (purpose-window-purpose window)))
                     (window-list frame)))
 
 (defun purpose-get-all-purposes ()
@@ -285,12 +285,12 @@ WINDOW defaults to the selected window."
 The top window is a window that takes up all the of the frame's width
 and has no window above it.  If there is no top window, return nil."
   (let (top-window)
-    (walk-window-tree #'(lambda (window)
-                          (unless (or (window-in-direction 'left window)
-                                      (window-in-direction 'right window)
-                                      (window-in-direction 'above window)
-                                      (not (window-in-direction 'below window)))
-                            (setq top-window window)))
+    (walk-window-tree (lambda (window)
+                        (unless (or (window-in-direction 'left window)
+                                    (window-in-direction 'right window)
+                                    (window-in-direction 'above window)
+                                    (not (window-in-direction 'below window)))
+                          (setq top-window window)))
                       frame)
     top-window))
 
@@ -299,12 +299,12 @@ and has no window above it.  If there is no top window, return nil."
 The bottom window is a window that takes up all the of the frame's width
 and has no window below it.  If there is no bottom window, return nil."
   (let (bottom-window)
-    (walk-window-tree #'(lambda (window)
-                          (unless (or (window-in-direction 'left window)
-                                      (window-in-direction 'right window)
-                                      (window-in-direction 'below window)
-                                      (not (window-in-direction 'above window)))
-                            (setq bottom-window window)))
+    (walk-window-tree (lambda (window)
+                        (unless (or (window-in-direction 'left window)
+                                    (window-in-direction 'right window)
+                                    (window-in-direction 'below window)
+                                    (not (window-in-direction 'above window)))
+                          (setq bottom-window window)))
                       frame)
     bottom-window))
 
@@ -314,12 +314,12 @@ The left window is a window that takes up all the of the frame's
 height and has no window to its left.  If there is no left window,
 return nil."
   (let (left-window)
-    (walk-window-tree #'(lambda (window)
-                          (unless (or (window-in-direction 'above window)
-                                      (window-in-direction 'below window)
-                                      (window-in-direction 'left window)
-                                      (not (window-in-direction 'right window)))
-                            (setq left-window window)))
+    (walk-window-tree (lambda (window)
+                        (unless (or (window-in-direction 'above window)
+                                    (window-in-direction 'below window)
+                                    (window-in-direction 'left window)
+                                    (not (window-in-direction 'right window)))
+                          (setq left-window window)))
                       frame)
     left-window))
 
@@ -329,12 +329,12 @@ The right window is a window that takes up all the of the frame's
 height and has no window to its right.  If there is no right window,
 return nil."
   (let (right-window)
-    (walk-window-tree #'(lambda (window)
-                          (unless (or (window-in-direction 'above window)
-                                      (window-in-direction 'below window)
-                                      (window-in-direction 'right window)
-                                      (not (window-in-direction 'left window)))
-                            (setq right-window window)))
+    (walk-window-tree (lambda (window)
+                        (unless (or (window-in-direction 'above window)
+                                    (window-in-direction 'below window)
+                                    (window-in-direction 'right window)
+                                    (not (window-in-direction 'left window)))
+                          (setq right-window window)))
                       frame)
     right-window))
 

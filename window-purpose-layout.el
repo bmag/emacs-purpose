@@ -161,8 +161,8 @@ not defined."
                  :width (purpose--window-width-to-percentage window)
                  :height (purpose--window-height-to-percentage window)
                  :edges (purpose--window-edges-to-percentage window))
-           (mapcar #'(lambda (fn)
-                       (funcall fn window))
+           (mapcar (lambda (fn)
+                     (funcall fn window))
                    purpose-get-extra-window-params-functions))))
 
 (defun purpose-set-window-properties (properties &optional window)
@@ -613,11 +613,11 @@ Use INDEX=0 for most recent."
 (defun purpose-delete-non-dedicated-windows ()
   "Delete all windows that aren't dedicated to their purpose or buffer."
   (interactive)
-  (mapc #'(lambda (window)
-            (when (and (window-deletable-p window)
-                       (not (window-dedicated-p window))
-                       (not (purpose-window-purpose-dedicated-p window)))
-              (delete-window window)))
+  (mapc (lambda (window)
+          (when (and (window-deletable-p window)
+                     (not (window-dedicated-p window))
+                     (not (purpose-window-purpose-dedicated-p window)))
+            (delete-window window)))
         (window-list)))
 
 ;;;###autoload

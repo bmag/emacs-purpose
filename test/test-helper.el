@@ -118,16 +118,16 @@ it.")
   (defun hash-table-keys (hash-table)
     "Return a list of keys in HASH-TABLE."
     (let (result)
-      (maphash #'(lambda (key value)
-                   (setq result (append (list key) result)))
+      (maphash (lambda (key value)
+                 (setq result (append (list key) result)))
                hash-table)
       result))
 
   (defun hash-table-values (hash-table)
     "Return a list of values in HASH-TABLE."
     (let (result)
-      (maphash #'(lambda (key value)
-                   (setq result (append (list value) result)))
+      (maphash (lambda (key value)
+                 (setq result (append (list value) result)))
                hash-table)
       result)))
 
@@ -163,7 +163,7 @@ it.")
 Each item in BUFFERS is either a buffer or a buffer's name."
   (let ((kill-buffer-query-functions nil)
         (kill-buffer-hook nil))
-    (mapc #'(lambda (buf) (ignore-errors (kill-buffer buf))) buffers)))
+    (mapc (lambda (buf) (ignore-errors (kill-buffer buf))) buffers)))
 
 (defmacro purpose-call-with-prefix-arg (arg command)
   (declare (indent defun) (debug 0))
